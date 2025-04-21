@@ -1,33 +1,40 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '@app/types';
-import { COLORS } from '@app/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
+// Definimos el tipo de las rutas
+type RootStackParamList = {
+  Welcome: undefined;
+  MainTabs: undefined;
+};
 
-const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
+// Definimos el tipo de navegación
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
+
+const WelcomeScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
+
+  const handleStart = () => {
+    navigation.navigate('MainTabs');
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Padpok</Text>
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoCircle}>
+            <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+          </View>
+          <Text style={styles.logoText}>PADPOK</Text>
+        </View>
+        <Text style={styles.title}>Encuentra tu próximo partido de pádel</Text>
         <Text style={styles.subtitle}>
-          La red social para jugadores de pádel
+          Conecta con jugadores de tu nivel y zona
         </Text>
       </View>
-
-      <View style={styles.logoContainer}>
-        <View style={styles.logoCircle}>
-          <Ionicons name="tennisball-outline" size={80} color={COLORS.primary} />
-        </View>
-        <Text style={styles.logoText}>PADPOK</Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Login')}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleStart}>
         <Text style={styles.buttonText}>Empezar</Text>
       </TouchableOpacity>
     </View>
@@ -42,14 +49,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleContainer: {
+  content: {
     alignItems: 'center',
     marginBottom: 40,
   },
   title: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: '#22C55E',
     marginBottom: 8,
   },
   subtitle: {
@@ -71,16 +78,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: '#22C55E',
   },
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: '#22C55E',
     letterSpacing: 2,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#22C55E',
     width: '100%',
     padding: 16,
     borderRadius: 8,
