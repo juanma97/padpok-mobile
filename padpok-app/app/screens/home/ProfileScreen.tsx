@@ -3,13 +3,47 @@ import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView, Pla
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@app/constants/theme';
 
-// Datos de ejemplo (luego vendrán de Firebase)
-const LEVELS = {
-  '1.0': 'Principiante',
-  '2.0': 'Iniciado',
-  '3.0': 'Intermedio',
-  '4.0': 'Intermedio Alto',
-  '5.0': 'Avanzado'
+type UserLevel = 'Principiante' | 'Intermedio' | 'Avanzado';
+
+interface UserStats {
+  matchesPlayed: number;
+  wins: number;
+  medals: string[];
+}
+
+interface UserAvailability {
+  days: string[];
+  hours: string[];
+}
+
+interface UserProfile {
+  uid: string;
+  displayName: string;
+  avatarUrl: string;
+  level: UserLevel | null;
+  stats: UserStats;
+  availability: UserAvailability;
+  clubZone?: string;
+  bio?: string;
+}
+
+// Mock data (later will come from Firebase)
+const mockProfile: UserProfile = {
+  uid: '1',
+  displayName: 'Usuario de Ejemplo',
+  avatarUrl: '',
+  level: 'Intermedio',
+  stats: {
+    matchesPlayed: 0,
+    wins: 0,
+    medals: [],
+  },
+  availability: {
+    days: [],
+    hours: [],
+  },
+  clubZone: 'Club de Pádel Madrid Norte',
+  bio: 'Busco partidos por las tardes, preferiblemente mixtos 🎾',
 };
 
 const DAYS = [
@@ -54,21 +88,27 @@ const ProfileScreen = () => {
         <View style={styles.avatarContainer}>
           <Ionicons name="person-circle" size={80} color="#22C55E" />
         </View>
-        <Text style={styles.username}>Usuario de Ejemplo</Text>
+        <Text style={styles.username}>{mockProfile.displayName}</Text>
         <TouchableOpacity style={styles.editButton}>
           <Text style={styles.editButtonText}>Editar Perfil</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Sección de Nivel simplificada */}
+      {/* Level and Club Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Nivel de Juego</Text>
-        <View style={styles.levelDisplay}>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>{LEVELS[level]}</Text>
-            <Text style={styles.levelNumber}>{level}</Text>
+        <View style={styles.levelClubContainer}>
+          <View style={styles.badge}>
+            <Ionicons name="trophy-outline" size={16} color="#22C55E" />
+            <Text style={styles.badgeText}>{mockProfile.level}</Text>
+          </View>
+          <View style={styles.badge}>
+            <Ionicons name="location-outline" size={16} color="#22C55E" />
+            <Text style={styles.badgeText}>{mockProfile.clubZone}</Text>
           </View>
         </View>
+        {mockProfile.bio && (
+          <Text style={styles.bioText}>{mockProfile.bio}</Text>
+        )}
       </View>
 
       {/* Estadísticas */}
@@ -203,27 +243,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
-  levelDisplay: {
-    alignItems: 'flex-start',
+  levelClubContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
   },
-  levelBadge: {
-    backgroundColor: '#22C55E15',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#22C55E15',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
   },
-  levelText: {
-    fontSize: 16,
-    fontWeight: '600',
+  badgeText: {
     color: '#22C55E',
-  },
-  levelNumber: {
     fontSize: 14,
-    color: '#22C55E',
-    opacity: 0.8,
+    fontWeight: '500',
+  },
+  bioText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
   statsContainer: {
     flexDirection: 'row',
