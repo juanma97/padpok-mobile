@@ -6,17 +6,20 @@ export type User = {
   createdAt: Date;
 };
 
-export type Match = {
-  id: string;
+export interface Match {
+  id?: string;
   title: string;
-  date: Date;
   location: string;
+  date: Date;
   playersNeeded: number;
-  playersJoined: string[]; // array of user IDs
-  createdBy: string; // user ID
+  playersJoined: string[];
+  createdBy: string;
   level: 'Principiante' | 'Intermedio' | 'Avanzado';
   description?: string;
-};
+  createdAt: any; // FirebaseTimestamp
+  clubZone: string;
+  telegramGroup?: string;
+}
 
 export type AuthStackParamList = {
   Welcome: undefined;

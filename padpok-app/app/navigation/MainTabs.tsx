@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text } from 'react-native';
 import ProfileScreen from '@app/screens/home/ProfileScreen';
+import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -10,12 +11,6 @@ const Tab = createBottomTabNavigator();
 const ExploreScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
     <Text>Explorar Partidos</Text>
-  </View>
-);
-
-const CreateMatchScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Crear Partido</Text>
   </View>
 );
 

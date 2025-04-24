@@ -12,6 +12,7 @@ import {
   FIREBASE_MEASUREMENT_ID,
 } from '@env';
 
+
 // Firebase config
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
