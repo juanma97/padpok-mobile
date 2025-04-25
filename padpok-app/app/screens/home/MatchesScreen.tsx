@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -7,26 +7,25 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  RefreshControl
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList, Match } from '@app/types';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 
 const MatchesScreen: React.FC<Props> = ({ navigation }) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  useEffect(() => {
-    fetchMatches();
-  }, []);
-
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     try {
       setLoading(true);
       const matchesRef = collection(db, 'matches');
@@ -47,8 +46,20 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
       console.error('Error fetching matches:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMatches();
+    }, [fetchMatches])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchMatches();
+  }, [fetchMatches]);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -104,7 +115,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#1e3a8a" />
@@ -145,6 +156,14 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
             renderItem={renderMatchCard}
             keyExtractor={(item, index) => item.id || `match-${index}`}
             contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#1e3a8a']}
+                tintColor="#1e3a8a"
+              />
+            }
           />
         )}
       </View>

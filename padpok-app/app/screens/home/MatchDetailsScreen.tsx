@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList, Match } from '@app/types';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -24,36 +24,64 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [isJoined, setIsJoined] = useState(
     match.playersJoined.includes(auth.currentUser?.uid || '')
   );
+  const isFull = match.playersJoined.length >= match.playersNeeded;
 
   const handleJoinMatch = async () => {
     if (!auth.currentUser) {
-      Alert.alert('Error', 'Debes iniciar sesión para unirte a un partido');
+      Alert.alert('Error', 'Debes iniciar sesión para unirte al partido');
       return;
     }
 
     if (isJoined) {
-      Alert.alert('Ya estás apuntado', 'Ya formas parte de este partido');
-      return;
-    }
-
-    if (match.playersJoined.length >= match.playersNeeded) {
-      Alert.alert('Partido completo', 'Este partido ya tiene todos los jugadores necesarios');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const matchRef = doc(db, 'matches', match.id);
-      await updateDoc(matchRef, {
-        playersJoined: [...match.playersJoined, auth.currentUser.uid]
-      });
-      
-      setIsJoined(true);
-      Alert.alert('¡Listo!', 'Te has unido al partido correctamente');
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudo unirte al partido: ' + error.message);
-    } finally {
-      setLoading(false);
+      setLoading(true);
+      try {
+        const matchRef = doc(db, 'matches', match.id);
+        await updateDoc(matchRef, {
+          playersJoined: arrayRemove(auth.currentUser.uid)
+        });
+        
+        Alert.alert(
+          '¡Desapuntado!',
+          'Te has desapuntado del partido correctamente',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      } catch (error: any) {
+        Alert.alert('Error', 
+          `Error al desapuntarte del partido: ${error.message}\n\nCódigo: ${error.code}`
+        );
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setLoading(true);
+      try {
+        const matchRef = doc(db, 'matches', match.id);
+        await updateDoc(matchRef, {
+          playersJoined: arrayUnion(auth.currentUser.uid)
+        });
+        
+        Alert.alert(
+          '¡Apuntado!',
+          'Te has unido al partido correctamente',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      } catch (error: any) {
+        Alert.alert('Error', 
+          `Error al unirte al partido: ${error.message}\n\nCódigo: ${error.code}`
+        );
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -151,13 +179,6 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                 <Text style={styles.noPlayersText}>Aún no hay jugadores apuntados</Text>
               )}
             </View>
-
-            {match.description && (
-              <View style={styles.descriptionCard}>
-                <Text style={styles.descriptionTitle}>Descripción</Text>
-                <Text style={styles.descriptionText}>{match.description}</Text>
-              </View>
-            )}
           </View>
         </ScrollView>
 
@@ -165,16 +186,17 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
           <TouchableOpacity
             style={[
               styles.joinButton,
-              (isJoined || match.playersJoined.length >= match.playersNeeded) && styles.joinButtonDisabled
+              isJoined && styles.leaveButton,
+              loading && styles.buttonDisabled
             ]}
             onPress={handleJoinMatch}
-            disabled={isJoined || match.playersJoined.length >= match.playersNeeded || loading}
+            disabled={loading || isFull}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.joinButtonText}>
-                {isJoined ? 'Ya estás apuntado' : 'Unirse al partido'}
+                {isJoined ? 'Desapuntarse del partido' : 'Unirse al partido'}
               </Text>
             )}
           </TouchableOpacity>
@@ -370,7 +392,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  joinButtonDisabled: {
+  leaveButton: {
+    backgroundColor: '#dc2626',
+  },
+  buttonDisabled: {
     backgroundColor: '#9ca3af',
   },
   joinButtonText: {

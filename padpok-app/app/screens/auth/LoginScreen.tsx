@@ -1,101 +1,182 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '@app/types';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, CommonActions } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { auth } from '@app/lib/firebase';
-import { COLORS } from '@app/constants/theme';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { RootStackScreenProps } from '@app/types';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+type NavigationProp = RootStackScreenProps<'Login'>['navigation'];
 
-const LoginScreen: React.FC<Props> = ({ navigation }) => {
+const LoginScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+      Alert.alert('Error', 'Por favor, completa todos los campos');
       return;
     }
 
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // El navigate será manejado por el AuthContext, automáticamente a la HomeTab
+      navigation.dispatch(
+        CommonActions.navigate({
+          name: 'Matches'
+        })
+      );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al iniciar sesión');
+      Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRegister = () => {
+    navigation.navigate('Register');
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>Iniciar Sesión</Text>
-        <Text style={styles.subtitle}>
-          Inicia sesión para encontrar y jugar partidos
-        </Text>
-      </View>
-
-      <View style={styles.formItem}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="tu@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
-
-      <View style={styles.formItem}>
-        <Text style={styles.label}>Contraseña</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="********"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={loading}
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
       >
-        <Text style={styles.buttonText}>
-          {loading ? 'Cargando...' : 'Iniciar Sesión'}
-        </Text>
-      </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+              </View>
+              <Text style={styles.logoText}>PADPOK</Text>
+            </View>
+            <Text style={styles.title}>Bienvenido de nuevo</Text>
+            <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
+          </View>
 
-      <TouchableOpacity
-        style={styles.registerButton}
-        onPress={() => navigation.navigate('Register')}
-      >
-        <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
-      </TouchableOpacity>
-    </View>
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity 
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={20} 
+                  color="#6b7280" 
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.forgotPassword}>
+              <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Iniciar sesión</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>¿No tienes una cuenta?</Text>
+              <TouchableOpacity onPress={handleRegister}>
+                <Text style={styles.registerLink}>Regístrate</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
     padding: 24,
   },
-  headerContainer: {
+  header: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f0f5ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#22C55E',
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#22C55E',
+    letterSpacing: 2,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: '#1e3a8a',
     marginBottom: 8,
   },
   subtitle: {
@@ -103,25 +184,40 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
   },
-  formItem: {
-    marginBottom: 24,
+  formContainer: {
+    gap: 16,
   },
-  label: {
-    color: '#4b5563',
-    marginBottom: 8,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    backgroundColor: '#f3f4f6',
-    padding: 16,
-    borderRadius: 8,
+    flex: 1,
+    paddingVertical: 16,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 8,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+  },
+  forgotPasswordText: {
+    color: '#22C55E',
+    fontSize: 14,
   },
   button: {
-    backgroundColor: COLORS.primary,
-    width: '100%',
+    backgroundColor: '#22C55E',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: 8,
   },
   buttonDisabled: {
     backgroundColor: '#9ca3af',
@@ -131,11 +227,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
   },
-  registerButton: {
-    alignItems: 'center',
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+    gap: 8,
   },
   registerText: {
-    color: COLORS.primary,
+    color: '#6b7280',
+  },
+  registerLink: {
+    color: '#22C55E',
+    fontWeight: 'bold',
   },
 });
 

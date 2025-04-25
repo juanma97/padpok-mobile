@@ -1,79 +1,91 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  StatusBar
+} from 'react-native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackScreenProps } from '@app/types';
 
-// Definimos el tipo de las rutas
-type RootStackParamList = {
-  Welcome: undefined;
-  MainTabs: undefined;
-};
-
-// Definimos el tipo de navegación
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
+type NavigationProp = RootStackScreenProps<'Welcome'>['navigation'];
 
 const WelcomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
 
-  const handleStart = () => {
-    navigation.navigate('MainTabs');
+  const handleExploreWithoutRegistration = () => {
+    navigation.navigate('Matches');
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+    <View style={styles.background}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.overlay}>
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+            </View>
+            <Text style={styles.logoText}>PADPOK</Text>
           </View>
-          <Text style={styles.logoText}>PADPOK</Text>
+          <Text style={styles.title}>Encuentra tu próximo partido</Text>
+          <Text style={styles.subtitle}>
+            Conecta con jugadores de padel cerca de ti
+          </Text>
         </View>
-        <Text style={styles.title}>Encuentra tu próximo partido de pádel</Text>
-        <Text style={styles.subtitle}>
-          Conecta con jugadores de tu nivel y zona
-        </Text>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.primaryButtonText}>Crear cuenta</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.secondaryButtonText}>Iniciar sesión</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.exploreButton}
+            onPress={handleExploreWithoutRegistration}
+          >
+            <Text style={styles.exploreButtonText}>Explorar sin registrarse</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleStart}>
-        <Text style={styles.buttonText}>Empezar</Text>
-      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#1e3a8a',
+  },
+  overlay: {
+    flex: 1,
     padding: 24,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+  },
+  header: {
     alignItems: 'center',
-  },
-  content: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#22C55E',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#6b7280',
-    textAlign: 'center',
+    marginTop: 60,
   },
   logoContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
   },
   logoCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#f0f5ff',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -83,21 +95,56 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#fff',
     letterSpacing: 2,
   },
-  button: {
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
+    opacity: 0.9,
+  },
+  buttonContainer: {
+    gap: 16,
+    marginBottom: 40,
+  },
+  primaryButton: {
     backgroundColor: '#22C55E',
-    width: '100%',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 16,
   },
-  buttonText: {
+  primaryButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 18,
+  },
+  secondaryButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#1e3a8a',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  exploreButton: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  exploreButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });
 

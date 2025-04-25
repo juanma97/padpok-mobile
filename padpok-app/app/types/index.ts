@@ -1,3 +1,6 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+
 export type User = {
   id: string;
   email: string;
@@ -8,26 +11,24 @@ export type User = {
 
 export type AgeRange = '18-30' | '30-45' | '+45' | 'todas las edades';
 
-export interface Match {
-  id?: string;
+export type Match = {
+  id: string;
   title: string;
   location: string;
   date: Date;
   playersNeeded: number;
   playersJoined: string[];
-  createdBy: string;
-  level: 'Principiante' | 'Intermedio' | 'Avanzado';
-  description?: string;
-  createdAt: any; // FirebaseTimestamp
-  clubZone: string;
-  telegramGroup?: string;
   ageRange: AgeRange;
-}
+  level: string;
+  createdBy: string;
+  createdAt: Date;
+};
 
 export type AuthStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
+  Matches: undefined;
 };
 
 export type HomeTabsParamList = {
@@ -35,6 +36,16 @@ export type HomeTabsParamList = {
   Create: undefined;
   Profile: undefined;
 };
+
+export type RootStackParamList = {
+  Home: undefined;
+  Auth: undefined;
+  MatchDetails: { match: Match };
+} & AuthStackParamList;
+
+export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<AuthStackParamList, T>;
+export type HomeTabScreenProps<T extends keyof HomeTabsParamList> = BottomTabScreenProps<HomeTabsParamList, T>;
+export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
 
 export type CreateStackParamList = {
   CreateMatch: undefined;

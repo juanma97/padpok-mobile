@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@app/constants/theme';
+import { useAuth } from '@app/lib/AuthContext';
+import { auth } from '@app/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useNavigation, CommonActions } from '@react-navigation/native';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { HomeTabsParamList, RootStackParamList } from '@app/types';
 
 type UserLevel = 'Principiante' | 'Intermedio' | 'Avanzado';
 
@@ -61,12 +68,20 @@ const AVAILABILITY = {
   afternoon: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 };
 
-const ProfileScreen = () => {
-  const [level, setLevel] = useState('3.0');
-  const [selectedDays, setSelectedDays] = useState([]);
-  const [selectedHours, setSelectedHours] = useState([]);
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<HomeTabsParamList, 'Profile'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
-  const handleDayToggle = (dayId) => {
+const ProfileScreen = () => {
+  const { user } = useAuth();
+  const navigation = useNavigation<Props['navigation']>();
+  const [loading, setLoading] = useState(false);
+  const [level, setLevel] = useState('3.0');
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedHours, setSelectedHours] = useState<string[]>([]);
+
+  const handleDayToggle = (dayId: string) => {
     setSelectedDays(prev =>
       prev.includes(dayId)
         ? prev.filter(d => d !== dayId)
@@ -74,7 +89,7 @@ const ProfileScreen = () => {
     );
   };
 
-  const handleHourToggle = (hour) => {
+  const handleHourToggle = (hour: string) => {
     setSelectedHours(prev =>
       prev.includes(hour)
         ? prev.filter(h => h !== hour)
@@ -82,15 +97,65 @@ const ProfileScreen = () => {
     );
   };
 
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Cerrar sesión',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await signOut(auth);
+              navigation.dispatch(
+                CommonActions.navigate({
+                  name: 'Welcome'
+                })
+              );
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo cerrar la sesión');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <Ionicons name="person-circle" size={80} color="#22C55E" />
+          <Ionicons name="person-circle-outline" size={80} color="#1e3a8a" />
         </View>
-        <Text style={styles.username}>{mockProfile.displayName}</Text>
-        <TouchableOpacity style={styles.editButton}>
-          <Text style={styles.editButtonText}>Editar Perfil</Text>
+        <Text style={styles.name}>{user.email}</Text>
+      </View>
+
+      <View style={styles.content}>
+        <TouchableOpacity 
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="log-out-outline" size={20} color="#fff" style={styles.signOutIcon} />
+              <Text style={styles.signOutText}>Cerrar sesión</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -208,30 +273,44 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: '#e5e7eb',
   },
   avatarContainer: {
-    backgroundColor: '#fff',
-    padding: 4,
+    width: 100,
+    height: 100,
     borderRadius: 50,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
-  username: {
-    color: '#fff',
+  name: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#1e3a8a',
   },
-  editButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#22C55E',
-    borderRadius: 20,
+  content: {
+    flex: 1,
+    padding: 24,
   },
-  editButtonText: {
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ef4444',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 'auto',
+  },
+  signOutIcon: {
+    marginRight: 8,
+  },
+  signOutText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   section: {
     padding: 20,

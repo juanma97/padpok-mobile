@@ -54,18 +54,18 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    // if (!auth.currentUser) {
-    //   Alert.alert('Error', 'Debes iniciar sesión para crear un partido');
-    //   return;
-    // }
+    if (!auth.currentUser) {
+      Alert.alert('Error', 'Debes iniciar sesión para crear un partido');
+      return;
+    }
 
     setLoading(true);
     try {
       const matchData: Partial<Match> = {
         ...formData,
         playersNeeded: 4,
-        playersJoined: ['test'],
-        createdBy: 'test',
+        playersJoined: [auth.currentUser.uid],
+        createdBy: auth.currentUser.uid,
         createdAt: serverTimestamp(),
       };
 
