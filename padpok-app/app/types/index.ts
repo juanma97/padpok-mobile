@@ -36,4 +36,10 @@ export type HomeTabsParamList = {
 export type CreateStackParamList = {
   CreateMatch: undefined;
   SelectLocation: undefined;
+};
+
+export type HomeStackParamList = {
+  Matches: undefined;
+  CreateMatch: undefined;
+  MatchDetails: { match: Match };
 }; 

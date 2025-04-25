@@ -1,83 +1,98 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator,
+  SafeAreaView,
+  StatusBar
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { HomeStackParamList, Match } from '@app/types';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
-import { Match } from '@app/types';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@app/constants/theme';
 
-const MatchesScreen: React.FC = () => {
+type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
+
+const MatchesScreen: React.FC<Props> = ({ navigation }) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const q = query(collection(db, 'matches'), orderBy('date', 'asc'));
-        const querySnapshot = await getDocs(q);
-        
-        const matchesData: Match[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          matchesData.push({
-            id: doc.id,
-            title: data.title,
-            date: data.date.toDate(),
-            location: data.location,
-            playersNeeded: data.playersNeeded,
-            playersJoined: data.playersJoined,
-            createdBy: data.createdBy,
-            level: data.level,
-            description: data.description,
-          });
-        });
-        
-        setMatches(matchesData);
-      } catch (error) {
-        console.error('Error fetching matches:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchMatches();
   }, []);
 
-  const renderMatchItem = ({ item }: { item: Match }) => {
-    const formattedDate = item.date.toLocaleDateString('es-ES', {
+  const fetchMatches = async () => {
+    try {
+      setLoading(true);
+      const matchesRef = collection(db, 'matches');
+      const q = query(matchesRef, orderBy('date', 'asc'));
+      const querySnapshot = await getDocs(q);
+      
+      const matchesData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date: data.date?.toDate() || new Date()
+        };
+      }) as Match[];
+      
+      setMatches(matchesData);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const sortedMatches = React.useMemo(() => {
+    return [...matches].sort((a, b) => {
+      const dateA = a.date?.getTime() || 0;
+      const dateB = b.date?.getTime() || 0;
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  }, [matches, sortOrder]);
+
+  const renderMatchCard = ({ item }: { item: Match }) => {
+    const formattedDate = item.date ? item.date.toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',
-      minute: '2-digit',
-    });
+      minute: '2-digit'
+    }) : 'Fecha no disponible';
 
     return (
-      <TouchableOpacity style={styles.matchCard}>
-        <View style={styles.matchHeader}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="tennisball-outline" size={24} color="#1e3a8a" />
-          </View>
-          <View style={styles.matchTitleContainer}>
-            <Text style={styles.matchTitle}>{item.title}</Text>
-            <Text style={styles.matchLocation}>{item.location}</Text>
-          </View>
-        </View>
-        
-        <View style={styles.matchFooter}>
-          <View style={styles.footerItem}>
-            <Ionicons name="calendar-outline" size={16} color="#666" />
-            <Text style={styles.footerText}>{formattedDate}</Text>
-          </View>
-          
-          <View style={styles.footerItem}>
-            <Ionicons name="people-outline" size={16} color="#666" />
-            <Text style={styles.footerText}>
-              {item.playersJoined.length}/{item.playersNeeded} jugadores
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={() => navigation.navigate('MatchDetails', { match: item })}
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <View style={styles.playersCount}>
+            <Text style={styles.playersCountText}>
+              {item.playersJoined.length}/{item.playersNeeded}
             </Text>
           </View>
-          
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>{item.level}</Text>
+        </View>
+
+        <View style={styles.cardContent}>
+          <View style={styles.infoRow}>
+            <Ionicons name="location-outline" size={20} color="#1e3a8a" />
+            <Text style={styles.infoText}>{item.location}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="calendar-outline" size={20} color="#1e3a8a" />
+            <Text style={styles.infoText}>{formattedDate}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -93,125 +108,142 @@ const MatchesScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Partidos disponibles</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Ionicons name="filter-outline" size={24} color="#1e3a8a" />
-        </TouchableOpacity>
-      </View>
-
-      {matches.length > 0 ? (
-        <FlatList
-          data={matches}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMatchItem}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="tennisball-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>
-            No hay partidos disponibles.{'\n'}¡Crea el primero!
-          </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Partidos Disponibles</Text>
+          <View style={styles.sortContainer}>
+            <Text style={styles.sortText}>
+              {sortOrder === 'asc' ? 'Más antiguos' : 'Más recientes'}
+            </Text>
+            <TouchableOpacity 
+              style={styles.filterButton}
+              onPress={toggleSortOrder}
+            >
+              <Ionicons 
+                name={sortOrder === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'} 
+                size={24} 
+                color="#1e3a8a" 
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
-    </View>
+
+        {matches.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No hay partidos disponibles</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={sortedMatches}
+            renderItem={renderMatchCard}
+            keyExtractor={(item, index) => item.id || `match-${index}`}
+            contentContainerStyle={styles.listContent}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
-    padding: 16,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#1e3a8a',
   },
   filterButton: {
     padding: 8,
+  },
+  listContent: {
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e3a8a',
+  },
+  playersCount: {
+    backgroundColor: 'rgba(30,58,138,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  playersCountText: {
+    color: '#1e3a8a',
+    fontWeight: '600',
+  },
+  cardContent: {
+    gap: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#4b5563',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  matchCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-  },
-  matchHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  iconContainer: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
-    padding: 8,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  matchTitleContainer: {
-    flex: 1,
-  },
-  matchTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  matchLocation: {
-    color: '#6b7280',
-  },
-  matchFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  footerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#666',
-    marginLeft: 4,
-  },
-  levelBadge: {
-    backgroundColor: '#e0f2fe',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  levelText: {
-    color: COLORS.primary,
-    fontSize: 12,
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
   },
   emptyText: {
-    fontSize: 18,
-    color: '#9ca3af',
-    marginTop: 16,
+    fontSize: 16,
+    color: '#6b7280',
     textAlign: 'center',
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sortText: {
+    color: '#6b7280',
+    fontSize: 14,
   },
 });
 

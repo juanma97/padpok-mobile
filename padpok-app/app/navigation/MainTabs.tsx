@@ -1,18 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text } from 'react-native';
 import ProfileScreen from '@app/screens/home/ProfileScreen';
 import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
-
+import MatchesScreen from '@app/screens/home/MatchesScreen';
 const Tab = createBottomTabNavigator();
-
-// Componentes temporales para las tabs
-const ExploreScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Explorar Partidos</Text>
-  </View>
-);
 
 const MainTabs = () => {
   return (
@@ -35,7 +27,7 @@ const MainTabs = () => {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Explorar" component={ExploreScreen} />
+      <Tab.Screen name="Explorar" component={MatchesScreen} />
       <Tab.Screen name="Crear" component={CreateMatchScreen} />
       <Tab.Screen name="Perfil" component={ProfileScreen} />
     </Tab.Navigator>
