@@ -34,6 +34,7 @@ export type AuthStackParamList = {
 export type HomeTabsParamList = {
   Matches: undefined;
   Create: undefined;
+  Ranking: undefined;
   Profile: undefined;
 };
 
@@ -54,6 +55,7 @@ export type CreateStackParamList = {
 
 export type HomeStackParamList = {
   Matches: undefined;
-  CreateMatch: undefined;
   MatchDetails: { match: Match };
+  CreateMatch: undefined;
+  Ranking: undefined;
 }; 

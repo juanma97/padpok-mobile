@@ -17,7 +17,7 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from '@app/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { RootStackScreenProps } from '@app/types';
 
 type NavigationProp = RootStackScreenProps<'Register'>['navigation'];
@@ -68,41 +68,52 @@ const RegisterScreen = () => {
   };
 
   const handleRegister = async () => {
-    if (!validateStep2()) return;
+    if (!validateStep2()) {
+      Alert.alert('Error', 'Por favor, completa todos los campos correctamente');
+      return;
+    }
 
     setLoading(true);
     try {
-      // Crear usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-      // Crear documento de usuario en Firestore
-      const userData = {
-        uid: user.uid,
+      // Crear el documento del usuario en Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
         username,
-        avatarUrl: '',
+        age,
         level,
         stats: {
+          points: 0,
           matchesPlayed: 0,
           wins: 0,
-          medals: [],
+          losses: 0
         },
-        availability: {
-          days: [],
-          hours: [],
-        },
-        createdAt: new Date(),
-      };
+        createdAt: serverTimestamp()
+      });
 
-      await setDoc(doc(db, 'users', user.uid), userData);
-      // Navegar a la pantalla principal
-      navigation.dispatch(
-        CommonActions.navigate({
-          name: 'Matches'
-        })
+      Alert.alert(
+        '¡Registro exitoso!',
+        'Tu cuenta ha sido creada correctamente',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+              })
+            ),
+          },
+        ]
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', 
+        `Error al registrarse: ${error.message}\n\nCódigo: ${error.code}`
+      );
     } finally {
       setLoading(false);
     }

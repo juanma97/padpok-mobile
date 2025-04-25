@@ -1,35 +1,67 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { HomeTabsParamList } from '@app/types';
 import { Ionicons } from '@expo/vector-icons';
-import ProfileScreen from '@app/screens/home/ProfileScreen';
-import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
 import MatchesScreen from '@app/screens/home/MatchesScreen';
-const Tab = createBottomTabNavigator();
+import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
+import ProfileScreen from '@app/screens/home/ProfileScreen';
+import RankingScreen from '@app/screens/home/RankingScreen';
+
+const Tab = createBottomTabNavigator<HomeTabsParamList>();
 
 const MainTabs = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Explorar') {
-            iconName = focused ? 'search' : 'search-outline';
-          } else if (route.name === 'Crear') {
-            iconName = focused ? 'add-circle' : 'add-circle-outline';
-          } else if (route.name === 'Perfil') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+      screenOptions={{
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopWidth: 1,
+          borderTopColor: '#f0f0f0',
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
-        tabBarActiveTintColor: '#22C55E',
-        tabBarInactiveTintColor: 'gray',
-      })}
+        tabBarActiveTintColor: '#1e3a8a',
+        tabBarInactiveTintColor: '#9ca3af',
+        headerShown: false,
+      }}
     >
-      <Tab.Screen name="Explorar" component={MatchesScreen} />
-      <Tab.Screen name="Crear" component={CreateMatchScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
+      <Tab.Screen
+        name="Matches"
+        component={MatchesScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="tennisball-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Create"
+        component={CreateMatchScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Ranking"
+        component={RankingScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trophy-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 };

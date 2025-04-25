@@ -15,6 +15,7 @@ import MatchesScreen from '@app/screens/home/MatchesScreen';
 import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
 import ProfileScreen from '@app/screens/home/ProfileScreen';
 import MatchDetailsScreen from '@app/screens/home/MatchDetailsScreen';
+import RankingScreen from '@app/screens/home/RankingScreen';
 
 // Types
 import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types';
@@ -38,6 +39,8 @@ const HomeNavigator = () => {
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Ranking') {
+            iconName = focused ? 'trophy' : 'trophy-outline';
           }
 
           return <Ionicons name={iconName as any} size={size} color={color} />;
@@ -51,6 +54,11 @@ const HomeNavigator = () => {
         name="Matches" 
         component={MatchesScreen} 
         options={{ headerTitle: 'Partidos', title: 'Partidos' }}
+      />
+      <HomeTab.Screen 
+        name="Ranking" 
+        component={RankingScreen as any} 
+        options={{ headerTitle: 'Ranking', title: 'Ranking' }}
       />
       {user && (
         <>
