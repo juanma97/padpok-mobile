@@ -11,7 +11,7 @@ import {
   Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CreateStackParamList, Match } from '@app/types';
+import { CreateStackParamList, Match, AgeRange } from '@app/types';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -26,6 +26,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     level: 'Intermedio',
     description: '',
     date: new Date(),
+    ageRange: 'todas las edades'
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -35,6 +36,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     if (!formData.title?.trim()) return 'El título es obligatorio';
     if (!formData.location?.trim()) return 'La ubicación es obligatoria';
     if (!formData.level) return 'El nivel es obligatorio';
+    if (!formData.ageRange) return 'El rango de edad es obligatorio';
     
     // Validación de fecha y hora
     const now = new Date();
@@ -279,6 +281,29 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
+        <View style={styles.formItem}>
+          <Text style={styles.label}>Rango de edad*</Text>
+          <View style={styles.ageRangeContainer}>
+            {['18-30', '30-45', '+45', 'todas las edades'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.ageRangeOption,
+                  formData.ageRange === option && styles.ageRangeOptionSelected
+                ]}
+                onPress={() => setFormData(prev => ({ ...prev, ageRange: option as AgeRange }))}
+              >
+                <Text style={[
+                  styles.ageRangeText,
+                  formData.ageRange === option && styles.ageRangeTextSelected
+                ]}>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {renderFormField('Descripción', 'description', 'Añade detalles adicionales...', { multiline: true })}
 
         <TouchableOpacity
@@ -386,6 +411,29 @@ const styles = StyleSheet.create({
   iosButtonText: {
     color: '#007bff',
     fontWeight: '600'
+  },
+  ageRangeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  ageRangeOption: {
+    flex: 1,
+    minWidth: '48%',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center'
+  },
+  ageRangeOptionSelected: {
+    backgroundColor: '#007bff'
+  },
+  ageRangeText: {
+    textAlign: 'center',
+    color: '#4b5563'
+  },
+  ageRangeTextSelected: {
+    color: '#fff'
   }
 });
 

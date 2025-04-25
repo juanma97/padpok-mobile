@@ -6,6 +6,8 @@ export type User = {
   createdAt: Date;
 };
 
+export type AgeRange = '18-30' | '30-45' | '+45' | 'todas las edades';
+
 export interface Match {
   id?: string;
   title: string;
@@ -19,6 +21,7 @@ export interface Match {
   createdAt: any; // FirebaseTimestamp
   clubZone: string;
   telegramGroup?: string;
+  ageRange: AgeRange;
 }
 
 export type AuthStackParamList = {

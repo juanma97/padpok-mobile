@@ -104,13 +104,23 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               </View>
 
               <View style={styles.mainInfoRow}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="trophy-outline" size={28} color="#1e3a8a" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="trophy-outline" size={28} color="#1e3a8a" />
+                </View>
+                <View style={styles.mainInfoTextContainer}>
+                  <Text style={styles.mainInfoLabel}>Nivel</Text>
+                  <Text style={styles.mainInfoText}>{match.level}</Text>
+                </View>
               </View>
-              <View style={styles.mainInfoTextContainer}>
-                <Text style={styles.levelLabel}>Nivel</Text>
-                <Text style={styles.levelText}>{match.level}</Text>
-              </View>
+
+              <View style={styles.mainInfoRow}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="people-outline" size={28} color="#1e3a8a" />
+                </View>
+                <View style={styles.mainInfoTextContainer}>
+                  <Text style={styles.mainInfoLabel}>Rango de edad</Text>
+                  <Text style={styles.mainInfoText}>{match.ageRange}</Text>
+                </View>
               </View>
             </View>
 

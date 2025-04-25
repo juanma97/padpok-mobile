@@ -94,6 +94,11 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons name="calendar-outline" size={20} color="#1e3a8a" />
             <Text style={styles.infoText}>{formattedDate}</Text>
           </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="people-outline" size={20} color="#1e3a8a" />
+            <Text style={styles.infoText}>{item.ageRange}</Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
