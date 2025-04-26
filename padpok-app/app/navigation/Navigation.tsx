@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
+import AppBar from '../components/AppBar';
 
 // Auth Screens
 import WelcomeScreen from '@app/screens/auth/WelcomeScreen';
@@ -17,6 +18,7 @@ import ProfileScreen from '@app/screens/home/ProfileScreen';
 import MatchDetailsScreen from '@app/screens/home/MatchDetailsScreen';
 import RankingScreen from '@app/screens/home/RankingScreen';
 import MedalsScreen from '@app/screens/home/MedalsScreen';
+import NotificationsScreen from '@app/screens/home/NotificationsScreen';
 
 // Types
 import { AuthStackParamList, HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
@@ -30,9 +32,29 @@ const HomeNavigator = () => {
   const { user } = useAuth();
 
   return (
-    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStack.Screen name="Home" component={HomeTabs} />
-      <HomeStack.Screen name="Medals" component={MedalsScreen} />
+    <HomeStack.Navigator
+      screenOptions={({ route }) => ({
+        header: ({ navigation, route, options }) => (
+          <AppBar title="padpok" />
+        ),
+      })}
+    >
+      <HomeStack.Screen 
+        name="Home" 
+        component={HomeTabs} 
+      />
+      <HomeStack.Screen 
+        name="Medals" 
+        component={MedalsScreen}
+      />
+      <HomeStack.Screen 
+        name="Notifications" 
+        component={NotificationsScreen}
+        options={{ 
+          headerShown: false,
+          title: 'Notificaciones' 
+        }}
+      />
     </HomeStack.Navigator>
   );
 };
@@ -66,24 +88,27 @@ const HomeTabs = () => {
       <HomeTab.Screen 
         name="Matches" 
         component={MatchesScreen} 
-        options={{ headerTitle: 'Partidos', title: 'Partidos' }}
+        options={{ 
+          headerShown: false,
+          title: 'Partidos' 
+        }}
       />
       <HomeTab.Screen 
         name="Ranking" 
         component={RankingScreen as any} 
-        options={{ headerTitle: 'Ranking', title: 'Ranking' }}
+        options={{ headerShown: false, title: 'Ranking' }}
       />
       {user && (
         <>
           <HomeTab.Screen 
             name="Create" 
             component={CreateMatchScreen as any} 
-            options={{ headerTitle: 'Crear Partido', title: 'Crear' }}
+            options={{ headerShown: false, title: 'Crear' }}
           />
           <HomeTab.Screen 
             name="Profile" 
             component={ProfileScreen as any} 
-            options={{ headerTitle: 'Mi Perfil', title: 'Perfil' }}
+            options={{ headerShown: false, title: 'Perfil' }}
           />
         </>
       )}
@@ -100,16 +125,32 @@ const Navigation = () => {
 
   return (
     <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator
+        screenOptions={({ route }) => ({
+          header: ({ navigation, route, options }) => (
+            <AppBar title="padpok" />
+          ),
+        })}
+      >
         {user ? (
-          <RootStack.Screen name="Home" component={HomeNavigator} />
+          <RootStack.Screen 
+            name="Home" 
+            component={HomeNavigator}
+            options={{ headerShown: false }}
+          />
         ) : (
-          <RootStack.Screen name="Auth" component={AuthNavigator} />
+          <RootStack.Screen 
+            name="Auth" 
+            component={AuthNavigator}
+            options={{ headerShown: false }}
+          />
         )}
         <RootStack.Screen 
           name="MatchDetails" 
           component={MatchDetailsScreen}
-          options={{ headerShown: false }}
+          options={{ 
+            headerShown: true 
+          }}
         />
       </RootStack.Navigator>
     </NavigationContainer>

@@ -30,6 +30,7 @@ const MainTabs = () => {
         name="Matches"
         component={MatchesScreen}
         options={{
+          title: 'Partidos',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="tennisball-outline" size={size} color={color} />
           ),
@@ -39,6 +40,7 @@ const MainTabs = () => {
         name="Create"
         component={CreateMatchScreen}
         options={{
+          title: 'Crear Partido',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
@@ -48,6 +50,7 @@ const MainTabs = () => {
         name="Ranking"
         component={RankingScreen}
         options={{
+          title: 'Ranking',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trophy-outline" size={size} color={color} />
           ),
@@ -57,6 +60,7 @@ const MainTabs = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
+          title: 'Mi Perfil',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),

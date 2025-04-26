@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList, Match, Score } from '@app/types';
-import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, arrayRemove, arrayUnion, getDoc } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
@@ -23,30 +23,76 @@ import TeamSelectionModal from '@app/components/TeamSelectionModal';
 type Props = NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>;
 
 const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { match: initialMatch } = route.params;
-  const [match, setMatch] = useState(initialMatch);
+  const { match: initialMatch, matchId } = route.params;
+  const [match, setMatch] = useState<Match | null>(initialMatch || null);
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isJoined, setIsJoined] = useState(false);
   const [showScoreForm, setShowScoreForm] = useState(false);
   const [showTeamSelection, setShowTeamSelection] = useState(false);
   const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
-    if (user && match.playersJoined.includes(user.uid)) {
+    const fetchMatch = async () => {
+      if (matchId) {
+        try {
+          const matchDoc = await getDoc(doc(db, 'matches', matchId));
+          if (matchDoc.exists()) {
+            const matchData = matchDoc.data() as Match;
+            setMatch({
+              ...matchData,
+              id: matchDoc.id,
+              date: matchData.date.toDate(),
+              createdAt: matchData.createdAt.toDate(),
+              updatedAt: matchData.updatedAt?.toDate()
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching match:', error);
+          Alert.alert('Error', 'No se pudo cargar el partido');
+        }
+      }
+      setLoading(false);
+    };
+
+    if (!initialMatch && matchId) {
+      fetchMatch();
+    } else {
+      setLoading(false);
+    }
+  }, [matchId, initialMatch]);
+
+  useEffect(() => {
+    if (user && match?.playersJoined.includes(user.uid)) {
       setIsJoined(true);
     }
   }, [user, match]);
 
   useEffect(() => {
     const fetchUsernames = async () => {
-      if (match.playersJoined.length > 0) {
+      if (match?.playersJoined.length > 0) {
         const users = await getMatchUsers(match.playersJoined);
         setUsernames(users);
       }
     };
     fetchUsernames();
-  }, [match.playersJoined]);
+  }, [match?.playersJoined]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1e3a8a" />
+      </View>
+    );
+  }
+
+  if (!match) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>No se encontró el partido</Text>
+      </View>
+    );
+  }
 
   const handleJoinMatch = () => {
     if (!user || !auth.currentUser) {
@@ -603,6 +649,21 @@ const styles = StyleSheet.create({
   },
   joinIcon: {
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

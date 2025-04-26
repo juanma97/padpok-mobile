@@ -2,6 +2,7 @@ import { collection, doc, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove, q
 import { db } from './firebase';
 import { Match, Score } from '@app/types';
 import { checkAndUpdateMedals } from './medals';
+import { notifyMatchFull, notifyResultAdded, notifyResultConfirmed } from './notifications';
 
 // Función para actualizar las estadísticas de los jugadores
 const updatePlayerStats = async (match: Match, score: Score): Promise<void> => {
@@ -88,10 +89,36 @@ export const updateMatchScore = async (matchId: string, score: Score): Promise<v
     for (const playerId of allPlayers) {
       await checkAndUpdateMedals(playerId, {
         ...matchData,
-        score // Añadimos el nuevo resultado al objeto del partido
+        score
       });
     }
   }
+
+  // Notificar a los jugadores sobre el nuevo resultado
+  await notifyResultAdded({
+    ...matchData,
+    id: matchId
+  }, score);
+};
+
+// Función para confirmar un resultado
+export const confirmMatchScore = async (matchId: string, userId: string): Promise<void> => {
+  const matchRef = doc(db, 'matches', matchId);
+  const matchDoc = await getDoc(matchRef);
+  
+  if (!matchDoc.exists()) {
+    throw new Error('El partido no existe');
+  }
+
+  const matchData = matchDoc.data() as Match;
+  
+  // Actualizar el array de confirmaciones
+  await updateDoc(matchRef, {
+    'score.confirmedBy': arrayUnion(userId)
+  });
+
+  // Notificar a los otros jugadores sobre la confirmación
+  await notifyResultConfirmed(matchData, userId);
 };
 
 // Función para validar el resultado de un partido
@@ -178,6 +205,16 @@ export const joinMatch = async (matchId: string, userId: string, team: 'team1' |
     playersJoined: arrayUnion(userId),
     teams
   });
+
+  // Verificar si el partido está lleno
+  const updatedMatchDoc = await getDoc(matchRef);
+  const updatedMatchData = updatedMatchDoc.data();
+  if (updatedMatchData.playersJoined.length === updatedMatchData.playersNeeded) {
+    await notifyMatchFull({
+      id: matchId,
+      ...updatedMatchData
+    });
+  }
 };
 
 // Función para abandonar un partido

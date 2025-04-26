@@ -77,12 +77,29 @@ export type CreateStackParamList = {
   SelectLocation: undefined;
 };
 
+export type NotificationType = 'match_full' | 'result_added' | 'result_confirmed';
+
+export type Notification = {
+  id: string;
+  type: NotificationType;
+  matchId: string;
+  matchTitle: string;
+  userId: string;
+  read: boolean;
+  createdAt: Timestamp;
+  data?: {
+    score?: Score;
+    confirmedBy?: string[];
+  };
+};
+
 export type HomeStackParamList = {
   Home: undefined;
   Matches: undefined;
   CreateMatch: undefined;
-  MatchDetails: { match: Match };
+  MatchDetails: { match?: Match; matchId?: string };
   Profile: undefined;
   Ranking: undefined;
   Medals: undefined;
+  Notifications: undefined;
 }; 
