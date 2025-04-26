@@ -2,13 +2,84 @@ import { collection, doc, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove, q
 import { db } from './firebase';
 import { Match, Score } from '@app/types';
 
+// Función para actualizar las estadísticas de los jugadores
+const updatePlayerStats = async (match: Match, score: Score): Promise<void> => {
+  const { teams } = match;
+  if (!teams) return;
+
+  const winningTeam = score.winner;
+  const losingTeam = winningTeam === 'team1' ? 'team2' : 'team1';
+
+  // Actualizar estadísticas de los ganadores
+  for (const playerId of teams[winningTeam]) {
+    const userRef = doc(db, 'users', playerId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const stats = userData.stats || {
+        points: 0,
+        matchesPlayed: 0,
+        wins: 0,
+        losses: 0
+      };
+
+      await updateDoc(userRef, {
+        stats: {
+          ...stats,
+          points: stats.points + 3, // 3 puntos por victoria
+          matchesPlayed: stats.matchesPlayed + 1,
+          wins: stats.wins + 1
+        }
+      });
+    }
+  }
+
+  // Actualizar estadísticas de los perdedores
+  for (const playerId of teams[losingTeam]) {
+    const userRef = doc(db, 'users', playerId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const stats = userData.stats || {
+        points: 0,
+        matchesPlayed: 0,
+        wins: 0,
+        losses: 0
+      };
+
+      await updateDoc(userRef, {
+        stats: {
+          ...stats,
+          points: stats.points + 1, // 1 punto por derrota
+          matchesPlayed: stats.matchesPlayed + 1,
+          losses: stats.losses + 1
+        }
+      });
+    }
+  }
+};
+
 // Función para actualizar el resultado de un partido
 export const updateMatchScore = async (matchId: string, score: Score): Promise<void> => {
   const matchRef = doc(db, 'matches', matchId);
+  const matchDoc = await getDoc(matchRef);
+  
+  if (!matchDoc.exists()) {
+    throw new Error('El partido no existe');
+  }
+
+  const matchData = matchDoc.data() as Match;
+  
+  // Actualizar el resultado del partido
   await updateDoc(matchRef, { 
     score,
     updatedAt: serverTimestamp()
   });
+
+  // Actualizar las estadísticas de los jugadores
+  await updatePlayerStats(matchData, score);
 };
 
 // Función para validar el resultado de un partido
