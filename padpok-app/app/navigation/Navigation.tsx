@@ -22,6 +22,8 @@ import MedalsScreen from '@app/screens/home/MedalsScreen';
 import NotificationsScreen from '@app/screens/home/NotificationsScreen';
 import MatchChatScreen from '@app/screens/home/MatchChatScreen';
 import MatchHistoryScreen from '@app/screens/MatchHistoryScreen';
+import FollowersScreen from '@app/screens/FollowersScreen';
+import FollowingScreen from '@app/screens/FollowingScreen';
 
 // Types
 import { AuthStackParamList, HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
@@ -192,6 +194,22 @@ const Navigation = () => {
           options={{ 
             headerShown: true,
             title: 'Historial de Partidos'
+          }}
+        />
+        <RootStack.Screen 
+          name="Followers" 
+          component={FollowersScreen}
+          options={{ 
+            headerShown: true,
+            title: 'Seguidores'
+          }}
+        />
+        <RootStack.Screen 
+          name="Following" 
+          component={FollowingScreen}
+          options={{ 
+            headerShown: true,
+            title: 'Siguiendo'
           }}
         />
       </RootStack.Navigator>

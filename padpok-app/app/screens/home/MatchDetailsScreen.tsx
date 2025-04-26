@@ -20,8 +20,18 @@ import { joinMatch, leaveMatch, updateMatchScore, getMatchUsers } from '@app/lib
 import ScoreForm from '@app/components/ScoreForm';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
 import MatchChat from '@app/components/MatchChat';
+import { useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { HomeTabsParamList } from '@app/types';
+import UserProfileModal from '@app/components/UserProfileModal';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'MatchDetails'>;
+type MatchDetailsScreenNavigationProp = CompositeNavigationProp<
+  NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>['navigation'],
+  BottomTabNavigationProp<HomeTabsParamList>
+>;
+
+type Props = NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>;
 
 const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { match: initialMatch, matchId } = route.params;
@@ -32,6 +42,8 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [showScoreForm, setShowScoreForm] = useState(false);
   const [showTeamSelection, setShowTeamSelection] = useState(false);
   const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
 
   useEffect(() => {
     const fetchMatch = async () => {
@@ -166,6 +178,11 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     setShowScoreForm(false);
   };
 
+  const handleUserPress = (userId: string) => {
+    setSelectedUserId(userId);
+    setShowUserProfile(true);
+  };
+
   const formattedDate = match.date.toLocaleDateString('es-ES', {
     weekday: 'long',
     day: 'numeric',
@@ -262,9 +279,14 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                       <View style={styles.playerNumber}>
                         <Text style={styles.playerNumberText}>{index + 1}</Text>
                       </View>
-                      <Text style={styles.playerName}>
-                        {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
-                      </Text>
+                      <TouchableOpacity 
+                        style={styles.playerNameContainer}
+                        onPress={() => handleUserPress(playerId)}
+                      >
+                        <Text style={styles.playerName}>
+                          {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
+                        </Text>
+                      </TouchableOpacity>
                       <View style={[styles.teamBadge, styles.team1Badge]}>
                         <Text style={styles.teamBadgeText}>Equipo 1</Text>
                       </View>
@@ -277,9 +299,14 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                       <View style={styles.playerNumber}>
                         <Text style={styles.playerNumberText}>{index + 1}</Text>
                       </View>
-                      <Text style={styles.playerName}>
-                        {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
-                      </Text>
+                      <TouchableOpacity 
+                        style={styles.playerNameContainer}
+                        onPress={() => handleUserPress(playerId)}
+                      >
+                        <Text style={styles.playerName}>
+                          {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
+                        </Text>
+                      </TouchableOpacity>
                       <View style={[styles.teamBadge, styles.team2Badge]}>
                         <Text style={styles.teamBadgeText}>Equipo 2</Text>
                       </View>
@@ -382,6 +409,12 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
           )}
         </View>
       </View>
+
+      <UserProfileModal
+        visible={showUserProfile}
+        onClose={() => setShowUserProfile(false)}
+        userId={selectedUserId || ''}
+      />
     </SafeAreaView>
   );
 };
@@ -508,10 +541,13 @@ const styles = StyleSheet.create({
     color: '#1e3a8a',
     fontWeight: '600',
   },
+  playerNameContainer: {
+    flex: 1,
+    paddingVertical: 4,
+  },
   playerName: {
     fontSize: 16,
     color: '#4b5563',
-    flex: 1,
   },
   teamBadge: {
     paddingHorizontal: 8,

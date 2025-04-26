@@ -62,19 +62,20 @@ export type AuthStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
-  Matches: undefined;
 };
 
 export type HomeTabsParamList = {
   Matches: undefined;
-  Create: undefined;
-  Ranking: undefined;
+  CreateMatch: undefined;
   Profile: undefined;
 };
 
 export type RootStackParamList = {
-  Home: undefined;
   Auth: undefined;
+  Home: undefined;
+  Profile: { userId: string };
+  Followers: { userId: string };
+  Following: { userId: string };
   MatchDetails: { matchId: string };
   MatchChat: { matchId: string };
   MatchHistory: undefined;
@@ -106,35 +107,11 @@ export type Notification = {
 };
 
 export type HomeStackParamList = {
-  Home: undefined;
   Matches: undefined;
-  CreateMatch: undefined;
-  MatchDetails: { match?: Match; matchId?: string };
-  Profile: undefined;
-  Ranking: undefined;
-  Medals: undefined;
-  Notifications: undefined;
+  MatchDetails: { matchId: string };
   MatchChat: { matchId: string };
-};
-
-export type Message = {
-  id: string;
-  matchId: string;
-  userId: string;
-  username: string;
-  text: string;
-  createdAt: Timestamp;
-};
-
-export type MatchHistory = {
-  id: string;
-  matchId: string;
-  userId: string;
-  date: Date;
-  result: 'win' | 'loss';
-  score?: Score;
-  team: 'team1' | 'team2';
-  position: 'first' | 'second';
-  partnerId?: string;
-  opponentIds: string[];
+  MatchHistory: undefined;
+  Profile: { userId: string };
+  Followers: { userId: string };
+  Following: { userId: string };
 }; 
