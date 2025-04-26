@@ -1,5 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { Timestamp } from 'firebase/firestore';
 
 export type User = {
   id: string;
@@ -31,14 +32,20 @@ export type Match = {
   id: string;
   title: string;
   location: string;
+  level: 'Principiante' | 'Intermedio' | 'Avanzado';
+  description: string;
   date: Date;
+  ageRange: 'todas las edades' | '18-25' | '26-35' | '36-45' | '46+';
   playersNeeded: number;
   playersJoined: string[];
-  ageRange: AgeRange;
-  level: string;
   createdBy: string;
-  createdAt: Date;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
   score?: Score;
+  teams?: {
+    team1: string[];
+    team2: string[];
+  };
 };
 
 export type AuthStackParamList = {

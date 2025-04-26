@@ -17,7 +17,6 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
   const [score, setScore] = useState<Score>({
     set1: { team1: 0, team2: 0 },
     set2: { team1: 0, team2: 0 },
-    set3: { team1: 0, team2: 0 },
     winner: 'team1'
   });
 
@@ -35,7 +34,7 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
     const team1Wins = 
       (score.set1.team1 > score.set1.team2 ? 1 : 0) +
       (score.set2.team1 > score.set2.team2 ? 1 : 0) +
-      (score.set3 && score.set3.team1 > score.set3.team2 && !(score.set3.team1 === 0 && score.set3.team2 === 0) ? 1 : 0);
+      (score.set3 && score.set3.team1 > score.set3.team2 ? 1 : 0);
     
     return team1Wins >= 2 ? 'team1' : 'team2';
   };
@@ -44,6 +43,7 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
     // Si no se jugó el tercer set, eliminarlo del objeto
     const scoreToSubmit = showSet3 ? {
       ...score,
+      set3: score.set3,
       winner: calculateWinner(score)
     } : {
       set1: score.set1,

@@ -16,8 +16,9 @@ import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
-import { joinMatch, leaveMatch, updateMatchScore } from '@app/lib/matches';
+import { joinMatch, leaveMatch, updateMatchScore, getMatchUsers } from '@app/lib/matches';
 import ScoreForm from '@app/components/ScoreForm';
+import TeamSelectionModal from '@app/components/TeamSelectionModal';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>;
 
@@ -28,6 +29,8 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const [showScoreForm, setShowScoreForm] = useState(false);
+  const [showTeamSelection, setShowTeamSelection] = useState(false);
+  const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (user && match.playersJoined.includes(user.uid)) {
@@ -35,8 +38,18 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   }, [user, match]);
 
-  const handleJoinMatch = async () => {
-    if (!user) {
+  useEffect(() => {
+    const fetchUsernames = async () => {
+      if (match.playersJoined.length > 0) {
+        const users = await getMatchUsers(match.playersJoined);
+        setUsernames(users);
+      }
+    };
+    fetchUsernames();
+  }, [match.playersJoined]);
+
+  const handleJoinMatch = () => {
+    if (!user || !auth.currentUser) {
       Alert.alert('Error', 'Debes iniciar sesión para unirte a un partido');
       return;
     }
@@ -46,14 +59,25 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
       return;
     }
 
+    setShowTeamSelection(true);
+  };
+
+  const handleTeamSelection = async (team: 'team1' | 'team2', position: 'first' | 'second') => {
+    if (!user) return;
+
     setLoading(true);
     try {
-      await joinMatch(match.id, user.uid);
+      await joinMatch(match.id, user.uid, team, position);
       setMatch(prev => ({
         ...prev,
-        playersJoined: [...prev.playersJoined, user.uid]
+        playersJoined: [...prev.playersJoined, user.uid],
+        teams: {
+          team1: team === 'team1' ? [...(prev.teams?.team1 || []), user.uid] : (prev.teams?.team1 || []),
+          team2: team === 'team2' ? [...(prev.teams?.team2 || []), user.uid] : (prev.teams?.team2 || [])
+        }
       }));
       setIsJoined(true);
+      setShowTeamSelection(false);
       Alert.alert('Éxito', 'Te has unido al partido correctamente');
     } catch (error) {
       console.error('Error al unirse al partido:', error);
@@ -71,7 +95,11 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
       await leaveMatch(match.id, user.uid);
       setMatch(prev => ({
         ...prev,
-        playersJoined: prev.playersJoined.filter(id => id !== user.uid)
+        playersJoined: prev.playersJoined.filter(id => id !== user.uid),
+        teams: {
+          team1: (prev.teams?.team1 || []).filter(id => id !== user.uid),
+          team2: (prev.teams?.team2 || []).filter(id => id !== user.uid)
+        }
       }));
       setIsJoined(false);
       Alert.alert('Éxito', 'Has abandonado el partido correctamente');
@@ -170,14 +198,33 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
 
               {match.playersJoined.length > 0 ? (
                 <View style={styles.playersList}>
-                  {match.playersJoined.map((playerId, index) => (
+                  {/* Equipo 1 */}
+                  {match.teams?.team1.map((playerId, index) => (
                     <View key={playerId} style={styles.playerItem}>
                       <View style={styles.playerNumber}>
                         <Text style={styles.playerNumberText}>{index + 1}</Text>
                       </View>
                       <Text style={styles.playerName}>
-                        {playerId === auth.currentUser?.uid ? 'Tú' : `Jugador ${index + 1}`}
+                        {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
                       </Text>
+                      <View style={[styles.teamBadge, styles.team1Badge]}>
+                        <Text style={styles.teamBadgeText}>Equipo 1</Text>
+                      </View>
+                    </View>
+                  ))}
+
+                  {/* Equipo 2 */}
+                  {match.teams?.team2.map((playerId, index) => (
+                    <View key={playerId} style={styles.playerItem}>
+                      <View style={styles.playerNumber}>
+                        <Text style={styles.playerNumberText}>{index + 1}</Text>
+                      </View>
+                      <Text style={styles.playerName}>
+                        {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
+                      </Text>
+                      <View style={[styles.teamBadge, styles.team2Badge]}>
+                        <Text style={styles.teamBadgeText}>Equipo 2</Text>
+                      </View>
                     </View>
                   ))}
                 </View>
@@ -239,6 +286,13 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               visible={showScoreForm}
               onClose={() => setShowScoreForm(false)}
             />
+
+            <TeamSelectionModal
+              visible={showTeamSelection}
+              onClose={() => setShowTeamSelection(false)}
+              onSelectTeam={handleTeamSelection}
+              match={match}
+            />
           </View>
         </ScrollView>
 
@@ -247,25 +301,23 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
             style={[
               styles.joinButton,
               isJoined ? styles.leaveButton : null,
-              loading && styles.buttonDisabled
+              loading && styles.buttonDisabled,
+              match.playersJoined.length >= match.playersNeeded && !isJoined && styles.buttonDisabled
             ]}
             onPress={isJoined ? handleLeaveMatch : handleJoinMatch}
-            disabled={loading || match.playersJoined.length >= match.playersNeeded}
+            disabled={loading || (match.playersJoined.length >= match.playersNeeded && !isJoined)}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <>
-                <Ionicons 
-                  name={isJoined ? "exit-outline" : "add-circle-outline"} 
-                  size={20} 
-                  color="#fff" 
-                  style={styles.joinIcon} 
-                />
                 <Text style={styles.joinButtonText}>
-                  {isJoined ? 'Abandonar Partido' : 'Unirse al Partido'}
+                  {isJoined 
+                    ? 'Abandonar Partido' 
+                    : match.playersJoined.length >= match.playersNeeded 
+                      ? 'Partido Completo' 
+                      : 'Unirse al Partido'
+                  }
                 </Text>
-              </>
             )}
           </TouchableOpacity>
         </View>
@@ -399,6 +451,23 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     color: '#4b5563',
+    flex: 1,
+  },
+  teamBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  team1Badge: {
+    backgroundColor: 'rgba(30,58,138,0.1)',
+  },
+  team2Badge: {
+    backgroundColor: 'rgba(220,38,38,0.1)',
+  },
+  teamBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   noPlayersText: {
     color: '#9ca3af',

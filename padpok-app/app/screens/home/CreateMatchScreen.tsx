@@ -67,6 +67,10 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         playersJoined: [auth.currentUser.uid],
         createdBy: auth.currentUser.uid,
         createdAt: serverTimestamp(),
+        teams: {
+          team1: [auth.currentUser.uid],
+          team2: []
+        }
       };
 
       const matchesRef = collection(db, 'matches');

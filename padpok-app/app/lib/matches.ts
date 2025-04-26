@@ -63,17 +63,77 @@ export const validateScore = (score: Score): boolean => {
 };
 
 // Función para unirse a un partido
-export const joinMatch = async (matchId: string, userId: string): Promise<void> => {
+export const joinMatch = async (matchId: string, userId: string, team: 'team1' | 'team2', position: 'first' | 'second'): Promise<void> => {
   const matchRef = doc(db, 'matches', matchId);
+  const matchDoc = await getDoc(matchRef);
+  
+  if (!matchDoc.exists()) {
+    throw new Error('El partido no existe');
+  }
+
+  const matchData = matchDoc.data();
+  const teams = matchData.teams || {
+    team1: [matchData.createdBy],
+    team2: []
+  };
+
+  // Verificar si el equipo está lleno
+  if (teams[team].length >= 2) {
+    throw new Error('El equipo está completo');
+  }
+
+  // Verificar si el usuario ya está en algún equipo
+  if (teams.team1.includes(userId) || teams.team2.includes(userId)) {
+    throw new Error('Ya estás en un equipo');
+  }
+
+  // Añadir el usuario al equipo seleccionado
+  teams[team].push(userId);
+
+  // Actualizar el documento
   await updateDoc(matchRef, {
-    playersJoined: arrayUnion(userId)
+    playersJoined: arrayUnion(userId),
+    teams
   });
 };
 
 // Función para abandonar un partido
 export const leaveMatch = async (matchId: string, userId: string): Promise<void> => {
   const matchRef = doc(db, 'matches', matchId);
+  const matchDoc = await getDoc(matchRef);
+  
+  if (!matchDoc.exists()) {
+    throw new Error('El partido no existe');
+  }
+
+  const matchData = matchDoc.data();
+  const teams = matchData.teams || {
+    team1: [matchData.createdBy],
+    team2: []
+  };
+
+  // Remover el usuario de los equipos
+  teams.team1 = teams.team1.filter((id: string) => id !== userId);
+  teams.team2 = teams.team2.filter((id: string) => id !== userId);
+
+  // Actualizar el documento
   await updateDoc(matchRef, {
-    playersJoined: arrayRemove(userId)
+    playersJoined: arrayRemove(userId),
+    teams
   });
+};
+
+// Función para obtener los usuarios de un partido
+export const getMatchUsers = async (playerIds: string[]): Promise<{ [key: string]: string }> => {
+  const users: { [key: string]: string } = {};
+  
+  for (const userId of playerIds) {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      users[userId] = userDoc.data().username || 'Usuario';
+    }
+  }
+  
+  return users;
 }; 
