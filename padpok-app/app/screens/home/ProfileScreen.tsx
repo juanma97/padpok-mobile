@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
@@ -8,7 +8,8 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeTabsParamList, RootStackParamList } from '@app/types';
+import { HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
+import { getAllMedals, getUserMedals, Medal } from '@app/lib/medals';
 
 type UserLevel = 'Principiante' | 'Intermedio' | 'Avanzado';
 
@@ -70,7 +71,7 @@ const AVAILABILITY = {
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<HomeTabsParamList, 'Profile'>,
-  NativeStackScreenProps<RootStackParamList>
+  NativeStackScreenProps<HomeStackParamList>
 >;
 
 const ProfileScreen = () => {
@@ -80,6 +81,28 @@ const ProfileScreen = () => {
   const [level, setLevel] = useState('3.0');
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<string[]>([]);
+  const [medals, setMedals] = useState<Medal[]>([]);
+  const [userMedals, setUserMedals] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchMedals = async () => {
+      if (!user) return;
+      
+      try {
+        const [allMedals, userMedalsList] = await Promise.all([
+          getAllMedals(),
+          getUserMedals(user.uid)
+        ]);
+        
+        setMedals(allMedals);
+        setUserMedals(userMedalsList);
+      } catch (error) {
+        console.error('Error fetching medals:', error);
+      }
+    };
+
+    fetchMedals();
+  }, [user]);
 
   const handleDayToggle = (dayId: string) => {
     setSelectedDays(prev =>
@@ -136,27 +159,28 @@ const ProfileScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person-circle-outline" size={80} color="#1e3a8a" />
+        <View style={styles.headerContent}>
+          <View style={styles.avatarContainer}>
+            <Ionicons name="person-circle-outline" size={50} color="#1e3a8a" />
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.name}>{user.email}</Text>
+            <TouchableOpacity 
+              style={styles.signOutButton}
+              onPress={handleSignOut}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#ef4444" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="log-out-outline" size={16} color="#ef4444" style={styles.signOutIcon} />
+                  <Text style={styles.signOutText}>Cerrar sesión</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-        <Text style={styles.name}>{user.email}</Text>
-      </View>
-
-      <View style={styles.content}>
-        <TouchableOpacity 
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="log-out-outline" size={20} color="#fff" style={styles.signOutIcon} />
-              <Text style={styles.signOutText}>Cerrar sesión</Text>
-            </>
-          )}
-        </TouchableOpacity>
       </View>
 
       {/* Level and Club Section */}
@@ -178,26 +202,88 @@ const ProfileScreen = () => {
 
       {/* Estadísticas */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Estadísticas</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="stats-chart" size={20} color="#1e3a8a" style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>Estadísticas</Text>
+          </View>
+        </View>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="tennisball-outline" size={20} color="#22C55E" />
+            </View>
             <Text style={styles.statNumber}>0</Text>
             <Text style={styles.statLabel}>Partidos</Text>
           </View>
           <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="trophy-outline" size={20} color="#22C55E" />
+            </View>
             <Text style={styles.statNumber}>0</Text>
             <Text style={styles.statLabel}>Victorias</Text>
           </View>
           <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="people-outline" size={20} color="#22C55E" />
+            </View>
             <Text style={styles.statNumber}>0</Text>
             <Text style={styles.statLabel}>Compañeros</Text>
           </View>
         </View>
       </View>
 
+      {/* Sección de Medallas */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="trophy" size={20} color="#1e3a8a" style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>Medallas</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.seeAllButton}
+            onPress={() => navigation.navigate('Medals')}
+          >
+            <Text style={styles.seeAllText}>Ver todas</Text>
+            <Ionicons name="chevron-forward" size={16} color="#1e3a8a" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.medalsContainer}>
+          {userMedals.length > 0 ? (
+            <View style={styles.medalsGrid}>
+              {userMedals.slice(0, 4).map((medalId) => {
+                const medal = medals.find(m => m.id === medalId);
+                return medal ? (
+                  <View key={medal.id} style={styles.medalItem}>
+                    <View style={styles.medalCircleUnlocked}>
+                      <Ionicons name={medal.icon as any} size={20} color="#22C55E" />
+                    </View>
+                    <Text style={styles.medalName} numberOfLines={1}>
+                      {medal.name}
+                    </Text>
+                  </View>
+                ) : null;
+              })}
+            </View>
+          ) : (
+            <View style={styles.noMedalsContainer}>
+              <Ionicons name="trophy-outline" size={24} color="#9ca3af" />
+              <Text style={styles.noMedalsText}>
+                Aún no has desbloqueado medallas
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
       {/* Sección de Disponibilidad */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Disponibilidad Habitual</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="calendar" size={20} color="#1e3a8a" style={styles.sectionIcon} />
+            <Text style={styles.sectionTitle}>Disponibilidad Habitual</Text>
+          </View>
+        </View>
         
         {/* Días de la semana */}
         <View style={styles.daysContainer}>
@@ -235,9 +321,16 @@ const ProfileScreen = () => {
           <View style={styles.availabilityContainer}>
             {Object.entries(AVAILABILITY).map(([timeOfDay, hours]) => (
               <View key={timeOfDay} style={styles.timeOfDayContainer}>
-                <Text style={styles.timeOfDayTitle}>
-                  {timeOfDay === 'morning' ? 'MAÑANA' : 'TARDE'}
-                </Text>
+                <View style={styles.timeOfDayHeader}>
+                  <Ionicons 
+                    name={timeOfDay === 'morning' ? 'sunny-outline' : 'moon-outline'} 
+                    size={16} 
+                    color="#4b5563" 
+                  />
+                  <Text style={styles.timeOfDayTitle}>
+                    {timeOfDay === 'morning' ? 'MAÑANA' : 'TARDE'}
+                  </Text>
+                </View>
                 <View style={styles.hoursGrid}>
                   {hours.map((hour) => (
                     <TouchableOpacity
@@ -272,55 +365,69 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    alignItems: 'center',
-    padding: 24,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginRight: 16,
+  },
+  userInfo: {
+    flex: 1,
+    justifyContent: 'center',
   },
   name: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1e3a8a',
-  },
-  content: {
-    flex: 1,
-    padding: 24,
+    marginBottom: 4,
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ef4444',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 'auto',
+    alignSelf: 'flex-start',
+    padding: 4,
   },
   signOutIcon: {
-    marginRight: 8,
+    marginRight: 4,
   },
   signOutText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: '#ef4444',
+    fontWeight: '500',
+    fontSize: 14,
   },
   section: {
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionIcon: {
+    marginRight: 8,
+  },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontWeight: '600',
+    color: '#1e3a8a',
   },
   levelClubContainer: {
     flexDirection: 'row',
@@ -351,20 +458,40 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
   },
   statItem: {
     alignItems: 'center',
   },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#1e3a8a',
+    marginBottom: 4,
   },
   statLabel: {
-    color: '#666',
+    color: '#4b5563',
+    fontSize: 12,
+    fontWeight: '500',
   },
   daysContainer: {
     marginBottom: 20,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
   },
   daysGrid: {
     flexDirection: 'row',
@@ -404,24 +531,30 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   subsectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: '#4b5563',
     marginBottom: 12,
-    marginTop: 16,
   },
   availabilityContainer: {
-    gap: 20,
+    gap: 16,
   },
   timeOfDayContainer: {
-    marginBottom: 20,
-    paddingHorizontal: 4,
+    marginBottom: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+  },
+  timeOfDayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   timeOfDayTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
+    color: '#4b5563',
+    marginLeft: 8,
   },
   hoursGrid: {
     flexDirection: 'row',
@@ -430,7 +563,7 @@ const styles = StyleSheet.create({
   },
   hourButton: {
     width: '30%',
-    borderRadius: 15,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#22C55E',
     paddingVertical: 8,
@@ -444,9 +577,61 @@ const styles = StyleSheet.create({
   hourButtonText: {
     color: '#22C55E',
     fontSize: 14,
+    fontWeight: '500',
   },
   hourButtonTextActive: {
     color: '#fff',
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
+  },
+  seeAllText: {
+    color: '#1e3a8a',
+    fontWeight: '500',
+    marginRight: 4,
+  },
+  medalsContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+  },
+  medalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  medalItem: {
+    width: '22%',
+    alignItems: 'center',
+  },
+  medalCircleUnlocked: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#22C55E',
+    marginBottom: 6,
+  },
+  medalName: {
+    fontSize: 11,
+    color: '#4b5563',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  noMedalsContainer: {
+    alignItems: 'center',
+    padding: 16,
+  },
+  noMedalsText: {
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 14,
   },
 });
 

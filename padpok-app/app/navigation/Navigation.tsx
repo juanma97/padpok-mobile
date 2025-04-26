@@ -16,15 +16,28 @@ import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
 import ProfileScreen from '@app/screens/home/ProfileScreen';
 import MatchDetailsScreen from '@app/screens/home/MatchDetailsScreen';
 import RankingScreen from '@app/screens/home/RankingScreen';
+import MedalsScreen from '@app/screens/home/MedalsScreen';
 
 // Types
-import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types';
+import { AuthStackParamList, HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeTab = createBottomTabNavigator<HomeTabsParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
+const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 
 const HomeNavigator = () => {
+  const { user } = useAuth();
+
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeTabs} />
+      <HomeStack.Screen name="Medals" component={MedalsScreen} />
+    </HomeStack.Navigator>
+  );
+};
+
+const HomeTabs = () => {
   const { user } = useAuth();
 
   return (

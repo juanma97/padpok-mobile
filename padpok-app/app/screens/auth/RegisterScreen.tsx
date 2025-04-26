@@ -83,6 +83,11 @@ const RegisterScreen = () => {
 
       // Crear el documento del usuario en Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
+        availbility: {
+          days: [],
+          hours: []
+        },
+        avatarUrl: '',
         username,
         age,
         level,
@@ -90,7 +95,8 @@ const RegisterScreen = () => {
           points: 0,
           matchesPlayed: 0,
           wins: 0,
-          losses: 0
+          losses: 0,
+          medals: []
         },
         createdAt: serverTimestamp()
       });

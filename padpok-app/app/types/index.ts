@@ -54,8 +54,11 @@ export type CreateStackParamList = {
 };
 
 export type HomeStackParamList = {
+  Home: undefined;
   Matches: undefined;
-  MatchDetails: { match: Match };
   CreateMatch: undefined;
+  MatchDetails: { match: Match };
+  Profile: undefined;
   Ranking: undefined;
+  Medals: undefined;
 }; 
