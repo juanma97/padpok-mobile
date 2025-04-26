@@ -11,6 +11,22 @@ export type User = {
 
 export type AgeRange = '18-30' | '30-45' | '+45' | 'todas las edades';
 
+export type Score = {
+  set1: {
+    team1: number;
+    team2: number;
+  };
+  set2: {
+    team1: number;
+    team2: number;
+  };
+  set3?: {
+    team1: number;
+    team2: number;
+  };
+  winner: 'team1' | 'team2';
+};
+
 export type Match = {
   id: string;
   title: string;
@@ -22,6 +38,7 @@ export type Match = {
   level: string;
   createdBy: string;
   createdAt: Date;
+  score?: Score;
 };
 
 export type AuthStackParamList = {

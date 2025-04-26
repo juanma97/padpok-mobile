@@ -1,0 +1,79 @@
+import { collection, doc, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove, query, where, orderBy, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { db } from './firebase';
+import { Match, Score } from '@app/types';
+
+// Función para actualizar el resultado de un partido
+export const updateMatchScore = async (matchId: string, score: Score): Promise<void> => {
+  const matchRef = doc(db, 'matches', matchId);
+  await updateDoc(matchRef, { 
+    score,
+    updatedAt: serverTimestamp()
+  });
+};
+
+// Función para validar el resultado de un partido
+export const validateScore = (score: Score): boolean => {
+  // Validar que los resultados son números positivos
+  if (
+    score.set1.team1 < 0 || score.set1.team2 < 0 ||
+    score.set2.team1 < 0 || score.set2.team2 < 0 ||
+    (score.set3 && (score.set3.team1 < 0 || score.set3.team2 < 0))
+  ) {
+    return false;
+  }
+
+  // Validar que el equipo ganador ha ganado al menos 2 sets
+  const team1Wins = 
+    (score.set1.team1 > score.set1.team2 ? 1 : 0) +
+    (score.set2.team1 > score.set2.team2 ? 1 : 0) +
+    (score.set3 && score.set3.team1 > score.set3.team2 && !(score.set3.team1 === 0 && score.set3.team2 === 0) ? 1 : 0);
+  
+  const team2Wins = 
+    (score.set1.team2 > score.set1.team1 ? 1 : 0) +
+    (score.set2.team2 > score.set2.team1 ? 1 : 0) +
+    (score.set3 && score.set3.team2 > score.set3.team1 && !(score.set3.team1 === 0 && score.set3.team2 === 0) ? 1 : 0);
+  
+  // Verificar que el ganador coincide con los sets ganados
+  if (score.winner === 'team1' && team1Wins < 2) return false;
+  if (score.winner === 'team2' && team2Wins < 2) return false;
+
+  // Validar que los resultados siguen las reglas del pádel
+  // Un set se gana al llegar a 6 juegos con diferencia de 2
+  // Si es 6-6, se juega un tie-break (7-6)
+  const isValidSet = (team1: number, team2: number): boolean => {
+    // Caso de victoria normal (6-4, 6-3, etc.)
+    if ((team1 >= 6 && team1 - team2 >= 2) || (team2 >= 6 && team2 - team1 >= 2)) {
+      return true;
+    }
+    
+    // Caso de tie-break (7-6, 7-5, etc.)
+    if ((team1 === 7 && team2 <= 6) || (team2 === 7 && team1 <= 6)) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Validar cada set
+  if (!isValidSet(score.set1.team1, score.set1.team2)) return false;
+  if (!isValidSet(score.set2.team1, score.set2.team2)) return false;
+  if (score.set3 && !(score.set3.team1 === 0 && score.set3.team2 === 0) && !isValidSet(score.set3.team1, score.set3.team2)) return false;
+
+  return true;
+};
+
+// Función para unirse a un partido
+export const joinMatch = async (matchId: string, userId: string): Promise<void> => {
+  const matchRef = doc(db, 'matches', matchId);
+  await updateDoc(matchRef, {
+    playersJoined: arrayUnion(userId)
+  });
+};
+
+// Función para abandonar un partido
+export const leaveMatch = async (matchId: string, userId: string): Promise<void> => {
+  const matchRef = doc(db, 'matches', matchId);
+  await updateDoc(matchRef, {
+    playersJoined: arrayRemove(userId)
+  });
+}; 

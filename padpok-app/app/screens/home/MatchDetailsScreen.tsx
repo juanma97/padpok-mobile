@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -11,78 +11,84 @@ import {
   StatusBar
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList, Match } from '@app/types';
+import { HomeStackParamList, Match, Score } from '@app/types';
 import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@app/lib/AuthContext';
+import { joinMatch, leaveMatch, updateMatchScore } from '@app/lib/matches';
+import ScoreForm from '@app/components/ScoreForm';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>;
 
 const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { match } = route.params;
+  const { match: initialMatch } = route.params;
+  const [match, setMatch] = useState(initialMatch);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [isJoined, setIsJoined] = useState(
-    match.playersJoined.includes(auth.currentUser?.uid || '')
-  );
-  const isFull = match.playersJoined.length >= match.playersNeeded;
+  const [isJoined, setIsJoined] = useState(false);
+  const [showScoreForm, setShowScoreForm] = useState(false);
+
+  useEffect(() => {
+    if (user && match.playersJoined.includes(user.uid)) {
+      setIsJoined(true);
+    }
+  }, [user, match]);
 
   const handleJoinMatch = async () => {
-    if (!auth.currentUser) {
-      Alert.alert('Error', 'Debes iniciar sesión para unirte al partido');
+    if (!user) {
+      Alert.alert('Error', 'Debes iniciar sesión para unirte a un partido');
       return;
     }
 
-    if (isJoined) {
-      setLoading(true);
-      try {
-        const matchRef = doc(db, 'matches', match.id);
-        await updateDoc(matchRef, {
-          playersJoined: arrayRemove(auth.currentUser.uid)
-        });
-        
-        Alert.alert(
-          '¡Desapuntado!',
-          'Te has desapuntado del partido correctamente',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        );
-      } catch (error: any) {
-        Alert.alert('Error', 
-          `Error al desapuntarte del partido: ${error.message}\n\nCódigo: ${error.code}`
-        );
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setLoading(true);
-      try {
-        const matchRef = doc(db, 'matches', match.id);
-        await updateDoc(matchRef, {
-          playersJoined: arrayUnion(auth.currentUser.uid)
-        });
-        
-        Alert.alert(
-          '¡Apuntado!',
-          'Te has unido al partido correctamente',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        );
-      } catch (error: any) {
-        Alert.alert('Error', 
-          `Error al unirte al partido: ${error.message}\n\nCódigo: ${error.code}`
-        );
-      } finally {
-        setLoading(false);
-      }
+    if (match.playersJoined.length >= match.playersNeeded) {
+      Alert.alert('Error', 'El partido ya está completo');
+      return;
     }
+
+    setLoading(true);
+    try {
+      await joinMatch(match.id, user.uid);
+      setMatch(prev => ({
+        ...prev,
+        playersJoined: [...prev.playersJoined, user.uid]
+      }));
+      setIsJoined(true);
+      Alert.alert('Éxito', 'Te has unido al partido correctamente');
+    } catch (error) {
+      console.error('Error al unirse al partido:', error);
+      Alert.alert('Error', 'No se pudo unir al partido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeaveMatch = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      await leaveMatch(match.id, user.uid);
+      setMatch(prev => ({
+        ...prev,
+        playersJoined: prev.playersJoined.filter(id => id !== user.uid)
+      }));
+      setIsJoined(false);
+      Alert.alert('Éxito', 'Has abandonado el partido correctamente');
+    } catch (error) {
+      console.error('Error al abandonar el partido:', error);
+      Alert.alert('Error', 'No se pudo abandonar el partido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleScoreSubmitted = async (newScore: Score) => {
+    setMatch(prev => ({
+      ...prev,
+      score: newScore
+    }));
+    setShowScoreForm(false);
   };
 
   const formattedDate = match.date.toLocaleDateString('es-ES', {
@@ -179,6 +185,60 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                 <Text style={styles.noPlayersText}>Aún no hay jugadores apuntados</Text>
               )}
             </View>
+
+            {/* Resultado del partido (si existe) */}
+            {match.score && (
+              <View style={styles.scoreSection}>
+                <Text style={styles.scoreTitle}>Resultado</Text>
+                <View style={styles.scoreContainer}>
+                  <View style={styles.scoreSet}>
+                    <Text style={styles.scoreSetTitle}>Set 1</Text>
+                    <Text style={styles.scoreSetValue}>
+                      {match.score.set1.team1} - {match.score.set1.team2}
+                    </Text>
+                  </View>
+                  <View style={styles.scoreSet}>
+                    <Text style={styles.scoreSetTitle}>Set 2</Text>
+                    <Text style={styles.scoreSetValue}>
+                      {match.score.set2.team1} - {match.score.set2.team2}
+                    </Text>
+                  </View>
+                  {match.score.set3 && (
+                    <View style={styles.scoreSet}>
+                      <Text style={styles.scoreSetTitle}>Set 3</Text>
+                      <Text style={styles.scoreSetValue}>
+                        {match.score.set3.team1} - {match.score.set3.team2}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.winnerContainer}>
+                    <Text style={styles.winnerText}>
+                      Ganador: Equipo {match.score.winner === 'team1' ? '1' : '2'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Formulario de resultados (condicional) */}
+            {!match.score && isJoined && (
+              <View style={styles.scoreFormContainer}>
+                <TouchableOpacity 
+                  style={styles.addScoreButton}
+                  onPress={() => setShowScoreForm(true)}
+                >
+                  <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
+                  <Text style={styles.addScoreText}>Añadir Resultado</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <ScoreForm 
+              matchId={match.id}
+              onScoreSubmitted={handleScoreSubmitted}
+              visible={showScoreForm}
+              onClose={() => setShowScoreForm(false)}
+            />
           </View>
         </ScrollView>
 
@@ -186,18 +246,26 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
           <TouchableOpacity
             style={[
               styles.joinButton,
-              isJoined && styles.leaveButton,
+              isJoined ? styles.leaveButton : null,
               loading && styles.buttonDisabled
             ]}
-            onPress={handleJoinMatch}
-            disabled={loading || isFull}
+            onPress={isJoined ? handleLeaveMatch : handleJoinMatch}
+            disabled={loading || match.playersJoined.length >= match.playersNeeded}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.joinButtonText}>
-                {isJoined ? 'Desapuntarse del partido' : 'Unirse al partido'}
-              </Text>
+              <>
+                <Ionicons 
+                  name={isJoined ? "exit-outline" : "add-circle-outline"} 
+                  size={20} 
+                  color="#fff" 
+                  style={styles.joinIcon} 
+                />
+                <Text style={styles.joinButtonText}>
+                  {isJoined ? 'Abandonar Partido' : 'Unirse al Partido'}
+                </Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -402,6 +470,70 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  scoreSection: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  scoreTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e3a8a',
+    marginBottom: 12,
+  },
+  scoreContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+  },
+  scoreSet: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  scoreSetTitle: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  scoreSetValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1e3a8a',
+  },
+  winnerContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  winnerText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#22C55E',
+  },
+  scoreFormContainer: {
+    marginBottom: 16,
+  },
+  addScoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1e3a8a',
+    padding: 16,
+    borderRadius: 8,
+  },
+  addScoreIcon: {
+    marginRight: 8,
+  },
+  addScoreText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  joinIcon: {
+    marginRight: 8,
   },
 });
 
