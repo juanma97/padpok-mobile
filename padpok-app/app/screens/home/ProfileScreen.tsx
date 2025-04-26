@@ -73,14 +73,11 @@ const AVAILABILITY = {
   afternoon: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 };
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<HomeTabsParamList, 'Profile'>,
-  NativeStackScreenProps<HomeStackParamList>
->;
+type Props = RootStackScreenProps<'Profile'>;
 
 const ProfileScreen = () => {
   const { user } = useAuth();
-  const navigation = useNavigation<Props['navigation']>();
+  const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(false);
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -276,6 +273,13 @@ const ProfileScreen = () => {
             <Ionicons name="stats-chart" size={20} color="#1e3a8a" style={styles.sectionIcon} />
             <Text style={styles.sectionTitle}>Estadísticas</Text>
           </View>
+          <TouchableOpacity 
+            style={styles.seeAllButton}
+            onPress={() => navigation.navigate('MatchHistory')}
+          >
+            <Text style={styles.seeAllText}>Ver historial</Text>
+            <Ionicons name="chevron-forward" size={16} color="#1e3a8a" />
+          </TouchableOpacity>
         </View>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>

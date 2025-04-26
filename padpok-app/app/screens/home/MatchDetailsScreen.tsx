@@ -11,7 +11,7 @@ import {
   StatusBar
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList, Match, Score } from '@app/types';
+import { HomeStackParamList, Match, Score, RootStackParamList } from '@app/types';
 import { doc, updateDoc, arrayRemove, arrayUnion, getDoc } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,8 +19,9 @@ import { useAuth } from '@app/lib/AuthContext';
 import { joinMatch, leaveMatch, updateMatchScore, getMatchUsers } from '@app/lib/matches';
 import ScoreForm from '@app/components/ScoreForm';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
+import MatchChat from '@app/components/MatchChat';
 
-type Props = NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'MatchDetails'>;
 
 const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { match: initialMatch, matchId } = route.params;
@@ -187,6 +188,17 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
             </TouchableOpacity>
             <Text style={styles.title}>{match.title}</Text>
+            {isJoined && (
+              <TouchableOpacity 
+                style={styles.chatButton}
+                onPress={() => navigation.navigate('MatchChat', { matchId: match.id })}
+              >
+                <View style={styles.chatButtonContent}>
+                  <Ionicons name="chatbubble-outline" size={20} color="#1e3a8a" />
+                  <Text style={styles.chatButtonText}>Chat</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.content}>
@@ -343,19 +355,20 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
         </ScrollView>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.joinButton,
-              isJoined ? styles.leaveButton : null,
-              loading && styles.buttonDisabled,
-              match.playersJoined.length >= match.playersNeeded && !isJoined && styles.buttonDisabled
-            ]}
-            onPress={isJoined ? handleLeaveMatch : handleJoinMatch}
-            disabled={loading || (match.playersJoined.length >= match.playersNeeded && !isJoined)}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
+          {!match.score && (
+            <TouchableOpacity
+              style={[
+                styles.joinButton,
+                isJoined ? styles.leaveButton : null,
+                loading && styles.buttonDisabled,
+                match.playersJoined.length >= match.playersNeeded && !isJoined && styles.buttonDisabled
+              ]}
+              onPress={isJoined ? handleLeaveMatch : handleJoinMatch}
+              disabled={loading || (match.playersJoined.length >= match.playersNeeded && !isJoined)}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
                 <Text style={styles.joinButtonText}>
                   {isJoined 
                     ? 'Abandonar Partido' 
@@ -364,8 +377,9 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                       : 'Unirse al Partido'
                   }
                 </Text>
-            )}
-          </TouchableOpacity>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -664,6 +678,21 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  chatButton: {
+    padding: 8,
+    backgroundColor: 'rgba(30,58,138,0.1)',
+    borderRadius: 8,
+  },
+  chatButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chatButtonText: {
+    marginLeft: 4,
+    color: '#1e3a8a',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
 

@@ -8,6 +8,16 @@ export type User = {
   displayName: string | null;
   photoURL: string | null;
   createdAt: Date;
+  username: string;
+  followers: string[];
+  following: string[];
+  stats: {
+    matchesPlayed: number;
+    matchesWon: number;
+    matchesLost: number;
+    currentStreak: number;
+    bestStreak: number;
+  };
 };
 
 export type AgeRange = '18-30' | '30-45' | '+45' | 'todas las edades';
@@ -39,8 +49,8 @@ export type Match = {
   playersNeeded: number;
   playersJoined: string[];
   createdBy: string;
-  createdAt: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt: Date;
+  updatedAt?: Date;
   score?: Score;
   teams?: {
     team1: string[];
@@ -65,7 +75,9 @@ export type HomeTabsParamList = {
 export type RootStackParamList = {
   Home: undefined;
   Auth: undefined;
-  MatchDetails: { match: Match };
+  MatchDetails: { matchId: string };
+  MatchChat: { matchId: string };
+  MatchHistory: undefined;
 } & AuthStackParamList;
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<AuthStackParamList, T>;
@@ -102,4 +114,27 @@ export type HomeStackParamList = {
   Ranking: undefined;
   Medals: undefined;
   Notifications: undefined;
+  MatchChat: { matchId: string };
+};
+
+export type Message = {
+  id: string;
+  matchId: string;
+  userId: string;
+  username: string;
+  text: string;
+  createdAt: Timestamp;
+};
+
+export type MatchHistory = {
+  id: string;
+  matchId: string;
+  userId: string;
+  date: Date;
+  result: 'win' | 'loss';
+  score?: Score;
+  team: 'team1' | 'team2';
+  position: 'first' | 'second';
+  partnerId?: string;
+  opponentIds: string[];
 }; 

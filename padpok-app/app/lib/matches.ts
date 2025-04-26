@@ -256,4 +256,79 @@ export const getMatchUsers = async (playerIds: string[]): Promise<{ [key: string
   }
   
   return users;
+};
+
+export const addMatchToHistory = async (
+  matchId: string,
+  userId: string,
+  result: 'win' | 'loss',
+  team: 'team1' | 'team2',
+  position: 'first' | 'second',
+  partnerId?: string,
+  opponentIds: string[] = []
+): Promise<void> => {
+  const matchRef = doc(db, 'matches', matchId);
+  const matchDoc = await getDoc(matchRef);
+  
+  if (!matchDoc.exists()) {
+    throw new Error('El partido no existe');
+  }
+
+  const matchData = matchDoc.data() as Match;
+  const historyRef = collection(db, 'matchHistory');
+  
+  await addDoc(historyRef, {
+    matchId,
+    userId,
+    date: matchData.date,
+    result,
+    score: matchData.score,
+    team,
+    position,
+    partnerId,
+    opponentIds,
+    createdAt: serverTimestamp()
+  });
+
+  // Actualizar estadísticas del usuario
+  const userRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userRef);
+  
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    const stats = userData.stats || {
+      matchesPlayed: 0,
+      matchesWon: 0,
+      matchesLost: 0,
+      currentStreak: 0,
+      bestStreak: 0
+    };
+
+    stats.matchesPlayed += 1;
+    if (result === 'win') {
+      stats.matchesWon += 1;
+      stats.currentStreak += 1;
+      stats.bestStreak = Math.max(stats.bestStreak, stats.currentStreak);
+    } else {
+      stats.matchesLost += 1;
+      stats.currentStreak = 0;
+    }
+
+    await updateDoc(userRef, { stats });
+  }
+};
+
+export const getUserMatchHistory = async (userId: string): Promise<MatchHistory[]> => {
+  const historyRef = collection(db, 'matchHistory');
+  const q = query(
+    historyRef,
+    where('userId', '==', userId),
+    orderBy('date', 'desc')
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as MatchHistory[];
 }; 

@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import AppBar from '../components/AppBar';
+import { View, Text } from 'react-native';
 
 // Auth Screens
 import WelcomeScreen from '@app/screens/auth/WelcomeScreen';
@@ -19,6 +20,8 @@ import MatchDetailsScreen from '@app/screens/home/MatchDetailsScreen';
 import RankingScreen from '@app/screens/home/RankingScreen';
 import MedalsScreen from '@app/screens/home/MedalsScreen';
 import NotificationsScreen from '@app/screens/home/NotificationsScreen';
+import MatchChatScreen from '@app/screens/home/MatchChatScreen';
+import MatchHistoryScreen from '@app/screens/MatchHistoryScreen';
 
 // Types
 import { AuthStackParamList, HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
@@ -53,6 +56,19 @@ const HomeNavigator = () => {
         options={{ 
           headerShown: false,
           title: 'Notificaciones' 
+        }}
+      />
+      <HomeStack.Screen 
+        name="MatchChat" 
+        component={MatchChatScreen}
+        options={{ title: 'Chat del Partido' }}
+      />
+      <HomeStack.Screen 
+        name="MatchHistory" 
+        component={MatchHistoryScreen}
+        options={{ 
+          headerShown: true,
+          title: 'Historial de Partidos'
         }}
       />
     </HomeStack.Navigator>
@@ -150,6 +166,32 @@ const Navigation = () => {
           component={MatchDetailsScreen}
           options={{ 
             headerShown: true 
+          }}
+        />
+        <RootStack.Screen 
+          name="MatchChat" 
+          component={MatchChatScreen}
+          options={({ route }) => ({ 
+            headerShown: true,
+            title: 'Chat del Partido',
+            headerTitle: ({ navigation, route, options }) => (
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', color: '#fff' }}>
+                  Chat del Partido
+                </Text>
+                <Text style={{ fontSize: 12, color: '#fff', opacity: 0.8 }}>
+                  Coordina con tu equipo
+                </Text>
+              </View>
+            )
+          })}
+        />
+        <RootStack.Screen 
+          name="MatchHistory" 
+          component={MatchHistoryScreen}
+          options={{ 
+            headerShown: true,
+            title: 'Historial de Partidos'
           }}
         />
       </RootStack.Navigator>
