@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
-import { auth } from '@app/lib/firebase';
+import { auth, db } from '@app/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -27,6 +28,7 @@ interface UserAvailability {
 
 interface UserProfile {
   uid: string;
+  username: string;
   displayName: string;
   avatarUrl: string;
   level: UserLevel | null;
@@ -39,6 +41,7 @@ interface UserProfile {
 // Mock data (later will come from Firebase)
 const mockProfile: UserProfile = {
   uid: '1',
+  username: 'Usuario de Ejemplo',
   displayName: 'Usuario de Ejemplo',
   avatarUrl: '',
   level: 'Intermedio',
@@ -79,11 +82,52 @@ const ProfileScreen = () => {
   const { user } = useAuth();
   const navigation = useNavigation<Props['navigation']>();
   const [loading, setLoading] = useState(false);
-  const [level, setLevel] = useState('3.0');
+  const [savingAvailability, setSavingAvailability] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<string[]>([]);
   const [medals, setMedals] = useState<Medal[]>([]);
   const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserProfile({
+            uid: user.uid,
+            username: userData.username || '',
+            displayName: userData.displayName || '',
+            avatarUrl: userData.avatarUrl || '',
+            level: userData.level || null,
+            stats: userData.stats || {
+              matchesPlayed: 0,
+              wins: 0,
+              medals: []
+            },
+            availability: userData.availability || {
+              days: [],
+              hours: []
+            },
+            clubZone: userData.clubZone || '',
+            bio: userData.bio || ''
+          });
+          setSelectedDays(userData.availability?.days || []);
+          setSelectedHours(userData.availability?.hours || []);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   useEffect(() => {
     const fetchMedals = async () => {
@@ -106,19 +150,43 @@ const ProfileScreen = () => {
   }, [user]);
 
   const handleDayToggle = (dayId: string) => {
-    setSelectedDays(prev =>
-      prev.includes(dayId)
+    setSelectedDays(prev => {
+      const newDays = prev.includes(dayId)
         ? prev.filter(d => d !== dayId)
-        : [...prev, dayId]
-    );
+        : [...prev, dayId];
+      setHasUnsavedChanges(true);
+      return newDays;
+    });
   };
 
   const handleHourToggle = (hour: string) => {
-    setSelectedHours(prev =>
-      prev.includes(hour)
+    setSelectedHours(prev => {
+      const newHours = prev.includes(hour)
         ? prev.filter(h => h !== hour)
-        : [...prev, hour]
-    );
+        : [...prev, hour];
+      setHasUnsavedChanges(true);
+      return newHours;
+    });
+  };
+
+  const handleSaveAvailability = async () => {
+    if (!user) return;
+
+    setSavingAvailability(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        'availability.days': selectedDays,
+        'availability.hours': selectedHours
+      });
+      setHasUnsavedChanges(false);
+      Alert.alert('Éxito', 'Disponibilidad actualizada correctamente');
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      Alert.alert('Error', 'No se pudo guardar la disponibilidad');
+    } finally {
+      setSavingAvailability(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -165,7 +233,24 @@ const ProfileScreen = () => {
             <Ionicons name="person-circle-outline" size={50} color="#1e3a8a" />
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.name}>{user.email}</Text>
+            <Text style={styles.name}>{userProfile?.username || user?.email}</Text>
+            <View style={styles.userBadges}>
+              {userProfile?.level && (
+                <View style={styles.badge}>
+                  <Ionicons name="trophy-outline" size={16} color="#22C55E" />
+                  <Text style={styles.badgeText}>{userProfile.level}</Text>
+                </View>
+              )}
+              {userProfile?.clubZone && (
+                <View style={styles.badge}>
+                  <Ionicons name="location-outline" size={16} color="#22C55E" />
+                  <Text style={styles.badgeText}>{userProfile.clubZone}</Text>
+                </View>
+              )}
+            </View>
+            {userProfile?.bio && (
+              <Text style={styles.bioText}>{userProfile.bio}</Text>
+            )}
             <TouchableOpacity 
               style={styles.signOutButton}
               onPress={handleSignOut}
@@ -184,23 +269,6 @@ const ProfileScreen = () => {
         </View>
       </View>
 
-      {/* Level and Club Section */}
-      <View style={styles.section}>
-        <View style={styles.levelClubContainer}>
-          <View style={styles.badge}>
-            <Ionicons name="trophy-outline" size={16} color="#22C55E" />
-            <Text style={styles.badgeText}>{mockProfile.level}</Text>
-          </View>
-          <View style={styles.badge}>
-            <Ionicons name="location-outline" size={16} color="#22C55E" />
-            <Text style={styles.badgeText}>{mockProfile.clubZone}</Text>
-          </View>
-        </View>
-        {mockProfile.bio && (
-          <Text style={styles.bioText}>{mockProfile.bio}</Text>
-        )}
-      </View>
-
       {/* Estadísticas */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -214,22 +282,24 @@ const ProfileScreen = () => {
             <View style={styles.statIconContainer}>
               <Ionicons name="tennisball-outline" size={20} color="#22C55E" />
             </View>
-            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statNumber}>{userProfile?.stats.matchesPlayed || 0}</Text>
             <Text style={styles.statLabel}>Partidos</Text>
           </View>
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
               <Ionicons name="trophy-outline" size={20} color="#22C55E" />
             </View>
-            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statNumber}>{userProfile?.stats.wins || 0}</Text>
             <Text style={styles.statLabel}>Victorias</Text>
           </View>
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
               <Ionicons name="people-outline" size={20} color="#22C55E" />
             </View>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Compañeros</Text>
+            <Text style={styles.statNumber}>
+              {userMedals.filter(medal => medal.unlocked).length}
+            </Text>
+            <Text style={styles.statLabel}>Medallas</Text>
           </View>
         </View>
       </View>
@@ -287,6 +357,19 @@ const ProfileScreen = () => {
             <Ionicons name="calendar" size={20} color="#1e3a8a" style={styles.sectionIcon} />
             <Text style={styles.sectionTitle}>Disponibilidad Habitual</Text>
           </View>
+          {hasUnsavedChanges && (
+            <TouchableOpacity 
+              style={styles.saveButton}
+              onPress={handleSaveAvailability}
+              disabled={savingAvailability}
+            >
+              {savingAvailability ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.saveButtonText}>Guardar cambios</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
         
         {/* Días de la semana */}
@@ -370,12 +453,13 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f0f0f0',
   },
   headerContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   avatarContainer: {
     width: 60,
@@ -388,13 +472,39 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
-    justifyContent: 'center',
   },
   name: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#1e3a8a',
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  userBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#22C55E15',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  badgeText: {
+    color: '#22C55E',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  bioText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    fontStyle: 'italic',
+    marginBottom: 8,
   },
   signOutButton: {
     flexDirection: 'row',
@@ -432,32 +542,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#1e3a8a',
-  },
-  levelClubContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#22C55E15',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
-  },
-  badgeText: {
-    color: '#22C55E',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  bioText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    fontStyle: 'italic',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -635,6 +719,19 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     textAlign: 'center',
     marginTop: 8,
+    fontSize: 14,
+  },
+  saveButton: {
+    backgroundColor: '#22C55E',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '600',
     fontSize: 14,
   },
 });

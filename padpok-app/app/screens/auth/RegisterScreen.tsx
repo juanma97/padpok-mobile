@@ -37,6 +37,7 @@ const RegisterScreen = () => {
   const [username, setUsername] = useState('');
   const [level, setLevel] = useState<'Principiante' | 'Intermedio' | 'Avanzado' | null>(null);
   const [age, setAge] = useState('');
+  const [clubZone, setClubZone] = useState('');
 
   const validateStep1 = () => {
     if (!email || !password) {
@@ -51,7 +52,7 @@ const RegisterScreen = () => {
   };
 
   const validateStep2 = () => {
-    if (!username || !level || !age) {
+    if (!username || !level || !age || !clubZone) {
       Alert.alert('Error', 'Por favor, completa todos los campos');
       return false;
     }
@@ -84,7 +85,7 @@ const RegisterScreen = () => {
 
       // Crear el documento del usuario en Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
-        availbility: {
+        availability: {
           days: [],
           hours: []
         },
@@ -92,6 +93,7 @@ const RegisterScreen = () => {
         username,
         age,
         level,
+        clubZone,
         stats: {
           points: 0,
           matchesPlayed: 0,
@@ -221,6 +223,16 @@ const RegisterScreen = () => {
             value={age}
             onChangeText={setAge}
             keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Ionicons name="location-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Club o zona de juego"
+            value={clubZone}
+            onChangeText={setClubZone}
           />
         </View>
 

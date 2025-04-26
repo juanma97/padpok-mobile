@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList, Match } from '@app/types';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, where, Timestamp } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '@app/lib/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 
@@ -24,12 +26,67 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showOnlyPreferences, setShowOnlyPreferences] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<{
+    days: string[];
+    hours: string[];
+    level: string | null;
+  }>({
+    days: [],
+    hours: [],
+    level: null
+  });
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      if (!user) return;
+      
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserPreferences({
+            days: userData.availability?.days || [],
+            hours: userData.availability?.hours || [],
+            level: userData.level || null
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user preferences:', error);
+      }
+    };
+
+    fetchUserPreferences();
+  }, [user]);
 
   const fetchMatches = useCallback(async () => {
     try {
       setLoading(true);
       const matchesRef = collection(db, 'matches');
-      const q = query(matchesRef, orderBy('date', 'asc'));
+      let q = query(matchesRef, orderBy('date', 'asc'));
+      
+      // Si el usuario quiere ver solo partidos que coincidan con sus preferencias
+      if (showOnlyPreferences && user) {
+        const conditions = [];
+        
+        // Filtrar por nivel si el usuario tiene uno definido
+        if (userPreferences.level) {
+          conditions.push(where('level', '==', userPreferences.level));
+        }
+        
+        // Filtrar por días disponibles
+        if (userPreferences.days.length > 0) {
+          // Convertir la fecha del partido a día de la semana
+          conditions.push(where('date', '>=', Timestamp.now()));
+        }
+        
+        q = query(matchesRef, ...conditions, orderBy('date', 'asc'));
+      }
+      
       const querySnapshot = await getDocs(q);
       
       const matchesData = querySnapshot.docs.map(doc => {
@@ -40,21 +97,39 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
           date: data.date?.toDate() || new Date()
         };
       }) as Match[];
+
+      // Filtrar por horas disponibles si es necesario
+      let filteredMatches = matchesData;
+      if (showOnlyPreferences && userPreferences.hours.length > 0) {
+        filteredMatches = matchesData.filter(match => {
+          const matchDate = match.date;
+          const matchHour = matchDate.getHours();
+          const matchDay = matchDate.getDay();
+          
+          // Convertir el día de la semana a formato de la app (L, M, X, etc.)
+          const dayMap = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+          const matchDayStr = dayMap[matchDay];
+          
+          // Convertir la hora del partido a formato de la app (HH:00)
+          const matchHourStr = `${matchHour.toString().padStart(2, '0')}:00`;
+          
+          return userPreferences.days.includes(matchDayStr) && 
+                 userPreferences.hours.includes(matchHourStr);
+        });
+      }
       
-      setMatches(matchesData);
+      setMatches(filteredMatches);
     } catch (error) {
       console.error('Error fetching matches:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [showOnlyPreferences, userPreferences]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchMatches();
-    }, [fetchMatches])
-  );
+  useEffect(() => {
+    fetchMatches();
+  }, [fetchMatches]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -63,6 +138,10 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const togglePreferencesFilter = () => {
+    setShowOnlyPreferences(prev => !prev);
   };
 
   const sortedMatches = React.useMemo(() => {
@@ -129,26 +208,47 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Partidos Disponibles</Text>
-          <View style={styles.sortContainer}>
-            <Text style={styles.sortText}>
-              {sortOrder === 'asc' ? 'Más antiguos' : 'Más recientes'}
-            </Text>
+          <View style={styles.controlsContainer}>
+            {user && (
+              <TouchableOpacity 
+                style={[styles.filterButton, showOnlyPreferences && styles.filterButtonActive]}
+                onPress={togglePreferencesFilter}
+              >
+                <Ionicons 
+                  name={showOnlyPreferences ? 'filter' : 'filter-outline'} 
+                  size={20} 
+                  color={showOnlyPreferences ? '#fff' : '#1e3a8a'} 
+                />
+                <Text style={[styles.filterButtonText, showOnlyPreferences && styles.filterButtonTextActive]}>
+                  {showOnlyPreferences ? 'Filtros activos' : 'Filtrar por preferencias'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            
             <TouchableOpacity 
-              style={styles.filterButton}
+              style={styles.sortButton}
               onPress={toggleSortOrder}
             >
               <Ionicons 
-                name={sortOrder === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'} 
-                size={24} 
+                name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'} 
+                size={20} 
                 color="#1e3a8a" 
               />
+              <Text style={styles.sortButtonText}>
+                {sortOrder === 'asc' ? 'Más antiguos' : 'Más recientes'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {matches.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay partidos disponibles</Text>
+            <Ionicons name="tennisball-outline" size={48} color="#9ca3af" />
+            <Text style={styles.emptyText}>
+              {showOnlyPreferences 
+                ? 'No hay partidos que coincidan con tus preferencias'
+                : 'No hay partidos disponibles'}
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -181,9 +281,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
@@ -193,9 +290,46 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1e3a8a',
+    marginBottom: 12,
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
   },
   filterButton: {
-    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+    flex: 1,
+  },
+  filterButtonActive: {
+    backgroundColor: '#1e3a8a',
+  },
+  filterButtonText: {
+    color: '#1e3a8a',
+    fontWeight: '600',
+  },
+  filterButtonTextActive: {
+    color: '#fff',
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+  },
+  sortButtonText: {
+    color: '#1e3a8a',
+    fontWeight: '600',
   },
   listContent: {
     padding: 16,
@@ -259,15 +393,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
-  },
-  sortContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sortText: {
-    color: '#6b7280',
-    fontSize: 14,
   },
 });
 
