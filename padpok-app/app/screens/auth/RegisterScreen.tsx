@@ -19,6 +19,7 @@ import { auth, db } from '@app/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { RootStackScreenProps } from '@app/types';
+import { MEDALS } from '@app/types/medals';
 
 type NavigationProp = RootStackScreenProps<'Register'>['navigation'];
 
@@ -95,9 +96,14 @@ const RegisterScreen = () => {
           points: 0,
           matchesPlayed: 0,
           wins: 0,
-          losses: 0,
-          medals: []
+          losses: 0
         },
+        medals: MEDALS.map(medal => ({
+          id: medal.id,
+          unlocked: false,
+          progress: 0,
+          lastUpdated: new Date()
+        })),
         createdAt: serverTimestamp()
       });
 

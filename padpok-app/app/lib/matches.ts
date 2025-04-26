@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove, query, where, orderBy, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { Match, Score } from '@app/types';
+import { checkAndUpdateMedals } from './medals';
 
 // Función para actualizar las estadísticas de los jugadores
 const updatePlayerStats = async (match: Match, score: Score): Promise<void> => {
@@ -80,6 +81,17 @@ export const updateMatchScore = async (matchId: string, score: Score): Promise<v
 
   // Actualizar las estadísticas de los jugadores
   await updatePlayerStats(matchData, score);
+
+  // Actualizar las medallas de todos los jugadores
+  if (matchData.teams) {
+    const allPlayers = [...matchData.teams.team1, ...matchData.teams.team2];
+    for (const playerId of allPlayers) {
+      await checkAndUpdateMedals(playerId, {
+        ...matchData,
+        score // Añadimos el nuevo resultado al objeto del partido
+      });
+    }
+  }
 };
 
 // Función para validar el resultado de un partido

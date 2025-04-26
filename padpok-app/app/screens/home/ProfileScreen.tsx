@@ -9,7 +9,8 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
-import { getAllMedals, getUserMedals, Medal } from '@app/lib/medals';
+import { getAllMedals, getUserMedals } from '@app/lib/medals';
+import { Medal, UserMedal } from '@app/types/medals';
 
 type UserLevel = 'Principiante' | 'Intermedio' | 'Avanzado';
 
@@ -82,7 +83,7 @@ const ProfileScreen = () => {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<string[]>([]);
   const [medals, setMedals] = useState<Medal[]>([]);
-  const [userMedals, setUserMedals] = useState<string[]>([]);
+  const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
 
   useEffect(() => {
     const fetchMedals = async () => {
@@ -249,21 +250,24 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.medalsContainer}>
-          {userMedals.length > 0 ? (
+          {userMedals.filter(medal => medal.unlocked).length > 0 ? (
             <View style={styles.medalsGrid}>
-              {userMedals.slice(0, 4).map((medalId) => {
-                const medal = medals.find(m => m.id === medalId);
-                return medal ? (
-                  <View key={medal.id} style={styles.medalItem}>
-                    <View style={styles.medalCircleUnlocked}>
-                      <Ionicons name={medal.icon as any} size={20} color="#22C55E" />
+              {userMedals
+                .filter(medal => medal.unlocked)
+                .slice(0, 4)
+                .map((userMedal) => {
+                  const medal = medals.find(m => m.id === userMedal.id);
+                  return medal ? (
+                    <View key={medal.id} style={styles.medalItem}>
+                      <View style={styles.medalCircleUnlocked}>
+                        <Ionicons name={medal.icon as any} size={20} color="#22C55E" />
+                      </View>
+                      <Text style={styles.medalName} numberOfLines={1}>
+                        {medal.name}
+                      </Text>
                     </View>
-                    <Text style={styles.medalName} numberOfLines={1}>
-                      {medal.name}
-                    </Text>
-                  </View>
-                ) : null;
-              })}
+                  ) : null;
+                })}
             </View>
           ) : (
             <View style={styles.noMedalsContainer}>

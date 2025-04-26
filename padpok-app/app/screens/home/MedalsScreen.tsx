@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
-import { getAllMedals, getUserMedals, Medal } from '@app/lib/medals';
+import { getAllMedals, getUserMedals } from '@app/lib/medals';
+import { Medal, UserMedal } from '@app/types/medals';
 
 const MedalsScreen = () => {
   const { user } = useAuth();
   const [medals, setMedals] = useState<Medal[]>([]);
-  const [userMedals, setUserMedals] = useState<string[]>([]);
+  const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +41,8 @@ const MedalsScreen = () => {
     );
   }
 
+  const unlockedMedalsCount = userMedals.filter(medal => medal.unlocked).length;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -47,13 +50,32 @@ const MedalsScreen = () => {
         <View style={styles.header}>
           <Text style={styles.title}>Tu Colección de Medallas</Text>
           <Text style={styles.subtitle}>
-            {userMedals.length} de {medals.length} medallas desbloqueadas
+            {unlockedMedalsCount} de {medals.length} medallas desbloqueadas
           </Text>
         </View>
 
         <View style={styles.medalsContainer}>
           {medals.map((medal) => {
-            const isUnlocked = userMedals.includes(medal.id);
+            const userMedal = userMedals.find(um => um.id === medal.id);
+            const isUnlocked = userMedal?.unlocked || false;
+            const progress = userMedal?.progress || 0;
+            
+            const getProgressText = () => {
+              if (isUnlocked) return '¡Desbloqueada!';
+              
+              const requirements = medal.requirements;
+              if (!requirements) return 'Progreso no disponible';
+              
+              const { type, value } = requirements;
+              const typeText = type === 'matches_played' ? 'partidos' : 
+                type === 'wins' ? 'victorias' :
+                type === 'win_streak' ? 'victorias consecutivas' :
+                type === 'unique_players' ? 'jugadores diferentes' :
+                type === 'time_of_day' ? 'partidos' :
+                type === 'weekend_matches' ? 'partidos en fin de semana' : '';
+              
+              return `${progress}/${value} ${typeText}`;
+            };
             
             return (
               <View key={medal.id} style={[styles.medalCard, !isUnlocked && styles.medalCardLocked]}>
@@ -80,7 +102,7 @@ const MedalsScreen = () => {
                     {medal.description}
                   </Text>
                   <Text style={[styles.medalProgress, !isUnlocked && styles.medalProgressLocked]}>
-                    {isUnlocked ? '¡Desbloqueada!' : medal.progress}
+                    {getProgressText()}
                   </Text>
                 </View>
               </View>
