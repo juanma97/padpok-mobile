@@ -22,9 +22,15 @@ export const getUserMedals = async (userId: string): Promise<UserMedal[]> => {
 
   // Asegurarnos de que todas las medallas existan en el array del usuario
   const allUserMedals = MEDALS.map(medal => {
-    const existingMedal = userMedals.find((m: UserMedal) => m.id === medal.id);
+    const existingMedal = userMedals.find((m: any) => m.id === medal.id);
     if (existingMedal) {
-      return existingMedal;
+      return {
+        ...existingMedal,
+        // Asegurarnos de que lastUpdated sea un Date válido
+        lastUpdated: existingMedal.lastUpdated instanceof Date 
+          ? existingMedal.lastUpdated 
+          : existingMedal.lastUpdated?.toDate?.() || new Date()
+      };
     }
     return {
       id: medal.id,

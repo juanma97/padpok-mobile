@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CreateStackParamList, Match, AgeRange } from '@app/types';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +31,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [highlightLoading, setHighlightLoading] = useState(false);
 
   const validateForm = (): string | null => {
     if (!formData.title?.trim()) return 'El título es obligatorio';
@@ -136,6 +137,29 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleHighlightClick = async () => {
+    setHighlightLoading(true);
+    try {
+      // Incrementar el contador en Firebase
+      const metricsRef = collection(db, 'metrics');
+      await addDoc(metricsRef, {
+        type: 'highlight_click',
+        timestamp: serverTimestamp(),
+        userId: auth.currentUser?.uid || 'anonymous'
+      });
+
+      Alert.alert(
+        '¡Próximamente!',
+        'La funcionalidad de destacar partidos estará disponible próximamente. ¡Mantente atento!',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Error al registrar el clic:', error);
+    } finally {
+      setHighlightLoading(false);
+    }
+  };
+
   const renderFormField = (
     label: string, 
     field: keyof Match, 
@@ -173,6 +197,23 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
 
         {renderFormField('Título del partido', 'title', 'Ej: Partido amistoso nivel medio', { required: true })}
         {renderFormField('Ubicación', 'location', 'Ej: Club Deportivo Norte - Pista 3', { required: true })}
+
+        {/* Botón de destacar partido */}
+        <TouchableOpacity
+          style={styles.highlightButton}
+          onPress={handleHighlightClick}
+          disabled={highlightLoading}
+        >
+          <View style={styles.highlightContent}>
+            <Ionicons name="star" size={20} color="#FFD700" />
+            <Text style={styles.highlightText}>Destacar este partido</Text>
+            {highlightLoading ? (
+              <ActivityIndicator size="small" color="#FFD700" />
+            ) : (
+              <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+            )}
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.formItem}>
           <Text style={styles.label}>Fecha del partido*</Text>
@@ -438,7 +479,27 @@ const styles = StyleSheet.create({
   },
   ageRangeTextSelected: {
     color: '#fff'
-  }
+  },
+  highlightButton: {
+    backgroundColor: '#1e3a8a',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  highlightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  highlightText: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    marginLeft: 8,
+  },
 });
 
 export default CreateMatchScreen; 

@@ -6,12 +6,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
-import { Medal } from '@app/types/medals';
+import { Medal, UserMedal } from '@app/types/medals';
 import { getAllMedals, getUserMedals } from '@app/lib/medals';
 
 interface UserProfileModalProps {
@@ -33,22 +34,20 @@ interface UserProfile {
   };
 }
 
-interface UserMedal {
-  id: string;
-  unlocked: boolean;
-}
-
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ visible, onClose, userId }) => {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [medals, setMedals] = useState<Medal[]>([]);
   const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userId || !visible) return;
       
       setLoading(true);
+      setError(null);
+      
       try {
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
@@ -68,18 +67,23 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ visible, onClose, u
             }
           });
           
-          // Fetch medals
-          const [allMedals, userMedalsList] = await Promise.all([
-            getAllMedals(),
-            getUserMedals(userId)
-          ]);
-          
-          setMedals(allMedals);
-          setUserMedals(userMedalsList);
+          try {
+            // Fetch medals
+            const allMedals = await getAllMedals();
+            setMedals(allMedals);
+            
+            const userMedalsList = await getUserMedals(userId);
+            setUserMedals(userMedalsList);
+          } catch (medalError) {
+            console.error('Error fetching medals:', medalError);
+            // No mostramos error al usuario si falla solo la carga de medallas
+            // Continuamos con el perfil básico
+            setUserMedals([]);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        Alert.alert('Error', 'No se pudo cargar el perfil del usuario');
+        setError('No se pudo cargar el perfil del usuario');
       } finally {
         setLoading(false);
       }
@@ -87,6 +91,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ visible, onClose, u
 
     fetchUserData();
   }, [userId, visible]);
+
+  const unlockedMedalsCount = userMedals.filter(medal => medal.unlocked).length || 0;
 
   return (
     <Modal
@@ -108,96 +114,102 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ visible, onClose, u
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#1e3a8a" />
             </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           ) : userProfile ? (
-            <View style={styles.profileContent}>
-              <View style={styles.userHeader}>
-                <View style={styles.avatarContainer}>
-                  <Ionicons name="person-circle-outline" size={50} color="#1e3a8a" />
-                </View>
-                <View style={styles.userInfo}>
-                  <Text style={styles.name}>{userProfile.username}</Text>
-                  <View style={styles.userBadges}>
-                    {userProfile.level && (
-                      <View style={styles.badge}>
-                        <Ionicons name="trophy-outline" size={16} color="#22C55E" />
-                        <Text style={styles.badgeText}>{userProfile.level}</Text>
-                      </View>
-                    )}
-                    {userProfile.clubZone && (
-                      <View style={styles.badge}>
-                        <Ionicons name="location-outline" size={16} color="#22C55E" />
-                        <Text style={styles.badgeText}>{userProfile.clubZone}</Text>
-                      </View>
+            <ScrollView style={styles.scrollView}>
+              <View style={styles.profileContent}>
+                <View style={styles.userHeader}>
+                  <View style={styles.avatarContainer}>
+                    <Ionicons name="person-circle-outline" size={50} color="#1e3a8a" />
+                  </View>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.name}>{userProfile.username}</Text>
+                    <View style={styles.userBadges}>
+                      {userProfile.level && (
+                        <View style={styles.badge}>
+                          <Ionicons name="trophy-outline" size={16} color="#22C55E" />
+                          <Text style={styles.badgeText}>{userProfile.level}</Text>
+                        </View>
+                      )}
+                      {userProfile.clubZone && (
+                        <View style={styles.badge}>
+                          <Ionicons name="location-outline" size={16} color="#22C55E" />
+                          <Text style={styles.badgeText}>{userProfile.clubZone}</Text>
+                        </View>
+                      )}
+                    </View>
+                    {userProfile.bio && (
+                      <Text style={styles.bioText}>{userProfile.bio}</Text>
                     )}
                   </View>
-                  {userProfile.bio && (
-                    <Text style={styles.bioText}>{userProfile.bio}</Text>
+                </View>
+
+                {/* Estadísticas */}
+                <View style={styles.statsSection}>
+                  <Text style={styles.sectionTitle}>Estadísticas</Text>
+                  <View style={styles.statsContainer}>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons name="tennisball-outline" size={20} color="#22C55E" />
+                      </View>
+                      <Text style={styles.statNumber}>{userProfile.stats.matchesPlayed || 0}</Text>
+                      <Text style={styles.statLabel}>Partidos</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons name="trophy-outline" size={20} color="#22C55E" />
+                      </View>
+                      <Text style={styles.statNumber}>{userProfile.stats.wins || 0}</Text>
+                      <Text style={styles.statLabel}>Victorias</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons name="medal-outline" size={20} color="#22C55E" />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {unlockedMedalsCount}
+                      </Text>
+                      <Text style={styles.statLabel}>Medallas</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Medallas */}
+                <View style={styles.medalsSection}>
+                  <Text style={styles.sectionTitle}>Medallas</Text>
+                  {unlockedMedalsCount > 0 ? (
+                    <View style={styles.medalsGrid}>
+                      {userMedals
+                        .filter(medal => medal.unlocked)
+                        .slice(0, 4)
+                        .map((userMedal) => {
+                          const medal = medals.find(m => m.id === userMedal.id);
+                          return medal ? (
+                            <View key={medal.id} style={styles.medalItem}>
+                              <View style={styles.medalCircleUnlocked}>
+                                <Ionicons name={medal.icon as any} size={20} color="#22C55E" />
+                              </View>
+                              <Text style={styles.medalName} numberOfLines={1}>
+                                {medal.name}
+                              </Text>
+                            </View>
+                          ) : null;
+                        })}
+                    </View>
+                  ) : (
+                    <View style={styles.noMedalsContainer}>
+                      <Ionicons name="trophy-outline" size={24} color="#9ca3af" />
+                      <Text style={styles.noMedalsText}>
+                        Sin medallas desbloqueadas
+                      </Text>
+                    </View>
                   )}
                 </View>
               </View>
-
-              {/* Estadísticas */}
-              <View style={styles.statsSection}>
-                <Text style={styles.sectionTitle}>Estadísticas</Text>
-                <View style={styles.statsContainer}>
-                  <View style={styles.statItem}>
-                    <View style={styles.statIconContainer}>
-                      <Ionicons name="tennisball-outline" size={20} color="#22C55E" />
-                    </View>
-                    <Text style={styles.statNumber}>{userProfile.stats.matchesPlayed || 0}</Text>
-                    <Text style={styles.statLabel}>Partidos</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <View style={styles.statIconContainer}>
-                      <Ionicons name="trophy-outline" size={20} color="#22C55E" />
-                    </View>
-                    <Text style={styles.statNumber}>{userProfile.stats.wins || 0}</Text>
-                    <Text style={styles.statLabel}>Victorias</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <View style={styles.statIconContainer}>
-                      <Ionicons name="medal-outline" size={20} color="#22C55E" />
-                    </View>
-                    <Text style={styles.statNumber}>
-                      {userMedals.filter(medal => medal.unlocked).length}
-                    </Text>
-                    <Text style={styles.statLabel}>Medallas</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Medallas */}
-              <View style={styles.medalsSection}>
-                <Text style={styles.sectionTitle}>Medallas</Text>
-                {userMedals.filter(medal => medal.unlocked).length > 0 ? (
-                  <View style={styles.medalsGrid}>
-                    {userMedals
-                      .filter(medal => medal.unlocked)
-                      .slice(0, 4)
-                      .map((userMedal) => {
-                        const medal = medals.find(m => m.id === userMedal.id);
-                        return medal ? (
-                          <View key={medal.id} style={styles.medalItem}>
-                            <View style={styles.medalCircleUnlocked}>
-                              <Ionicons name={medal.icon as any} size={20} color="#22C55E" />
-                            </View>
-                            <Text style={styles.medalName} numberOfLines={1}>
-                              {medal.name}
-                            </Text>
-                          </View>
-                        ) : null;
-                      })}
-                  </View>
-                ) : (
-                  <View style={styles.noMedalsContainer}>
-                    <Ionicons name="trophy-outline" size={24} color="#9ca3af" />
-                    <Text style={styles.noMedalsText}>
-                      Sin medallas desbloqueadas
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
+            </ScrollView>
           ) : (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>No se pudo cargar el perfil</Text>
@@ -243,6 +255,9 @@ const styles = StyleSheet.create({
     padding: 30,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scrollView: {
+    flex: 1,
   },
   profileContent: {
     padding: 16,
@@ -388,7 +403,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     fontSize: 14,
-  },
+  }
 });
 
 export default UserProfileModal; 

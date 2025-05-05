@@ -36,26 +36,6 @@ interface UserProfile {
   bio?: string;
 }
 
-// Mock data (later will come from Firebase)
-const mockProfile: UserProfile = {
-  uid: '1',
-  username: 'Usuario de Ejemplo',
-  displayName: 'Usuario de Ejemplo',
-  avatarUrl: '',
-  level: 'Intermedio',
-  stats: {
-    matchesPlayed: 0,
-    wins: 0,
-    medals: [],
-  },
-  availability: {
-    days: [],
-    hours: [],
-  },
-  clubZone: 'Club de Pádel Madrid Norte',
-  bio: 'Busco partidos por las tardes, preferiblemente mixtos 🎾',
-};
-
 const DAYS = [
   { id: 'L', name: 'Lunes' },
   { id: 'M', name: 'Martes' },
@@ -192,6 +172,16 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   };
 
   const handleSignOut = async () => {
+    console.log('Cerrando sesión');
+    if (Platform.OS === 'web') {
+      await signOut(auth);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Auth' }]
+        })
+      );
+    }
     Alert.alert(
       'Cerrar sesión',
       '¿Estás seguro de que quieres cerrar sesión?',
@@ -208,8 +198,9 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             try {
               await signOut(auth);
               navigation.dispatch(
-                CommonActions.navigate({
-                  name: 'Welcome'
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'Auth' }]
                 })
               );
             } catch (error) {
