@@ -4,12 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { auth, db } from '@app/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, updateDoc, getDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useNavigation, CommonActions } from '@react-navigation/native';
-import { CompositeScreenProps } from '@react-navigation/native';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
+import { RootStackParamList } from '@app/types';
 import { getAllMedals, getUserMedals } from '@app/lib/medals';
 import { Medal, UserMedal } from '@app/types/medals';
 
@@ -36,8 +34,6 @@ interface UserProfile {
   availability: UserAvailability;
   clubZone?: string;
   bio?: string;
-  followers?: string[];
-  following?: string[];
 }
 
 // Mock data (later will come from Firebase)
@@ -58,8 +54,6 @@ const mockProfile: UserProfile = {
   },
   clubZone: 'Club de Pádel Madrid Norte',
   bio: 'Busco partidos por las tardes, preferiblemente mixtos 🎾',
-  followers: [],
-  following: [],
 };
 
 const DAYS = [
@@ -77,9 +71,11 @@ const AVAILABILITY = {
   afternoon: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
+interface ProfileParams {
+  userId?: string;
+}
 
-const ProfileScreen = ({ route }: Props) => {
+const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   const { userId } = route.params || {};
   const { user } = useAuth();
   const navigation = useNavigation<any>();
@@ -91,7 +87,6 @@ const ProfileScreen = ({ route }: Props) => {
   const [medals, setMedals] = useState<Medal[]>([]);
   const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
 
   // Determinar si estamos viendo nuestro propio perfil
   const isOwnProfile = !userId || userId === user?.uid;
@@ -124,16 +119,9 @@ const ProfileScreen = ({ route }: Props) => {
             },
             clubZone: userData.clubZone || '',
             bio: userData.bio || '',
-            followers: userData.followers || [],
-            following: userData.following || []
           });
           setSelectedDays(userData.availability?.days || []);
           setSelectedHours(userData.availability?.hours || []);
-
-          // Verificar si el usuario actual sigue a este usuario
-          if (user && userData.followers?.includes(user.uid)) {
-            setIsFollowing(true);
-          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -235,38 +223,6 @@ const ProfileScreen = ({ route }: Props) => {
     );
   };
 
-  const handleFollowToggle = async () => {
-    if (!user || !userProfile) return;
-
-    try {
-      const userRef = doc(db, 'users', userId);
-      const currentUserRef = doc(db, 'users', user.uid);
-
-      if (isFollowing) {
-        // Dejar de seguir
-        await updateDoc(userRef, {
-          followers: arrayRemove(user.uid)
-        });
-        await updateDoc(currentUserRef, {
-          following: arrayRemove(userId)
-        });
-        setIsFollowing(false);
-      } else {
-        // Seguir
-        await updateDoc(userRef, {
-          followers: arrayUnion(user.uid)
-        });
-        await updateDoc(currentUserRef, {
-          following: arrayUnion(userId)
-        });
-        setIsFollowing(true);
-      }
-    } catch (error) {
-      console.error('Error toggling follow:', error);
-      Alert.alert('Error', 'No se pudo actualizar el estado de seguimiento');
-    }
-  };
-
   if (!user) {
     return null;
   }
@@ -297,16 +253,6 @@ const ProfileScreen = ({ route }: Props) => {
             {userProfile?.bio && (
               <Text style={styles.bioText}>{userProfile.bio}</Text>
             )}
-            {!isOwnProfile && (
-              <TouchableOpacity 
-                style={[styles.followButton, isFollowing && styles.followingButton]}
-                onPress={handleFollowToggle}
-              >
-                <Text style={styles.followButtonText}>
-                  {isFollowing ? 'Siguiendo' : 'Seguir'}
-                </Text>
-              </TouchableOpacity>
-            )}
             {isOwnProfile && (
               <TouchableOpacity 
                 style={styles.signOutButton}
@@ -324,32 +270,6 @@ const ProfileScreen = ({ route }: Props) => {
               </TouchableOpacity>
             )}
           </View>
-        </View>
-      </View>
-
-      {/* Seguidores y Seguidos */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleContainer}>
-            <Ionicons name="people" size={20} color="#1e3a8a" style={styles.sectionIcon} />
-            <Text style={styles.sectionTitle}>Social</Text>
-          </View>
-        </View>
-        <View style={styles.socialContainer}>
-          <TouchableOpacity 
-            style={styles.socialItem}
-            onPress={() => navigation.navigate('Followers', { userId: userProfile?.uid })}
-          >
-            <Text style={styles.socialNumber}>{userProfile?.followers?.length || 0}</Text>
-            <Text style={styles.socialLabel}>Seguidores</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.socialItem}
-            onPress={() => navigation.navigate('Following', { userId: userProfile?.uid })}
-          >
-            <Text style={styles.socialNumber}>{userProfile?.following?.length || 0}</Text>
-            <Text style={styles.socialLabel}>Siguiendo</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -821,41 +741,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-  },
-  socialItem: {
-    alignItems: 'center',
-  },
-  socialNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
-    marginBottom: 4,
-  },
-  socialLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  followButton: {
-    backgroundColor: '#1e3a8a',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 8,
-  },
-  followingButton: {
-    backgroundColor: '#6b7280',
-  },
-  followButtonText: {
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
