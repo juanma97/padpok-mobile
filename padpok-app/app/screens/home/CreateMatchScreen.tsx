@@ -11,11 +11,12 @@ import {
   Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CreateStackParamList, Match, AgeRange } from '@app/types';
+import type { Match, AgeRange, CreateStackParamList } from '@app/types/index';
 import { collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import CustomDialog from '@app/components/CustomDialog';
 
 type Props = NativeStackScreenProps<CreateStackParamList, 'CreateMatch'>;
 
@@ -32,6 +33,17 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [highlightLoading, setHighlightLoading] = useState(false);
+  const [dialog, setDialog] = useState<{
+    visible: boolean;
+    title?: string;
+    message: string;
+    options?: { text: string; onPress?: () => void; style?: object }[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    options: undefined,
+  });
 
   const validateForm = (): string | null => {
     if (!formData.title?.trim()) return 'El título es obligatorio';
@@ -48,15 +60,19 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     return null;
   };
 
+  const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
+    setDialog({ visible: true, title, message, options });
+  };
+
   const handleCreateMatch = async () => {
     const error = validateForm();
     if (error != null) {
-      Alert.alert('Error', error);
+      showDialog('Error', error);
       return;
     }
 
     if (!auth.currentUser) {
-      Alert.alert('Error', 'Debes iniciar sesión para crear un partido');
+      showDialog('Error', 'Debes iniciar sesión para crear un partido');
       return;
     }
 
@@ -67,7 +83,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         playersNeeded: 4,
         playersJoined: [auth.currentUser.uid],
         createdBy: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp() as any,
         teams: {
           team1: [auth.currentUser.uid],
           team2: []
@@ -78,8 +94,8 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
 
       const docRef = await addDoc(matchesRef, matchData);
 
-      Alert.alert(
-        '¡Partido creado!', 
+      showDialog(
+        '¡Partido creado!',
         'Tu partido se ha creado correctamente',
         [
           {
@@ -89,9 +105,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         ]
       );
     } catch (error: any) {
-      Alert.alert('Error', 
-        `Error al crear el partido: ${error.message}\n\nCódigo: ${error.code}`
-      );
+      showDialog('Error', `Error al crear el partido: ${error.message}\n\nCódigo: ${error.code}`);
     } finally {
       setLoading(false);
     }
@@ -109,11 +123,11 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
       // Validación inmediata al cambiar la fecha
       const now = new Date();
       if (selectedDate < now) {
-        Alert.alert('Error', 'No puedes seleccionar una fecha anterior al momento actual');
+        showDialog('Error', 'No puedes seleccionar una fecha anterior al momento actual');
         return;
       }
       
-      setFormData(prev => ({ ...prev, date: selectedDate }));
+      setFormData((prev: Partial<Match>) => ({ ...prev, date: selectedDate }));
     }
   };
 
@@ -129,11 +143,11 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
       // Validación inmediata al cambiar la hora
       const now = new Date();
       if (newDate < now) {
-        Alert.alert('Error', 'No puedes seleccionar una hora anterior al momento actual');
+        showDialog('Error', 'No puedes seleccionar una hora anterior al momento actual');
         return;
       }
       
-      setFormData(prev => ({ ...prev, date: newDate }));
+      setFormData((prev: Partial<Match>) => ({ ...prev, date: newDate }));
     }
   };
 
@@ -148,7 +162,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         userId: auth.currentUser?.uid || 'anonymous'
       });
 
-      Alert.alert(
+      showDialog(
         '¡Próximamente!',
         'La funcionalidad de destacar partidos estará disponible próximamente. ¡Mantente atento!',
         [{ text: 'OK' }]
@@ -180,7 +194,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         ]}
         placeholder={placeholder}
         value={formData[field]?.toString()}
-        onChangeText={(text) => setFormData(prev => ({ 
+        onChangeText={(text) => setFormData((prev: Partial<Match>) => ({ 
           ...prev, 
           [field]: text 
         }))}
@@ -313,7 +327,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
                   styles.levelOption,
                   formData.level === option && styles.levelOptionSelected
                 ]}
-                onPress={() => setFormData(prev => ({ ...prev, level: option as Match['level'] }))}
+                onPress={() => setFormData((prev: Partial<Match>) => ({ ...prev, level: option as Match['level'] }))}
               >
                 <Text style={[
                   styles.levelText,
@@ -329,14 +343,14 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.formItem}>
           <Text style={styles.label}>Rango de edad*</Text>
           <View style={styles.ageRangeContainer}>
-            {['18-30', '30-45', '+45', 'todas las edades'].map((option) => (
+            {['18-25', '26-35', '36-45', '46+', 'todas las edades'].map((option) => (
               <TouchableOpacity
                 key={option}
                 style={[
                   styles.ageRangeOption,
                   formData.ageRange === option && styles.ageRangeOptionSelected
                 ]}
-                onPress={() => setFormData(prev => ({ ...prev, ageRange: option as AgeRange }))}
+                onPress={() => setFormData((prev: Partial<Match>) => ({ ...prev, ageRange: option as Match['ageRange'] }))}
               >
                 <Text style={[
                   styles.ageRangeText,
@@ -363,6 +377,13 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
           )}
         </TouchableOpacity>
       </View>
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        options={dialog.options}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </ScrollView>
   );
 };
