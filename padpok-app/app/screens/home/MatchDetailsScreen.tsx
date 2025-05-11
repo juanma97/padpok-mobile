@@ -422,11 +422,11 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#F0F0F0',
   },
   scrollView: {
     flex: 1,
@@ -435,9 +435,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F0F0F0',
   },
   backButton: {
     padding: 8,
@@ -447,12 +447,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     flex: 1,
+    color: '#314E99',
   },
   content: {
     padding: 16,
   },
   mainInfoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
@@ -468,7 +469,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconContainer: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(49,78,153,0.1)',
     padding: 12,
     borderRadius: 12,
     marginRight: 16,
@@ -478,16 +479,16 @@ const styles = StyleSheet.create({
   },
   mainInfoLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#1D1B20',
     marginBottom: 4,
   },
   mainInfoText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e3a8a',
+    color: '#314E99',
   },
   playersCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
@@ -506,16 +507,16 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#314E99',
   },
   playersCount: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(49,78,153,0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   playersCountText: {
-    color: '#1e3a8a',
+    color: '#314E99',
     fontWeight: '600',
   },
   playersList: {
@@ -526,19 +527,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F0F0F0',
   },
   playerNumber: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(49,78,153,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   playerNumberText: {
-    color: '#1e3a8a',
+    color: '#314E99',
     fontWeight: '600',
   },
   playerNameContainer: {
@@ -547,7 +548,7 @@ const styles = StyleSheet.create({
   },
   playerName: {
     fontSize: 16,
-    color: '#4b5563',
+    color: '#1D1B20',
   },
   teamBadge: {
     paddingHorizontal: 8,
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   team1Badge: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(49,78,153,0.1)',
   },
   team2Badge: {
     backgroundColor: 'rgba(220,38,38,0.1)',
@@ -564,63 +565,22 @@ const styles = StyleSheet.create({
   teamBadgeText: {
     fontSize: 12,
     fontWeight: '500',
+    color: '#1D1B20',
   },
   noPlayersText: {
-    color: '#9ca3af',
+    color: '#1D1B20',
     fontStyle: 'italic',
     textAlign: 'center',
     marginVertical: 16,
   },
-  levelCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  levelInfo: {
-    marginLeft: 16,
-  },
-  levelLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  levelText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e3a8a',
-  },
-  descriptionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-  },
-  descriptionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  descriptionText: {
-    fontSize: 16,
-    color: '#4b5563',
-    lineHeight: 24,
-  },
   buttonContainer: {
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#F0F0F0',
   },
   joinButton: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: '#314E99',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -629,15 +589,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#dc2626',
   },
   buttonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: '#F0F0F0',
   },
   joinButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
   scoreSection: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -645,11 +605,11 @@ const styles = StyleSheet.create({
   scoreTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e3a8a',
+    color: '#314E99',
     marginBottom: 12,
   },
   scoreContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
   },
@@ -660,18 +620,18 @@ const styles = StyleSheet.create({
   },
   scoreSetTitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#1D1B20',
   },
   scoreSetValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1e3a8a',
+    color: '#314E99',
   },
   winnerContainer: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#F0F0F0',
   },
   winnerText: {
     fontSize: 16,
@@ -685,7 +645,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e3a8a',
+    backgroundColor: '#314E99',
     padding: 16,
     borderRadius: 8,
   },
@@ -693,12 +653,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   addScoreText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
-  },
-  joinIcon: {
-    marginRight: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -717,7 +674,7 @@ const styles = StyleSheet.create({
   },
   chatButton: {
     padding: 8,
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(49,78,153,0.1)',
     borderRadius: 8,
   },
   chatButtonContent: {
@@ -726,7 +683,7 @@ const styles = StyleSheet.create({
   },
   chatButtonText: {
     marginLeft: 4,
-    color: '#1e3a8a',
+    color: '#314E99',
     fontWeight: '600',
     fontSize: 14,
   },

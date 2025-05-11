@@ -3,11 +3,10 @@ import { View, Text, StyleSheet, StatusBar, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import NotificationHeader from './NotificationHeader';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const BASELINE_HEIGHT = 812; // Altura base de referencia
-const SCALE = SCREEN_HEIGHT / BASELINE_HEIGHT;
-const CONTAINER_HEIGHT = Math.round(120 * SCALE);
-const CONTENT_HEIGHT = Math.round(56 * SCALE);
+// Altura estándar de AppBar según Material Design
+const APP_BAR_HEIGHT = 56; // Altura base del AppBar
+const STATUS_BAR_HEIGHT = 24; // Altura aproximada de la barra de estado
+const TOTAL_HEIGHT = APP_BAR_HEIGHT + STATUS_BAR_HEIGHT;
 
 interface AppBarProps {
   title: string;
@@ -15,9 +14,9 @@ interface AppBarProps {
 
 const AppBar: React.FC<AppBarProps> = ({ title }) => {
   return (
-    <SafeAreaView style={[styles.container, { height: CONTAINER_HEIGHT }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
-      <View style={[styles.content, { height: CONTENT_HEIGHT }]}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#314E99" />
+      <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
         <NotificationHeader />
       </View>
@@ -27,19 +26,28 @@ const AppBar: React.FC<AppBarProps> = ({ title }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1e3a8a',
-    elevation: 2,
+    backgroundColor: '#314E99',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+    height: APP_BAR_HEIGHT,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '500',
-    color: '#ffffff',
+    color: '#FFFFFF',
+    letterSpacing: 0.15,
   },
 });
 

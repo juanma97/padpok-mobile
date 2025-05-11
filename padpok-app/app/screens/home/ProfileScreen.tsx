@@ -223,14 +223,14 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.avatarContainer}>
-            <Ionicons name="person-circle-outline" size={50} color="#1e3a8a" />
+            <Ionicons name="person-circle-outline" size={50} color="#314E99" />
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.name}>{userProfile?.username || 'Usuario'}</Text>
             <View style={styles.userBadges}>
               {userProfile?.level && (
                 <View style={styles.badge}>
-                  <Ionicons name="trophy-outline" size={16} color="#22C55E" />
+                  <Ionicons name="trophy-outline" size={16} color="#314E99" />
                   <Text style={styles.badgeText}>{userProfile.level}</Text>
                 </View>
               )}
@@ -251,10 +251,10 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#ef4444" size="small" />
+                  <ActivityIndicator color="#dc2626" size="small" />
                 ) : (
                   <>
-                    <Ionicons name="log-out-outline" size={16} color="#ef4444" style={styles.signOutIcon} />
+                    <Ionicons name="log-out-outline" size={16} color="#dc2626" style={styles.signOutIcon} />
                     <Text style={styles.signOutText}>Cerrar sesión</Text>
                   </>
                 )}
@@ -268,7 +268,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons name="stats-chart" size={20} color="#1e3a8a" style={styles.sectionIcon} />
+            <Ionicons name="stats-chart" size={20} color="#314E99" style={styles.sectionIcon} />
             <Text style={styles.sectionTitle}>Estadísticas</Text>
           </View>
           <TouchableOpacity 
@@ -276,27 +276,27 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             onPress={() => navigation.navigate('MatchHistory')}
           >
             <Text style={styles.seeAllText}>Ver historial</Text>
-            <Ionicons name="chevron-forward" size={16} color="#1e3a8a" />
+            <Ionicons name="chevron-forward" size={16} color="#314E99" />
           </TouchableOpacity>
         </View>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
-              <Ionicons name="tennisball-outline" size={20} color="#22C55E" />
+              <Ionicons name="tennisball-outline" size={20} color="#314E99" />
             </View>
             <Text style={styles.statNumber}>{userProfile?.stats.matchesPlayed || 0}</Text>
             <Text style={styles.statLabel}>Partidos</Text>
           </View>
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
-              <Ionicons name="trophy-outline" size={20} color="#22C55E" />
+              <Ionicons name="trophy-outline" size={20} color="#314E99" />
             </View>
             <Text style={styles.statNumber}>{userProfile?.stats.wins || 0}</Text>
             <Text style={styles.statLabel}>Victorias</Text>
           </View>
           <View style={styles.statItem}>
             <View style={styles.statIconContainer}>
-              <Ionicons name="people-outline" size={20} color="#22C55E" />
+              <Ionicons name="people-outline" size={20} color="#314E99" />
             </View>
             <Text style={styles.statNumber}>
               {userMedals.filter(medal => medal.unlocked).length}
@@ -310,7 +310,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons name="trophy" size={20} color="#1e3a8a" style={styles.sectionIcon} />
+            <Ionicons name="trophy" size={20} color="#314E99" style={styles.sectionIcon} />
             <Text style={styles.sectionTitle}>Medallas</Text>
           </View>
           <TouchableOpacity 
@@ -318,7 +318,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             onPress={() => navigation.navigate('Medals')}
           >
             <Text style={styles.seeAllText}>Ver todas</Text>
-            <Ionicons name="chevron-forward" size={16} color="#1e3a8a" />
+            <Ionicons name="chevron-forward" size={16} color="#314E99" />
           </TouchableOpacity>
         </View>
         <View style={styles.medalsContainer}>
@@ -332,7 +332,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
                   return medal ? (
                     <View key={medal.id} style={styles.medalItem}>
                       <View style={styles.medalCircleUnlocked}>
-                        <Ionicons name={medal.icon as any} size={20} color="#22C55E" />
+                        <Ionicons name={medal.icon as any} size={20} color="#314E99" />
                       </View>
                       <Text style={styles.medalName} numberOfLines={1}>
                         {medal.name}
@@ -343,7 +343,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             </View>
           ) : (
             <View style={styles.noMedalsContainer}>
-              <Ionicons name="trophy-outline" size={24} color="#9ca3af" />
+              <Ionicons name="trophy-outline" size={24} color="#1D1B20" />
               <Text style={styles.noMedalsText}>
                 Aún no has desbloqueado medallas
               </Text>
@@ -356,7 +356,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons name="calendar" size={20} color="#1e3a8a" style={styles.sectionIcon} />
+            <Ionicons name="calendar" size={20} color="#314E99" style={styles.sectionIcon} />
             <Text style={styles.sectionTitle}>Disponibilidad Habitual</Text>
           </View>
           {hasUnsavedChanges && (
@@ -366,7 +366,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
               disabled={savingAvailability}
             >
               {savingAvailability ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <Text style={styles.saveButtonText}>Guardar cambios</Text>
               )}
@@ -414,7 +414,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
                   <Ionicons 
                     name={timeOfDay === 'morning' ? 'sunny-outline' : 'moon-outline'} 
                     size={16} 
-                    color="#4b5563" 
+                    color="#1D1B20" 
                   />
                   <Text style={styles.timeOfDayTitle}>
                     {timeOfDay === 'morning' ? 'MAÑANA' : 'TARDE'}
@@ -451,13 +451,13 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F0F0F0',
   },
   headerContent: {
     flexDirection: 'row',
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#314E99',
     marginBottom: 8,
   },
   userBadges: {
@@ -490,20 +490,20 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#22C55E15',
+    backgroundColor: 'rgba(49,78,153,0.1)',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     gap: 6,
   },
   badgeText: {
-    color: '#22C55E',
+    color: '#314E99',
     fontSize: 14,
     fontWeight: '500',
   },
   bioText: {
     fontSize: 14,
-    color: '#666',
+    color: '#1D1B20',
     lineHeight: 20,
     fontStyle: 'italic',
     marginBottom: 8,
@@ -518,14 +518,14 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   signOutText: {
-    color: '#ef4444',
+    color: '#dc2626',
     fontWeight: '500',
     fontSize: 14,
   },
   section: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: '#F0F0F0',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -539,16 +539,17 @@ const styles = StyleSheet.create({
   },
   sectionIcon: {
     marginRight: 8,
+    color: '#314E99',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e3a8a',
+    color: '#314E99',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 16,
   },
@@ -559,27 +560,27 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#F0F0F0',
   },
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#314E99',
     marginBottom: 4,
   },
   statLabel: {
-    color: '#4b5563',
+    color: '#1D1B20',
     fontSize: 12,
     fontWeight: '500',
   },
   daysContainer: {
     marginBottom: 20,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 16,
   },
@@ -593,29 +594,29 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22C55E',
+    borderColor: '#314E99',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 4,
   },
   dayButtonActive: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#314E99',
   },
   dayButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#314E99',
   },
   dayButtonTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
   dayFullName: {
     fontSize: 8,
-    color: '#22C55E',
+    color: '#314E99',
     marginTop: 2,
   },
   dayFullNameActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
   hoursContainer: {
     marginTop: 8,
@@ -623,7 +624,7 @@ const styles = StyleSheet.create({
   subsectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4b5563',
+    color: '#1D1B20',
     marginBottom: 12,
   },
   availabilityContainer: {
@@ -631,7 +632,7 @@ const styles = StyleSheet.create({
   },
   timeOfDayContainer: {
     marginBottom: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 16,
   },
@@ -643,7 +644,7 @@ const styles = StyleSheet.create({
   timeOfDayTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4b5563',
+    color: '#1D1B20',
     marginLeft: 8,
   },
   hoursGrid: {
@@ -655,22 +656,22 @@ const styles = StyleSheet.create({
     width: '30%',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22C55E',
+    borderColor: '#314E99',
     paddingVertical: 8,
     paddingHorizontal: 4,
     alignItems: 'center',
     marginBottom: 8,
   },
   hourButtonActive: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#314E99',
   },
   hourButtonText: {
-    color: '#22C55E',
+    color: '#314E99',
     fontSize: 14,
     fontWeight: '500',
   },
   hourButtonTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
   seeAllButton: {
     flexDirection: 'row',
@@ -678,12 +679,12 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   seeAllText: {
-    color: '#1e3a8a',
+    color: '#314E99',
     fontWeight: '500',
     marginRight: 4,
   },
   medalsContainer: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 16,
   },
@@ -700,16 +701,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#22C55E',
+    borderColor: '#314E99',
     marginBottom: 6,
   },
   medalName: {
     fontSize: 11,
-    color: '#4b5563',
+    color: '#1D1B20',
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -718,13 +719,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   noMedalsText: {
-    color: '#9ca3af',
+    color: '#1D1B20',
     textAlign: 'center',
     marginTop: 8,
     fontSize: 14,
   },
   saveButton: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#314E99',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -732,7 +733,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
   },

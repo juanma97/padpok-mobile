@@ -14,15 +14,27 @@ const MainTabs = () => {
     <Tab.Navigator
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
-          borderTopColor: '#f0f0f0',
+          borderTopColor: '#F0F0F0',
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
         },
-        tabBarActiveTintColor: '#1e3a8a',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: '#314E99',
+        tabBarInactiveTintColor: '#1D1B20',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
         headerShown: false,
       }}
     >

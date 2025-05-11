@@ -391,7 +391,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#FFFFFF'
   },
   container: {
     padding: 24
@@ -400,27 +400,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 24
+    marginBottom: 24,
+    color: '#314E99'
   },
   formItem: {
     marginBottom: 24
   },
   label: {
-    color: '#4b5563',
+    color: '#1D1B20',
     marginBottom: 8
   },
   input: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     padding: 16,
-    borderRadius: 8
+    borderRadius: 8,
+    color: '#1D1B20'
   },
   dateSelector: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     padding: 16,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    color: '#1D1B20'
   },
   levelContainer: {
     flexDirection: 'row'
@@ -430,17 +433,17 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginRight: 8,
-    backgroundColor: '#f3f4f6'
+    backgroundColor: '#F0F0F0'
   },
   levelOptionSelected: {
-    backgroundColor: '#007bff'
+    backgroundColor: '#314E99'
   },
   levelText: {
     textAlign: 'center',
-    color: '#4b5563'
+    color: '#1D1B20'
   },
   levelTextSelected: {
-    color: '#fff'
+    color: '#FFFFFF'
   },
   textArea: {
     height: 100, 
@@ -451,13 +454,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#007bff'
+    backgroundColor: '#314E99'
   },
   buttonDisabled: {
-    backgroundColor: '#9ca3af'
+    backgroundColor: '#F0F0F0'
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 18
   },
@@ -465,7 +468,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     padding: 10,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8
   },
@@ -475,7 +478,7 @@ const styles = StyleSheet.create({
     marginLeft: 10
   },
   iosButtonText: {
-    color: '#007bff',
+    color: '#314E99',
     fontWeight: '600'
   },
   ageRangeContainer: {
@@ -488,21 +491,21 @@ const styles = StyleSheet.create({
     minWidth: '48%',
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center'
   },
   ageRangeOptionSelected: {
-    backgroundColor: '#007bff'
+    backgroundColor: '#314E99'
   },
   ageRangeText: {
     textAlign: 'center',
-    color: '#4b5563'
+    color: '#1D1B20'
   },
   ageRangeTextSelected: {
-    color: '#fff'
+    color: '#FFFFFF'
   },
   highlightButton: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: '#314E99',
     padding: 16,
     borderRadius: 8,
     marginBottom: 24,

@@ -36,7 +36,7 @@ const MedalsScreen = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1e3a8a" />
+        <ActivityIndicator size="large" color="#314E99" />
       </View>
     );
   }
@@ -84,7 +84,7 @@ const MedalsScreen = () => {
                     <Ionicons 
                       name={medal.icon as any} 
                       size={32} 
-                      color={isUnlocked ? '#22C55E' : '#9ca3af'} 
+                      color={isUnlocked ? '#314E99' : '#1D1B20'} 
                     />
                   </View>
                   {!isUnlocked && (
@@ -117,13 +117,13 @@ const MedalsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -135,19 +135,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#314E99',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#1D1B20',
   },
   medalsContainer: {
     padding: 16,
   },
   medalCard: {
     flexDirection: 'row',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -175,20 +175,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   medalCircleUnlocked: {
-    backgroundColor: '#22C55E15',
+    backgroundColor: 'rgba(49,78,153,0.1)',
     borderWidth: 2,
-    borderColor: '#22C55E',
+    borderColor: '#314E99',
   },
   medalCircleLocked: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     borderWidth: 2,
-    borderColor: '#9ca3af',
+    borderColor: '#1D1B20',
   },
   lockIcon: {
     position: 'absolute',
     bottom: -4,
     right: -4,
-    backgroundColor: '#6b7280',
+    backgroundColor: '#1D1B20',
     borderRadius: 12,
     width: 24,
     height: 24,
@@ -202,27 +202,29 @@ const styles = StyleSheet.create({
   medalName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1e3a8a',
+    color: '#314E99',
     marginBottom: 4,
   },
   medalNameLocked: {
-    color: '#6b7280',
+    color: '#1D1B20',
   },
   medalDescription: {
     fontSize: 14,
-    color: '#4b5563',
+    color: '#1D1B20',
     marginBottom: 8,
   },
   medalDescriptionLocked: {
-    color: '#9ca3af',
+    color: '#1D1B20',
+    opacity: 0.7,
   },
   medalProgress: {
     fontSize: 12,
-    color: '#22C55E',
+    color: '#314E99',
     fontWeight: '500',
   },
   medalProgressLocked: {
-    color: '#9ca3af',
+    color: '#1D1B20',
+    opacity: 0.7,
   },
 });
 
