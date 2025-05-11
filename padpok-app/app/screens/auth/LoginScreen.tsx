@@ -16,21 +16,38 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '@app/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { RootStackScreenProps } from '@app/types';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import type { AuthStackParamList } from '@app/types';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import CustomDialog from '@app/components/CustomDialog';
 
-type NavigationProp = RootStackScreenProps<'Login'>['navigation'];
+type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 const LoginScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<Props['navigation']>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [dialog, setDialog] = useState<{
+    visible: boolean;
+    title?: string;
+    message: string;
+    options?: { text: string; onPress?: () => void; style?: object }[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    options: undefined,
+  });
+
+  const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
+    setDialog({ visible: true, title, message, options });
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor, completa todos los campos');
+      showDialog('Error', 'Por favor, completa todos los campos');
       return;
     }
 
@@ -43,7 +60,14 @@ const LoginScreen = () => {
         })
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      console.log(error);
+      let errorMessage = 'Error al iniciar sesión';
+      if (error.code === 'auth/invalid-email' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Email o contraseña incorrectos';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Demasiados intentos fallidos. Por favor, espera un momento';
+      }
+      showDialog('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -51,6 +75,33 @@ const LoginScreen = () => {
 
   const handleRegister = () => {
     navigation.navigate('Register');
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      showDialog('Error', 'Por favor, ingresa tu email para recuperar la contraseña');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      showDialog(
+        'Email enviado',
+        'Se ha enviado un email con instrucciones para recuperar tu contraseña',
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      let errorMessage = 'Error al enviar el email de recuperación';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No existe una cuenta con este email';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'El email ingresado no es válido';
+      }
+      showDialog('Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,7 +157,10 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.forgotPassword}>
+            <TouchableOpacity 
+              style={styles.forgotPassword}
+              onPress={handleForgotPassword}
+            >
               <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
@@ -131,6 +185,13 @@ const LoginScreen = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        options={dialog.options}
+        onClose={() => setDialog(d => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
