@@ -26,9 +26,8 @@ const WelcomeScreen = () => {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
-              <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+              <Ionicons name="tennisball-outline" size={40} color="#314E99" />
             </View>
-            <Text style={styles.logoText}>PADPOK</Text>
           </View>
           <Text style={styles.title}>Encuentra tu próximo partido</Text>
           <Text style={styles.subtitle}>
@@ -66,7 +65,7 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: '#314E99',
   },
   overlay: {
     flex: 1,
@@ -85,29 +84,29 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#22C55E',
+    borderColor: '#F0F0F0',
   },
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FFFFFF',
     letterSpacing: 2,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 16,
   },
   subtitle: {
     fontSize: 18,
-    color: '#fff',
+    color: '#FFFFFF',
     textAlign: 'center',
     opacity: 0.9,
   },
@@ -116,24 +115,26 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   primaryButton: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#fff',
+    color: '#314E99',
     fontWeight: 'bold',
     fontSize: 18,
   },
   secondaryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   secondaryButtonText: {
-    color: '#1e3a8a',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 18,
   },
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   exploreButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     textDecorationLine: 'underline',
   },

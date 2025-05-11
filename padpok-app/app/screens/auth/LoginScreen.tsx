@@ -115,9 +115,9 @@ const LoginScreen = () => {
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <View style={styles.logoCircle}>
-                <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+                <Ionicons name="tennisball-outline" size={40} color="#314E99" />
               </View>
-              <Text style={styles.logoText}>PADPOK</Text>
+              <Text style={styles.logoText}>padpok</Text>
             </View>
             <Text style={styles.title}>Bienvenido de nuevo</Text>
             <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
@@ -199,11 +199,11 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
@@ -221,28 +221,29 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f0f5ff',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#22C55E',
+    borderColor: '#314E99',
   },
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#314E99',
     letterSpacing: 2,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#1D1B20',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#1D1B20',
+    opacity: 0.7,
     textAlign: 'center',
   },
   formContainer: {
@@ -251,17 +252,20 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     borderRadius: 8,
     paddingHorizontal: 16,
   },
   inputIcon: {
     marginRight: 12,
+    color: '#1D1B20',
+    opacity: 0.7,
   },
   input: {
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
+    color: '#1D1B20',
   },
   eyeIcon: {
     padding: 8,
@@ -270,21 +274,22 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   forgotPasswordText: {
-    color: '#22C55E',
+    color: '#314E99',
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#314E99',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: '#1D1B20',
+    opacity: 0.5,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 18,
   },
@@ -295,10 +300,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   registerText: {
-    color: '#6b7280',
+    color: '#1D1B20',
+    opacity: 0.7,
   },
   registerLink: {
-    color: '#22C55E',
+    color: '#314E99',
     fontWeight: 'bold',
   },
 });

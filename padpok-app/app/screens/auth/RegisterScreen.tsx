@@ -138,9 +138,9 @@ const RegisterScreen = () => {
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Ionicons name="tennisball-outline" size={40} color="#22C55E" />
+            <Ionicons name="tennisball-outline" size={40} color="#314E99" />
           </View>
-          <Text style={styles.logoText}>PADPOK</Text>
+          <Text style={styles.logoText}>padpok</Text>
         </View>
         <Text style={styles.title}>Crear cuenta</Text>
         <Text style={styles.subtitle}>Paso 1 de 2: Tus credenciales</Text>
@@ -148,7 +148,7 @@ const RegisterScreen = () => {
 
       <View style={styles.formContainer}>
         <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <Ionicons name="mail-outline" size={20} color="#1D1B20" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -160,7 +160,7 @@ const RegisterScreen = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <Ionicons name="lock-closed-outline" size={20} color="#1D1B20" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Contraseña"
@@ -175,7 +175,7 @@ const RegisterScreen = () => {
             <Ionicons 
               name={showPassword ? "eye-off-outline" : "eye-outline"} 
               size={20} 
-              color="#6b7280" 
+              color="#1D1B20" 
             />
           </TouchableOpacity>
         </View>
@@ -198,7 +198,7 @@ const RegisterScreen = () => {
           style={styles.backButton}
           onPress={() => setStep(1)}
         >
-          <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
+          <Ionicons name="arrow-back" size={24} color="#1D1B20" />
         </TouchableOpacity>
         <Text style={styles.title}>Información adicional</Text>
         <Text style={styles.subtitle}>Paso 2 de 2: Cuéntanos sobre ti</Text>
@@ -206,7 +206,7 @@ const RegisterScreen = () => {
 
       <View style={styles.formContainer}>
         <View style={styles.inputContainer}>
-          <Ionicons name="person-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <Ionicons name="person-outline" size={20} color="#1D1B20" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Nombre de usuario"
@@ -216,7 +216,7 @@ const RegisterScreen = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Ionicons name="trophy-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <Ionicons name="trophy-outline" size={20} color="#1D1B20" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Edad"
@@ -227,7 +227,7 @@ const RegisterScreen = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Ionicons name="location-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <Ionicons name="location-outline" size={20} color="#1D1B20" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Club o zona de juego"
@@ -265,7 +265,7 @@ const RegisterScreen = () => {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.buttonText}>Crear cuenta</Text>
           )}
@@ -276,7 +276,7 @@ const RegisterScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -292,11 +292,11 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
@@ -320,28 +320,29 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f0f5ff',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#22C55E',
+    borderColor: '#314E99',
   },
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#314E99',
     letterSpacing: 2,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#1D1B20',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#1D1B20',
+    opacity: 0.7,
     textAlign: 'center',
   },
   formContainer: {
@@ -350,33 +351,37 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     borderRadius: 8,
     paddingHorizontal: 16,
   },
   inputIcon: {
     marginRight: 12,
+    color: '#1D1B20',
+    opacity: 0.7,
   },
   input: {
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
+    color: '#1D1B20',
   },
   eyeIcon: {
     padding: 8,
   },
   button: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#314E99',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: '#1D1B20',
+    opacity: 0.5,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 18,
   },
@@ -384,7 +389,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   levelLabel: {
-    color: '#4b5563',
+    color: '#1D1B20',
+    opacity: 0.7,
     marginBottom: 8,
   },
   levelOptions: {
@@ -395,17 +401,17 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
   },
   levelOptionSelected: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#314E99',
   },
   levelText: {
-    color: '#4b5563',
+    color: '#1D1B20',
   },
   levelTextSelected: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
 });
 

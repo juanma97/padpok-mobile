@@ -108,7 +108,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           ]}
         >
           <View style={styles.ballContainer}>
-            <Ionicons name="tennisball" size={80} color="#22C55E" />
+            <Ionicons name="tennisball" size={80} color="#FFFFFF" />
           </View>
           <Text style={styles.title}>PADPOK</Text>
           <Text style={styles.subtitle}>Tu app de pádel</Text>
@@ -132,7 +132,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: '#314E99',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -146,14 +146,14 @@ const styles = StyleSheet.create({
   },
   ballContainer: {
     marginBottom: 20,
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
     borderRadius: 50,
   },
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#FFFFFF',
     marginBottom: 8,
     letterSpacing: 2,
   },
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#22C55E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 2,
   },
   loadingText: {
