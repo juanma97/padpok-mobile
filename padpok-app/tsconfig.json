@@ -12,6 +12,7 @@
       "@constants/*": ["app/constants/*"],
       "@types/*": ["app/types/*"],
       "@assets/*": ["assets/*"]
-    }
+    },
+    "jsx": "react-jsx"
   }
 }
