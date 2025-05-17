@@ -67,7 +67,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
     try {
       setLoading(true);
       const matchesRef = collection(db, 'matches');
-      let q = query(matchesRef, orderBy('date', 'asc'));
+      let q = query(matchesRef, where('date', '>=', Timestamp.now()), orderBy('date', 'asc'));
       
       // Si el usuario quiere ver solo partidos que coincidan con sus preferencias
       if (showOnlyPreferences && user) {
