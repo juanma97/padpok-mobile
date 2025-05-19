@@ -221,7 +221,11 @@ const RegisterScreen = () => {
             style={styles.input}
             placeholder="Edad"
             value={age}
-            onChangeText={setAge}
+            onChangeText={text => {
+              // Solo números positivos, sin ceros iniciales ni negativos
+              const filtered = text.replace(/[^0-9]/g, '');
+              setAge(filtered.replace(/^0+/, ''));
+            }}
             keyboardType="numeric"
           />
         </View>
