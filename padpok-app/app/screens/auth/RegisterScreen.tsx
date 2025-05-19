@@ -20,6 +20,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { RootStackScreenProps } from '@app/types';
 import { MEDALS } from '@app/types/medals';
+import CustomDialog from '@app/components/CustomDialog';
 
 type NavigationProp = RootStackScreenProps<'Register'>['navigation'];
 
@@ -39,13 +40,24 @@ const RegisterScreen = () => {
   const [age, setAge] = useState('');
   const [clubZone, setClubZone] = useState('');
 
+  const [dialog, setDialog] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    options: undefined as { text: string; onPress?: () => void; style?: object }[] | undefined,
+  });
+
+  const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
+    setDialog({ visible: true, title, message, options });
+  };
+
   const validateStep1 = () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor, completa todos los campos');
+      showDialog('Error', 'Por favor, completa todos los campos');
       return false;
     }
     if (password.length < 6) {
-      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
+      showDialog('Error', 'La contraseña debe tener al menos 6 caracteres');
       return false;
     }
     return true;
@@ -53,11 +65,11 @@ const RegisterScreen = () => {
 
   const validateStep2 = () => {
     if (!username || !level || !age || !clubZone) {
-      Alert.alert('Error', 'Por favor, completa todos los campos');
+      showDialog('Error', 'Por favor, completa todos los campos');
       return false;
     }
     if (isNaN(Number(age)) || Number(age) < 18) {
-      Alert.alert('Error', 'La edad debe ser un número válido mayor o igual a 18');
+      showDialog('Error', 'La edad debe ser un número válido mayor o igual a 18');
       return false;
     }
     return true;
@@ -71,7 +83,7 @@ const RegisterScreen = () => {
 
   const handleRegister = async () => {
     if (!validateStep2()) {
-      Alert.alert('Error', 'Por favor, completa todos los campos correctamente');
+      showDialog('Error', 'Por favor, completa todos los campos correctamente');
       return;
     }
 
@@ -109,7 +121,7 @@ const RegisterScreen = () => {
         createdAt: serverTimestamp()
       });
 
-      Alert.alert(
+      showDialog(
         '¡Registro exitoso!',
         'Tu cuenta ha sido creada correctamente',
         [
@@ -125,9 +137,7 @@ const RegisterScreen = () => {
         ]
       );
     } catch (error: any) {
-      Alert.alert('Error', 
-        `Error al registrarse: ${error.message}\n\nCódigo: ${error.code}`
-      );
+      showDialog('Error', `Error al registrarse: ${error.message}\n\nCódigo: ${error.code}`);
     } finally {
       setLoading(false);
     }
@@ -288,6 +298,13 @@ const RegisterScreen = () => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {step === 1 ? renderStep1() : renderStep2()}
         </ScrollView>
+        <CustomDialog
+          visible={dialog.visible}
+          title={dialog.title}
+          message={dialog.message}
+          options={dialog.options}
+          onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

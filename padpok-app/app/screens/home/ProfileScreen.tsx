@@ -10,6 +10,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types';
 import { getAllMedals, getUserMedals } from '@app/lib/medals';
 import { Medal, UserMedal } from '@app/types/medals';
+import CustomDialog from '@app/components/CustomDialog';
 
 type UserLevel = 'Principiante' | 'Intermedio' | 'Avanzado';
 
@@ -67,6 +68,12 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   const [medals, setMedals] = useState<Medal[]>([]);
   const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [dialog, setDialog] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    options: undefined as { text: string; onPress?: () => void; style?: object }[] | undefined,
+  });
 
   // Determinar si estamos viendo nuestro propio perfil
   const isOwnProfile = !userId || userId === user?.uid;
@@ -162,10 +169,10 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
         'availability.hours': selectedHours
       });
       setHasUnsavedChanges(false);
-      Alert.alert('Éxito', 'Disponibilidad actualizada correctamente');
+      showDialog('Éxito', 'Disponibilidad actualizada correctamente');
     } catch (error) {
       console.error('Error saving availability:', error);
-      Alert.alert('Error', 'No se pudo guardar la disponibilidad');
+      showDialog('Error', 'No se pudo guardar la disponibilidad');
     } finally {
       setSavingAvailability(false);
     }
@@ -178,33 +185,33 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
         screen: 'Welcome'
       });
     }
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Cerrar sesión',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await signOut(auth);
-              navigation.navigate('Auth', {
-                screen: 'Welcome'
-              });
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo cerrar la sesión');
-            } finally {
-              setLoading(false);
-            }
+    showDialog('Cerrar sesión', '¿Estás seguro de que quieres cerrar sesión?', [
+      {
+        text: 'Cancelar',
+        style: 'cancel'
+      },
+      {
+        text: 'Cerrar sesión',
+        style: 'destructive',
+        onPress: async () => {
+          setLoading(true);
+          try {
+            await signOut(auth);
+            navigation.navigate('Auth', {
+              screen: 'Welcome'
+            });
+          } catch (error) {
+            showDialog('Error', 'No se pudo cerrar la sesión');
+          } finally {
+            setLoading(false);
           }
         }
-      ]
-    );
+      }
+    ]);
+  };
+
+  const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
+    setDialog({ visible: true, title, message, options });
   };
 
   if (!user) {
@@ -437,6 +444,13 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
           </View>
         </View>
       </View>
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        options={dialog.options}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </ScrollView>
   );
 };

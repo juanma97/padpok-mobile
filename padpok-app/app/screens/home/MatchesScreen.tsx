@@ -12,12 +12,10 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList, Match } from '@app/types';
-import { collection, query, orderBy, getDocs, where, Timestamp } from 'firebase/firestore';
-import { db } from '@app/lib/firebase';
+import { query, orderBy, getDocs, where, Timestamp } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@app/lib/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 
@@ -44,15 +42,15 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
       if (!user) return;
       
       try {
-        const userRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userRef);
+        const userRef = firestore().collection('users').doc(user.uid);
+        const userDoc = await userRef.get();
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserPreferences({
-            days: userData.availability?.days || [],
-            hours: userData.availability?.hours || [],
-            level: userData.level || null
+            days: userData?.availability?.days || [],
+            hours: userData?.availability?.hours || [],
+            level: userData?.level || null
           });
         }
       } catch (error) {
@@ -66,12 +64,12 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
   const fetchMatches = useCallback(async () => {
     try {
       setLoading(true);
-      const matchesRef = collection(db, 'matches');
+      const matchesRef = firestore().collection('matches');
       let q = query(matchesRef, where('date', '>=', Timestamp.now()), orderBy('date', 'asc'));
       
       // Si el usuario quiere ver solo partidos que coincidan con sus preferencias
       if (showOnlyPreferences && user) {
-        const conditions = [];
+        const conditions = [where('date', '>=', Timestamp.now())];
         
         // Filtrar por nivel si el usuario tiene uno definido
         if (userPreferences.level) {
