@@ -11,8 +11,6 @@ import ProfileScreen from '@app/screens/home/ProfileScreen';
 import RankingScreen from '@app/screens/home/RankingScreen';
 import MedalsScreen from '@app/screens/home/MedalsScreen';
 import NotificationsScreen from '@app/screens/home/NotificationsScreen';
-import FollowersScreen from '@app/screens/FollowersScreen';
-import FollowingScreen from '@app/screens/FollowingScreen';
 import AppBar from '@app/components/AppBar';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -62,16 +60,6 @@ const HomeStack = () => {
       <Stack.Screen 
         name="Profile" 
         component={ProfileScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen 
-        name="Followers" 
-        component={FollowersScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen 
-        name="Following" 
-        component={FollowingScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen 

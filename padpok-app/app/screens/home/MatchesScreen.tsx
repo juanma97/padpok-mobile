@@ -8,18 +8,25 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList, Match } from '@app/types';
-import { query, orderBy, getDocs, where, Timestamp } from 'firebase/firestore';
+import { HomeStackParamList } from '@app/types/navigation';
+import { Match } from '@app/types/models';
+import { query, orderBy, getDocs, where, Timestamp, collection, DocumentData, doc, getDoc } from 'firebase/firestore';
+import { db } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
-import firestore from '@react-native-firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '@app/types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
+type RootNavigationProp = StackNavigationProp<RootStackParamList>;
 
-const MatchesScreen: React.FC<Props> = ({ navigation }) => {
+const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
+  const rootNavigation = useNavigation<RootNavigationProp>();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,8 +49,8 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
       if (!user) return;
       
       try {
-        const userRef = firestore().collection('users').doc(user.uid);
-        const userDoc = await userRef.get();
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
@@ -61,69 +68,44 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
     fetchUserPreferences();
   }, [user]);
 
+  useEffect(() => {
+    if (route.params?.refresh) {
+      fetchMatches();
+      // Limpiar el parámetro después de usarlo
+      navigation.setParams({ refresh: undefined });
+    }
+  }, [route.params?.refresh]);
+
   const fetchMatches = useCallback(async () => {
     try {
       setLoading(true);
-      const matchesRef = firestore().collection('matches');
-      let q = query(matchesRef, where('date', '>=', Timestamp.now()), orderBy('date', 'asc'));
-      
-      // Si el usuario quiere ver solo partidos que coincidan con sus preferencias
-      if (showOnlyPreferences && user) {
-        const conditions = [where('date', '>=', Timestamp.now())];
-        
-        // Filtrar por nivel si el usuario tiene uno definido
-        if (userPreferences.level) {
-          conditions.push(where('level', '==', userPreferences.level));
-        }
-        
-        // Filtrar por días disponibles
-        if (userPreferences.days.length > 0) {
-          // Convertir la fecha del partido a día de la semana
-          conditions.push(where('date', '>=', Timestamp.now()));
-        }
-        
-        q = query(matchesRef, ...conditions, orderBy('date', 'asc'));
-      }
+      const matchesRef = collection(db, 'matches');
+      const q = query(
+        matchesRef,
+        where('date', '>=', Timestamp.now()),
+        orderBy('date', 'asc')
+      );
       
       const querySnapshot = await getDocs(q);
-      
-      const matchesData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
+      const matchesData = querySnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
         return {
-          id: doc.id,
           ...data,
-          date: data.date?.toDate() || new Date()
-        };
-      }) as Match[];
+          id: docSnapshot.id,
+          date: data.date.toDate(),
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        } as Match;
+      });
 
-      // Filtrar por horas disponibles si es necesario
-      let filteredMatches = matchesData;
-      if (showOnlyPreferences && userPreferences.hours.length > 0) {
-        filteredMatches = matchesData.filter(match => {
-          const matchDate = match.date;
-          const matchHour = matchDate.getHours();
-          const matchDay = matchDate.getDay();
-          
-          // Convertir el día de la semana a formato de la app (L, M, X, etc.)
-          const dayMap = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-          const matchDayStr = dayMap[matchDay];
-          
-          // Convertir la hora del partido a formato de la app (HH:00)
-          const matchHourStr = `${matchHour.toString().padStart(2, '0')}:00`;
-          
-          return userPreferences.days.includes(matchDayStr) && 
-                 userPreferences.hours.includes(matchHourStr);
-        });
-      }
-      
-      setMatches(filteredMatches);
+      setMatches(matchesData);
     } catch (error) {
       console.error('Error fetching matches:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [showOnlyPreferences, userPreferences]);
+  }, []);
 
   useEffect(() => {
     fetchMatches();
@@ -150,47 +132,62 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
     });
   }, [matches, sortOrder]);
 
-  const renderMatchCard = ({ item }: { item: Match }) => {
-    const formattedDate = item.date ? item.date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : 'Fecha no disponible';
-
-    return (
-      <TouchableOpacity 
-        style={styles.card}
-        onPress={() => navigation.navigate('MatchDetails', { match: item })}
-      >
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          <View style={styles.playersCount}>
-            <Text style={styles.playersCountText}>
-              {item.playersJoined.length}/{item.playersNeeded}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.cardContent}>
-          <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={20} color="#1e3a8a" />
-            <Text style={styles.infoText}>{item.location}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color="#1e3a8a" />
-            <Text style={styles.infoText}>{formattedDate}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="people-outline" size={20} color="#1e3a8a" />
-            <Text style={styles.infoText}>{item.ageRange}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
+  const handleMatchPress = (match: Match) => {
+    if (!user) {
+      Alert.alert(
+        'Iniciar sesión requerido',
+        'Debes iniciar sesión para ver los detalles del partido',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel'
+          },
+          {
+            text: 'Iniciar sesión',
+            onPress: () => rootNavigation.navigate('Auth')
+          }
+        ]
+      );
+      return;
+    }
+    navigation.navigate('MatchDetails', { matchId: match.id });
   };
+
+  const renderMatchItem = ({ item }: { item: Match }) => (
+    <TouchableOpacity
+      style={styles.matchItem}
+      onPress={() => handleMatchPress(item)}
+    >
+      <View style={styles.matchHeader}>
+        <Text style={styles.matchTitle}>{item.title}</Text>
+        <Text style={styles.matchDate}>
+          {item.date.toLocaleDateString('es-ES', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </Text>
+      </View>
+      <View style={styles.matchInfo}>
+        <View style={styles.infoRow}>
+          <Ionicons name="location-outline" size={16} color="#666" />
+          <Text style={styles.infoText}>{item.location}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name="people-outline" size={16} color="#666" />
+          <Text style={styles.infoText}>
+            {item.playersJoined.length}/{item.playersNeeded} jugadores
+          </Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name="trophy-outline" size={16} color="#666" />
+          <Text style={styles.infoText}>{item.level}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   if (loading && !refreshing) {
     return (
@@ -241,18 +238,13 @@ const MatchesScreen: React.FC<Props> = ({ navigation }) => {
 
         {matches.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="tennisball-outline" size={48} color="#9ca3af" />
-            <Text style={styles.emptyText}>
-              {showOnlyPreferences 
-                ? 'No hay partidos que coincidan con tus preferencias'
-                : 'No hay partidos disponibles'}
-            </Text>
+            <Text style={styles.emptyText}>No hay partidos disponibles</Text>
           </View>
         ) : (
           <FlatList
             data={sortedMatches}
-            renderItem={renderMatchCard}
-            keyExtractor={(item, index) => item.id || `match-${index}`}
+            renderItem={renderMatchItem}
+            keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
             refreshControl={
               <RefreshControl
@@ -276,7 +268,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f5f5f5',
   },
   header: {
     padding: 16,
@@ -332,64 +324,64 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
   },
-  card: {
+  matchItem: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  cardHeader: {
+  matchHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  cardTitle: {
+  matchTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
-  },
-  playersCount: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  playersCountText: {
-    color: '#1e3a8a',
     fontWeight: '600',
+    color: '#1e3a8a',
+    flex: 1,
   },
-  cardContent: {
-    gap: 12,
+  matchDate: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  matchInfo: {
+    gap: 8,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   infoText: {
+    fontSize: 14,
+    color: '#666',
     marginLeft: 8,
-    fontSize: 16,
-    color: '#4b5563',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 32,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#666',
     textAlign: 'center',
   },
 });

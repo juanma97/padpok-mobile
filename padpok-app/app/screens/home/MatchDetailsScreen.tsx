@@ -11,16 +11,14 @@ import {
   StatusBar
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList, Match, Score, RootStackParamList } from '@app/types';
-import { doc, updateDoc, arrayRemove, arrayUnion, getDoc } from 'firebase/firestore';
+import { HomeStackParamList, Match, Score } from '@app/types';
+import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
-import { joinMatch, leaveMatch, updateMatchScore, getMatchUsers } from '@app/lib/matches';
+import { joinMatch, leaveMatch, getMatchUsers } from '@app/lib/matches';
 import ScoreForm from '@app/components/ScoreForm';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
-import MatchChat from '@app/components/MatchChat';
-import { useNavigation } from '@react-navigation/native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { HomeTabsParamList } from '@app/types';
@@ -355,13 +353,35 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
             {/* Formulario de resultados (condicional) */}
             {!match.score && isJoined && (
               <View style={styles.scoreFormContainer}>
-                <TouchableOpacity 
-                  style={styles.addScoreButton}
-                  onPress={() => setShowScoreForm(true)}
-                >
-                  <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
-                  <Text style={styles.addScoreText}>Añadir Resultado</Text>
-                </TouchableOpacity>
+                {(() => {
+                  const now = new Date();
+                  const matchDate = match.date;
+                  const timeDiff = matchDate.getTime() - now.getTime();
+                  const minutesRemaining = Math.ceil(timeDiff / (1000 * 60));
+                  
+                  if (timeDiff <= 0) {
+                    return (
+                      <TouchableOpacity 
+                        style={styles.addScoreButton}
+                        onPress={() => setShowScoreForm(true)}
+                      >
+                        <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
+                        <Text style={styles.addScoreText}>Añadir Resultado</Text>
+                      </TouchableOpacity>
+                    );
+                  }
+                  
+                  return (
+                    <View style={[styles.addScoreButton, styles.addScoreButtonDisabled]}>
+                      <Ionicons name="time-outline" size={20} color="#fff" style={styles.addScoreIcon} />
+                      <Text style={styles.addScoreText}>
+                        {minutesRemaining > 60 
+                          ? `El partido comienza en ${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
+                          : `El partido comienza en ${minutesRemaining}m`}
+                      </Text>
+                    </View>
+                  );
+                })()}
               </View>
             )}
 
@@ -656,6 +676,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  addScoreButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    opacity: 0.8,
   },
   loadingContainer: {
     flex: 1,
