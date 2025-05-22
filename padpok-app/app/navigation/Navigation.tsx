@@ -24,56 +24,11 @@ import MatchChatScreen from '@app/screens/home/MatchChatScreen';
 import MatchHistoryScreen from '@app/screens/MatchHistoryScreen';
 
 // Types
-import { AuthStackParamList, HomeTabsParamList, RootStackParamList, HomeStackParamList } from '@app/types';
+import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeTab = createBottomTabNavigator<HomeTabsParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
-const HomeStack = createNativeStackNavigator<HomeStackParamList>();
-
-const HomeNavigator = () => {
-  const { user } = useAuth();
-
-  return (
-    <HomeStack.Navigator
-      screenOptions={({ route }) => ({
-        header: ({ navigation, route, options }) => (
-          <AppBar title="padpok" />
-        ),
-      })}
-    >
-      <HomeStack.Screen 
-        name="Home" 
-        component={HomeTabs} 
-      />
-      <HomeStack.Screen 
-        name="Medals" 
-        component={MedalsScreen}
-      />
-      <HomeStack.Screen 
-        name="Notifications" 
-        component={NotificationsScreen}
-        options={{ 
-          headerShown: false,
-          title: 'Notificaciones' 
-        }}
-      />
-      <HomeStack.Screen 
-        name="MatchChat" 
-        component={MatchChatScreen}
-        options={{ title: 'Chat del Partido' }}
-      />
-      <HomeStack.Screen 
-        name="MatchHistory" 
-        component={MatchHistoryScreen}
-        options={{ 
-          headerShown: true,
-          title: 'Historial de Partidos'
-        }}
-      />
-    </HomeStack.Navigator>
-  );
-};
 
 const HomeTabs = () => {
   const { user } = useAuth();
@@ -98,33 +53,73 @@ const HomeTabs = () => {
         },
         tabBarActiveTintColor: '#1e3a8a',
         tabBarInactiveTintColor: 'gray',
-        headerShown: true,
+        header: ({ navigation, route, options }) => {
+          // Lista de pantallas que deben mostrar el AppBar
+          const screensWithAppBar = ['Matches', 'Ranking', 'Create', 'Profile'];
+          
+          // Solo mostrar AppBar en las pantallas especificadas
+          if (screensWithAppBar.includes(route.name)) {
+            return (
+              <AppBar
+                title={options.title || ''}
+                showBackButton={false}
+                onBackPress={() => navigation.goBack()}
+              />
+            );
+          }
+          return null;
+        },
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#F0F0F0',
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       })}
     >
       <HomeTab.Screen 
         name="Matches" 
         component={MatchesScreen} 
         options={{ 
-          headerShown: false,
-          title: 'Partidos' 
+          title: 'Partidos'
         }}
       />
       <HomeTab.Screen 
         name="Ranking" 
-        component={RankingScreen as any} 
-        options={{ headerShown: false, title: 'Ranking' }}
+        component={RankingScreen} 
+        options={{ 
+          title: 'Ranking'
+        }}
       />
       {user && (
         <>
           <HomeTab.Screen 
             name="Create" 
-            component={CreateMatchScreen as any} 
-            options={{ headerShown: false, title: 'Crear' }}
+            component={CreateMatchScreen} 
+            options={{ 
+              title: 'Crear Partido'
+            }}
           />
           <HomeTab.Screen 
             name="Profile" 
-            component={ProfileScreen as any} 
-            options={{ headerShown: false, title: 'Perfil' }}
+            component={ProfileScreen} 
+            options={{ 
+              title: 'Mi Perfil'
+            }}
           />
         </>
       )}
@@ -143,15 +138,13 @@ const Navigation = () => {
     <NavigationContainer>
       <RootStack.Navigator
         screenOptions={({ route }) => ({
-          header: ({ navigation, route, options }) => (
-            <AppBar title="padpok" />
-          ),
+          headerShown: false
         })}
       >
         {user ? (
           <RootStack.Screen 
             name="Home" 
-            component={HomeNavigator}
+            component={HomeTabs}
             options={{ headerShown: false }}
           />
         ) : (
@@ -164,35 +157,27 @@ const Navigation = () => {
         <RootStack.Screen 
           name="MatchDetails" 
           component={MatchDetailsScreen}
-          options={{ 
-            headerShown: true 
-          }}
+          options={{ headerShown: false }}
         />
         <RootStack.Screen 
           name="MatchChat" 
           component={MatchChatScreen}
-          options={({ route }) => ({ 
-            headerShown: true,
-            title: 'Chat del Partido',
-            headerTitle: ({ navigation, route, options }) => (
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 18, fontWeight: '600', color: '#fff' }}>
-                  Chat del Partido
-                </Text>
-                <Text style={{ fontSize: 12, color: '#fff', opacity: 0.8 }}>
-                  Coordina con tu equipo
-                </Text>
-              </View>
-            )
-          })}
+          options={{ headerShown: false }}
         />
         <RootStack.Screen 
           name="MatchHistory" 
           component={MatchHistoryScreen}
-          options={{ 
-            headerShown: true,
-            title: 'Historial de Partidos'
-          }}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen 
+          name="Medals" 
+          component={MedalsScreen}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen 
+          name="Notifications" 
+          component={NotificationsScreen}
+          options={{ headerShown: false }}
         />
       </RootStack.Navigator>
     </NavigationContainer>
@@ -200,15 +185,10 @@ const Navigation = () => {
 };
 
 const AuthNavigator = () => (
-  <AuthStack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+  <AuthStack.Navigator screenOptions={{ headerShown: false }}>
     <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
     <AuthStack.Screen name="Login" component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
-    <AuthStack.Screen 
-      name="Matches" 
-      component={MatchesScreen} 
-      options={{ headerShown: false }} 
-    />
   </AuthStack.Navigator>
 );
 
