@@ -1,81 +1,89 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { HomeTabsParamList } from '@app/types';
 import { Ionicons } from '@expo/vector-icons';
+import { HomeTabsParamList } from '@app/types/navigation';
 import MatchesScreen from '@app/screens/home/MatchesScreen';
+import RankingScreen from '@app/screens/home/RankingScreen';
 import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
 import ProfileScreen from '@app/screens/home/ProfileScreen';
-import RankingScreen from '@app/screens/home/RankingScreen';
+import GroupsScreen from '@app/screens/home/GroupsScreen';
 
 const Tab = createBottomTabNavigator<HomeTabsParamList>();
 
 const MainTabs = () => {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          switch (route.name) {
+            case 'Matches':
+              iconName = focused ? 'tennisball' : 'tennisball-outline';
+              break;
+            case 'Ranking':
+              iconName = focused ? 'trophy' : 'trophy-outline';
+              break;
+            case 'CreateMatch':
+              iconName = focused ? 'add-circle' : 'add-circle-outline';
+              break;
+            case 'Profile':
+              iconName = focused ? 'person' : 'person-outline';
+              break;
+            case 'Groups':
+              iconName = focused ? 'people' : 'people-outline';
+              break;
+            default:
+              iconName = 'help-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#314E99',
+        tabBarInactiveTintColor: '#666',
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#F0F0F0',
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: -2,
-          },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
         },
-        tabBarActiveTintColor: '#314E99',
-        tabBarInactiveTintColor: '#1D1B20',
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
         },
-        headerShown: false,
-      }}
+      })}
     >
-      <Tab.Screen
-        name="Matches"
+      <Tab.Screen 
+        name="Matches" 
         component={MatchesScreen}
         options={{
           title: 'Partidos',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="tennisball-outline" size={size} color={color} />
-          ),
         }}
       />
-      <Tab.Screen
-        name="Create"
-        component={CreateMatchScreen}
-        options={{
-          title: 'Crear Partido',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Ranking"
+      <Tab.Screen 
+        name="Ranking" 
         component={RankingScreen}
         options={{
           title: 'Ranking',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trophy-outline" size={size} color={color} />
-          ),
         }}
       />
-      <Tab.Screen
-        name="Profile"
+      <Tab.Screen 
+        name="CreateMatch" 
+        component={CreateMatchScreen}
+        options={{
+          title: 'Crear',
+        }}
+      />
+      <Tab.Screen 
+        name="Groups" 
+        component={GroupsScreen}
+        options={{
+          title: 'Grupos',
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
         component={ProfileScreen}
         options={{
-          title: 'Mi Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
+          title: 'Perfil',
         }}
       />
     </Tab.Navigator>

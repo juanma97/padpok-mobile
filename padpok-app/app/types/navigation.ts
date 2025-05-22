@@ -9,8 +9,10 @@ export type AuthStackParamList = {
 
 export type HomeTabsParamList = {
   Matches: undefined;
+  Ranking: undefined;
   CreateMatch: undefined;
   Profile: undefined;
+  Groups: undefined;
 };
 
 export type HomeStackParamList = {
@@ -24,6 +26,8 @@ export type HomeStackParamList = {
 export type RootStackParamList = {
   Auth: undefined;
   Home: undefined;
+  CreateGroup: undefined;
+  GroupDetails: { groupId: string };
   Profile: { userId: string };
   MatchDetails: { matchId: string };
   MatchChat: { matchId: string };

@@ -22,9 +22,11 @@ import MedalsScreen from '@app/screens/home/MedalsScreen';
 import NotificationsScreen from '@app/screens/home/NotificationsScreen';
 import MatchChatScreen from '@app/screens/home/MatchChatScreen';
 import MatchHistoryScreen from '@app/screens/MatchHistoryScreen';
+import CreateGroupScreen from '@app/screens/home/CreateGroupScreen';
+import GroupsScreen from '@app/screens/home/GroupsScreen';
 
 // Types
-import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types';
+import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types/navigation';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeTab = createBottomTabNavigator<HomeTabsParamList>();
@@ -39,14 +41,24 @@ const HomeTabs = () => {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          if (route.name === 'Matches') {
-            iconName = focused ? 'tennisball' : 'tennisball-outline';
-          } else if (route.name === 'Create') {
-            iconName = focused ? 'add-circle' : 'add-circle-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Ranking') {
-            iconName = focused ? 'trophy' : 'trophy-outline';
+          switch (route.name) {
+            case 'Matches':
+              iconName = focused ? 'tennisball' : 'tennisball-outline';
+              break;
+            case 'Ranking':
+              iconName = focused ? 'trophy' : 'trophy-outline';
+              break;
+            case 'CreateMatch':
+              iconName = focused ? 'add-circle' : 'add-circle-outline';
+              break;
+            case 'Profile':
+              iconName = focused ? 'person' : 'person-outline';
+              break;
+            case 'Groups':
+              iconName = focused ? 'people' : 'people-outline';
+              break;
+            default:
+              iconName = 'help-outline';
           }
 
           return <Ionicons name={iconName as any} size={size} color={color} />;
@@ -54,10 +66,8 @@ const HomeTabs = () => {
         tabBarActiveTintColor: '#1e3a8a',
         tabBarInactiveTintColor: 'gray',
         header: ({ navigation, route, options }) => {
-          // Lista de pantallas que deben mostrar el AppBar
-          const screensWithAppBar = ['Matches', 'Ranking', 'Create', 'Profile'];
+          const screensWithAppBar = ['Matches', 'Ranking', 'CreateMatch', 'Profile', 'Groups'];
           
-          // Solo mostrar AppBar en las pantallas especificadas
           if (screensWithAppBar.includes(route.name)) {
             return (
               <AppBar
@@ -105,10 +115,17 @@ const HomeTabs = () => {
           title: 'Ranking'
         }}
       />
+      <HomeTab.Screen 
+        name="Groups" 
+        component={GroupsScreen} 
+        options={{ 
+          title: 'Grupos'
+        }}
+      />
       {user && (
         <>
           <HomeTab.Screen 
-            name="Create" 
+            name="CreateMatch" 
             component={CreateMatchScreen} 
             options={{ 
               title: 'Crear Partido'
@@ -141,18 +158,34 @@ const Navigation = () => {
           headerShown: false
         })}
       >
-        {user ? (
-          <RootStack.Screen 
-            name="Home" 
-            component={HomeTabs}
-            options={{ headerShown: false }}
-          />
-        ) : (
+        {!user ? (
           <RootStack.Screen 
             name="Auth" 
             component={AuthNavigator}
             options={{ headerShown: false }}
           />
+        ) : (
+          <>
+            <RootStack.Screen 
+              name="Home" 
+              component={HomeTabs}
+              options={{ headerShown: false }}
+            />
+            <RootStack.Screen 
+              name="CreateGroup" 
+              component={CreateGroupScreen}
+              options={{
+                headerShown: true,
+                header: ({ navigation, route, options }) => (
+                  <AppBar
+                    title="Crear Grupo"
+                    showBackButton
+                    onBackPress={() => navigation.goBack()}
+                  />
+                ),
+              }}
+            />
+          </>
         )}
         <RootStack.Screen 
           name="Welcome" 
