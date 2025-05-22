@@ -155,6 +155,11 @@ const Navigation = () => {
           />
         )}
         <RootStack.Screen 
+          name="Welcome" 
+          component={WelcomeScreen}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen 
           name="MatchDetails" 
           component={MatchDetailsScreen}
           options={{ headerShown: false }}
@@ -189,6 +194,7 @@ const AuthNavigator = () => (
     <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
     <AuthStack.Screen name="Login" component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
+    <AuthStack.Screen name="Matches" component={MatchesScreen} />
   </AuthStack.Navigator>
 );
 

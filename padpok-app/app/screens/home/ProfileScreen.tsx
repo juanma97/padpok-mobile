@@ -179,12 +179,6 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   };
 
   const handleSignOut = async () => {
-    if (Platform.OS === 'web') {
-      await signOut(auth);
-      navigation.navigate('Auth', {
-        screen: 'Welcome'
-      });
-    }
     showDialog('Cerrar sesión', '¿Estás seguro de que quieres cerrar sesión?', [
       {
         text: 'Cancelar',
@@ -197,9 +191,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
           setLoading(true);
           try {
             await signOut(auth);
-            navigation.navigate('Auth', {
-              screen: 'Welcome'
-            });
+            navigation.navigate('Welcome');
           } catch (error) {
             showDialog('Error', 'No se pudo cerrar la sesión');
           } finally {

@@ -7,9 +7,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { RootStackScreenProps } from '@app/types';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { AuthStackParamList, RootStackParamList } from '@app/types';
 
-type NavigationProp = RootStackScreenProps<'Welcome'>['navigation'];
+type NavigationProp = StackNavigationProp<RootStackParamList & AuthStackParamList>;
 
 const WelcomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -37,14 +38,14 @@ const WelcomeScreen = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => navigation.navigate('Register')}
+            onPress={() => navigation.navigate('Auth', { screen: 'Register' })}
           >
             <Text style={styles.primaryButtonText}>Crear cuenta</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.secondaryButton}
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => navigation.navigate('Auth', { screen: 'Login' })}
           >
             <Text style={styles.secondaryButtonText}>Iniciar sesión</Text>
           </TouchableOpacity>

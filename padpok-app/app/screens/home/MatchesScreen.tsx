@@ -144,7 +144,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           },
           {
             text: 'Iniciar sesión',
-            onPress: () => rootNavigation.navigate('Auth')
+            onPress: () => rootNavigation.navigate('Login')
           }
         ]
       );
