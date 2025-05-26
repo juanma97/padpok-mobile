@@ -39,7 +39,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [isJoined, setIsJoined] = useState(false);
   const [showScoreForm, setShowScoreForm] = useState(false);
   const [showTeamSelection, setShowTeamSelection] = useState(false);
-  const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
+  const [userInfos, setUserInfos] = useState<{ [key: string]: { username: string; gender?: 'Masculino' | 'Femenino' } }>({});
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
 
@@ -80,13 +80,13 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   }, [user, match]);
 
   useEffect(() => {
-    const fetchUsernames = async () => {
+    const fetchUserInfos = async () => {
       if (match?.playersJoined.length > 0) {
         const users = await getMatchUsers(match.playersJoined);
-        setUsernames(users);
+        setUserInfos(users);
       }
     };
-    fetchUsernames();
+    fetchUserInfos();
   }, [match?.playersJoined]);
 
   if (loading) {
@@ -281,9 +281,17 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                         style={styles.playerNameContainer}
                         onPress={() => handleUserPress(playerId)}
                       >
-                        <Text style={styles.playerName}>
-                          {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={styles.playerName}>
+                            {playerId === auth.currentUser?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
+                          </Text>
+                          {userInfos[playerId]?.gender === 'Masculino' && (
+                            <Ionicons name="male" size={16} color="#3B82F6" style={{ marginLeft: 6 }} />
+                          )}
+                          {userInfos[playerId]?.gender === 'Femenino' && (
+                            <Ionicons name="female" size={16} color="#EC4899" style={{ marginLeft: 6 }} />
+                          )}
+                        </View>
                       </TouchableOpacity>
                       <View style={[styles.teamBadge, styles.team1Badge]}>
                         <Text style={styles.teamBadgeText}>Equipo 1</Text>
@@ -301,9 +309,17 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                         style={styles.playerNameContainer}
                         onPress={() => handleUserPress(playerId)}
                       >
-                        <Text style={styles.playerName}>
-                          {playerId === auth.currentUser?.uid ? 'Tú' : usernames[playerId] || 'Cargando...'}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={styles.playerName}>
+                            {playerId === auth.currentUser?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
+                          </Text>
+                          {userInfos[playerId]?.gender === 'Masculino' && (
+                            <Ionicons name="male" size={16} color="#3B82F6" style={{ marginLeft: 6 }} />
+                          )}
+                          {userInfos[playerId]?.gender === 'Femenino' && (
+                            <Ionicons name="female" size={16} color="#EC4899" style={{ marginLeft: 6 }} />
+                          )}
+                        </View>
                       </TouchableOpacity>
                       <View style={[styles.teamBadge, styles.team2Badge]}>
                         <Text style={styles.teamBadgeText}>Equipo 2</Text>

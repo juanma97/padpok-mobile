@@ -37,6 +37,7 @@ const RegisterScreen = () => {
   const [level, setLevel] = useState<'Principiante' | 'Intermedio' | 'Avanzado' | null>(null);
   const [age, setAge] = useState('');
   const [clubZone, setClubZone] = useState('');
+  const [gender, setGender] = useState<'Masculino' | 'Femenino' | null>(null);
 
   const [dialog, setDialog] = useState({
     visible: false,
@@ -71,7 +72,7 @@ const RegisterScreen = () => {
   };
 
   const validateStep2 = () => {
-    if (!username || !level || !age || !clubZone) {
+    if (!username || !level || !age || !clubZone || !gender) {
       showDialog('Error', 'Por favor, completa todos los campos');
       return false;
     }
@@ -113,6 +114,7 @@ const RegisterScreen = () => {
         age,
         level,
         clubZone,
+        gender,
         stats: {
           points: 0,
           matchesPlayed: 0,
@@ -255,6 +257,29 @@ const RegisterScreen = () => {
             value={clubZone}
             onChangeText={setClubZone}
           />
+        </View>
+
+        <View style={styles.levelContainer}>
+          <Text style={styles.levelLabel}>Género</Text>
+          <View style={styles.levelOptions}>
+            {['Masculino', 'Femenino'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.levelOption,
+                  gender === option && styles.levelOptionSelected
+                ]}
+                onPress={() => setGender(option as typeof gender)}
+              >
+                <Text style={[
+                  styles.levelText,
+                  gender === option && styles.levelTextSelected
+                ]}>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={styles.levelContainer}>
