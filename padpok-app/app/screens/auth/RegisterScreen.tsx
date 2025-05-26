@@ -5,7 +5,6 @@ import {
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -18,14 +17,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from '@app/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { RootStackScreenProps } from '@app/types';
+import { AuthStackParamList } from '@app/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MEDALS } from '@app/types/medals';
 import CustomDialog from '@app/components/CustomDialog';
 
-type NavigationProp = RootStackScreenProps<'Register'>['navigation'];
-
 const RegisterScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList, 'Register'>>();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -51,9 +49,18 @@ const RegisterScreen = () => {
     setDialog({ visible: true, title, message, options });
   };
 
+  const validateEmail = (text: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(text);
+  };
+
   const validateStep1 = () => {
     if (!email || !password) {
-      showDialog('Error', 'Por favor, completa todos los campos');
+      showDialog('Error', 'Por favor, completa email y contraseña');
+      return false;
+    }
+    if (!validateEmail(email)) {
+      showDialog('Error de Formato', 'Por favor, introduce un email válido.');
       return false;
     }
     if (password.length < 6) {

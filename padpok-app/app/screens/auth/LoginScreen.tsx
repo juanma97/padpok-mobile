@@ -9,21 +9,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StatusBar
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '@app/lib/firebase';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import type { AuthStackParamList } from '@app/types';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { AuthStackParamList } from '@app/types/navigation';
+import { NativeStackScreenProps, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomDialog from '@app/components/CustomDialog';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
-
 const LoginScreen = () => {
-  const navigation = useNavigation<Props['navigation']>();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList, 'Login'>>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,6 +38,11 @@ const LoginScreen = () => {
     options: undefined,
   });
 
+  const validateEmail = (text: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(text);
+  };
+
   const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
     setDialog({ visible: true, title, message, options });
   };
@@ -47,6 +50,10 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!email || !password) {
       showDialog('Error', 'Por favor, completa todos los campos');
+      return;
+    }
+    if (!validateEmail(email)) {
+      showDialog('Error de Formato', 'Por favor, introduce un email válido.');
       return;
     }
 
