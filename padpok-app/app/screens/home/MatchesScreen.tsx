@@ -25,6 +25,21 @@ import { RootStackParamList } from '@app/types';
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 type RootNavigationProp = StackNavigationProp<RootStackParamList>;
 
+// Helper para obtener el día de la semana
+const getDayOfWeek = (date: Date): string => {
+  const days = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  return days[date.getDay()];
+};
+
+// Helper para obtener la franja horaria
+const getTimeSlot = (date: Date): string => {
+  const hour = date.getHours();
+  if (hour >= 7 && hour <= 12) return 'Mañana';
+  if (hour >= 16 && hour < 21) return 'Tarde';
+  if (hour >= 22 && hour < 24) return 'Noche';
+  return 'Otro'; // O manejar de otra forma si no cae en ninguna franja
+};
+
 const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   const rootNavigation = useNavigation<RootNavigationProp>();
   const [matches, setMatches] = useState<Match[]>([]);
@@ -44,9 +59,44 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const { user } = useAuth();
 
+  const fetchMatches = useCallback(async () => {
+    try {
+      setLoading(true);
+      const matchesRef = collection(db, 'matches');
+      const q = query(
+        matchesRef,
+        orderBy('date', 'asc') 
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const matchesData = querySnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
+        return {
+          ...data,
+          id: docSnapshot.id,
+          date: data.date.toDate(),
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        } as Match;
+      }).filter(match => match.date >= new Date());
+
+      setMatches(matchesData);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchUserPreferences = async () => {
-      if (!user) return;
+      if (!user) {
+        // Resetear preferencias si el usuario cierra sesión
+        setUserPreferences({ days: [], hours: [], level: null });
+        setShowOnlyPreferences(false); // Opcional: desactivar filtro si no hay usuario
+        return;
+      }
       
       try {
         const userRef = doc(db, 'users', user.uid);
@@ -71,41 +121,9 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     if (route.params?.refresh) {
       fetchMatches();
-      // Limpiar el parámetro después de usarlo
       navigation.setParams({ refresh: undefined });
     }
-  }, [route.params?.refresh]);
-
-  const fetchMatches = useCallback(async () => {
-    try {
-      setLoading(true);
-      const matchesRef = collection(db, 'matches');
-      const q = query(
-        matchesRef,
-        where('date', '>=', Timestamp.now()),
-        orderBy('date', 'asc')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const matchesData = querySnapshot.docs.map(docSnapshot => {
-        const data = docSnapshot.data();
-        return {
-          ...data,
-          id: docSnapshot.id,
-          date: data.date.toDate(),
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt?.toDate()
-        } as Match;
-      });
-
-      setMatches(matchesData);
-    } catch (error) {
-      console.error('Error fetching matches:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  }, [route.params?.refresh, navigation, fetchMatches]);
 
   useEffect(() => {
     fetchMatches();
@@ -121,16 +139,55 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const togglePreferencesFilter = () => {
+    if (!user) {
+       Alert.alert(
+        'Iniciar sesión requerido',
+        'Debes iniciar sesión para usar los filtros de preferencias.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Iniciar sesión', onPress: () => rootNavigation.navigate('Login')}
+        ]
+      );
+      return;
+    }
     setShowOnlyPreferences(prev => !prev);
   };
 
-  const sortedMatches = React.useMemo(() => {
-    return [...matches].sort((a, b) => {
+  const filteredAndSortedMatches = React.useMemo(() => {
+    let processedMatches = [...matches];
+
+    if (showOnlyPreferences && user && userPreferences) {
+      processedMatches = processedMatches.filter(match => {
+
+        // Filtrar por nivel
+        if (userPreferences.level && match.level !== userPreferences.level) {
+          return false;
+        }
+        // Filtrar por días
+        if (userPreferences.days && userPreferences.days.length > 0) {
+          const matchDay = getDayOfWeek(match.date);
+          if (!userPreferences.days.includes(matchDay)) {
+            return false;
+          }
+        }
+        // Filtrar por horas
+        if (userPreferences.hours && userPreferences.hours.length > 0) {
+          const matchHour = match.date.getHours();
+          const userHours = userPreferences.hours.map(h => parseInt(h.split(':')[0], 10));
+          if (!userHours.includes(matchHour)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    return processedMatches.sort((a, b) => {
       const dateA = a.date?.getTime() || 0;
       const dateB = b.date?.getTime() || 0;
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
-  }, [matches, sortOrder]);
+  }, [matches, sortOrder, showOnlyPreferences, user, userPreferences]);
 
   const handleMatchPress = (match: Match) => {
     if (!user) {
@@ -236,13 +293,13 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
 
-        {matches.length === 0 ? (
+        {filteredAndSortedMatches.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay partidos disponibles</Text>
+            <Text style={styles.emptyText}>{matches.length === 0 ? 'No hay partidos disponibles' : 'No hay partidos que coincidan con tus preferencias'}</Text>
           </View>
         ) : (
           <FlatList
-            data={sortedMatches}
+            data={filteredAndSortedMatches}
             renderItem={renderMatchItem}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}

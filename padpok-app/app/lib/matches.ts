@@ -244,17 +244,21 @@ export const leaveMatch = async (matchId: string, userId: string): Promise<void>
 };
 
 // Función para obtener los usuarios de un partido
-export const getMatchUsers = async (playerIds: string[]): Promise<{ [key: string]: string }> => {
-  const users: { [key: string]: string } = {};
-  
+export const getMatchUsers = async (playerIds: string[]): Promise<{ [key: string]: { username: string; gender?: "Masculino" | "Femenino" } }> => {
+  const users: { [key: string]: { username: string; gender?: "Masculino" | "Femenino" } } = {};
+
   for (const userId of playerIds) {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
     if (userDoc.exists()) {
-      users[userId] = userDoc.data().username || 'Usuario';
+      const data = userDoc.data();
+      users[userId] = {
+        username: data.username || 'Usuario',
+        gender: data.gender,
+      };
     }
   }
-  
+
   return users;
 };
 

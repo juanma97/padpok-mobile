@@ -6,6 +6,8 @@ node_modules/
 scripts/
 
 .env
+/android
+/ios
 
 # Expo
 .expo/

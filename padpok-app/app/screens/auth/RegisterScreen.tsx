@@ -5,7 +5,6 @@ import {
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -18,14 +17,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from '@app/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { RootStackScreenProps } from '@app/types';
+import { AuthStackParamList } from '@app/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MEDALS } from '@app/types/medals';
 import CustomDialog from '@app/components/CustomDialog';
 
-type NavigationProp = RootStackScreenProps<'Register'>['navigation'];
-
 const RegisterScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList, 'Register'>>();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +37,7 @@ const RegisterScreen = () => {
   const [level, setLevel] = useState<'Principiante' | 'Intermedio' | 'Avanzado' | null>(null);
   const [age, setAge] = useState('');
   const [clubZone, setClubZone] = useState('');
+  const [gender, setGender] = useState<'Masculino' | 'Femenino' | null>(null);
 
   const [dialog, setDialog] = useState({
     visible: false,
@@ -51,9 +50,18 @@ const RegisterScreen = () => {
     setDialog({ visible: true, title, message, options });
   };
 
+  const validateEmail = (text: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(text);
+  };
+
   const validateStep1 = () => {
     if (!email || !password) {
-      showDialog('Error', 'Por favor, completa todos los campos');
+      showDialog('Error', 'Por favor, completa email y contraseña');
+      return false;
+    }
+    if (!validateEmail(email)) {
+      showDialog('Error de Formato', 'Por favor, introduce un email válido.');
       return false;
     }
     if (password.length < 6) {
@@ -64,7 +72,7 @@ const RegisterScreen = () => {
   };
 
   const validateStep2 = () => {
-    if (!username || !level || !age || !clubZone) {
+    if (!username || !level || !age || !clubZone || !gender) {
       showDialog('Error', 'Por favor, completa todos los campos');
       return false;
     }
@@ -106,6 +114,7 @@ const RegisterScreen = () => {
         age,
         level,
         clubZone,
+        gender,
         stats: {
           points: 0,
           matchesPlayed: 0,
@@ -248,6 +257,29 @@ const RegisterScreen = () => {
             value={clubZone}
             onChangeText={setClubZone}
           />
+        </View>
+
+        <View style={styles.levelContainer}>
+          <Text style={styles.levelLabel}>Género</Text>
+          <View style={styles.levelOptions}>
+            {['Masculino', 'Femenino'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.levelOption,
+                  gender === option && styles.levelOptionSelected
+                ]}
+                onPress={() => setGender(option as typeof gender)}
+              >
+                <Text style={[
+                  styles.levelText,
+                  gender === option && styles.levelTextSelected
+                ]}>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={styles.levelContainer}>
