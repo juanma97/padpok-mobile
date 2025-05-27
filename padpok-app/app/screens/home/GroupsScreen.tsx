@@ -6,12 +6,18 @@ import {
   FlatList, 
   TouchableOpacity, 
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  TextInput,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types/navigation';
+
+// Si usas expo, puedes instalar este paquete para un control nativo:
+// import SegmentedControl from '@react-native-segmented-control/segmented-control';
+// Para este ejemplo, haré un control simple manual.
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,59 +30,124 @@ interface Group {
 
 const GroupsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [groups, setGroups] = React.useState<Group[]>([]);
+  const [selectedTab, setSelectedTab] = React.useState<'mis' | 'explorar'>('mis');
+  const [search, setSearch] = React.useState('');
+
+  // Datos ficticios
+  const [groups] = React.useState<Group[]>([
+    { id: '1', name: 'Padel Friends', members: 10, isAdmin: true },
+    { id: '2', name: 'Tenis Lovers', members: 8, isAdmin: false },
+    { id: '3', name: 'Club Deportivo', members: 25, isAdmin: false },
+  ]);
+
+  const publicGroups: Group[] = [
+    { id: '101', name: 'Padel Madrid', members: 34, isAdmin: false },
+    { id: '102', name: 'Tenis Barcelona', members: 21, isAdmin: false },
+    { id: '103', name: 'Amigos del Pádel', members: 12, isAdmin: false },
+    { id: '104', name: 'Padel Sur', members: 18, isAdmin: false },
+    { id: '105', name: 'Padel Norte', members: 27, isAdmin: false },
+    { id: '106', name: 'Padel Este', members: 15, isAdmin: false },
+    { id: '107', name: 'Padel Oeste', members: 19, isAdmin: false },
+  ];
 
   const handleCreateGroup = () => {
     navigation.navigate('CreateGroup');
   };
 
+  // Filtro de búsqueda para explorar grupos
+  const filteredPublicGroups = publicGroups.filter(g =>
+    g.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Renderizado de cada grupo
   const renderGroupItem = ({ item }: { item: Group }) => (
     <TouchableOpacity style={styles.groupCard}>
-      <View style={styles.groupInfo}>
+      <View style={styles.groupInfoCompact}>
         <Text style={styles.groupName}>{item.name}</Text>
         <View style={styles.memberInfo}>
-          <Ionicons name="people-outline" size={16} color="#666" />
+          <Ionicons name="people-outline" size={14} color="#666" />
           <Text style={styles.memberCount}>{item.members} miembros</Text>
         </View>
       </View>
-      {item.isAdmin && (
+      {item.isAdmin && selectedTab === 'mis' && (
         <View style={styles.adminBadge}>
           <Text style={styles.adminText}>Admin</Text>
         </View>
       )}
+      {selectedTab === 'explorar' && (
+        <TouchableOpacity style={styles.joinButton}>
+          <Text style={styles.joinButtonText}>Unirse</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
+  );
+
+  // Control de pestañas manual
+  const renderTabs = () => (
+    <View style={styles.tabsContainer}>
+      <TouchableOpacity
+        style={[styles.tab, selectedTab === 'mis' && styles.tabSelected]}
+        onPress={() => setSelectedTab('mis')}
+      >
+        <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Grupos</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, selectedTab === 'explorar' && styles.tabSelected]}
+        onPress={() => setSelectedTab('explorar')}
+      >
+        <Text style={[styles.tabText, selectedTab === 'explorar' && styles.tabTextSelected]}>Explorar Grupos</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Mis Grupos</Text>
-          <TouchableOpacity 
-            style={styles.createButton}
-            onPress={handleCreateGroup}
-          >
-            <Ionicons name="add-circle" size={24} color="#314E99" />
-            <Text style={styles.createButtonText}>Crear Grupo</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Tabs */}
+        {renderTabs()}
 
+        {/* Buscador solo en explorar */}
+        {selectedTab === 'explorar' && (
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={18} color="#888" style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar grupo..."
+              value={search}
+              onChangeText={setSearch}
+              placeholderTextColor="#aaa"
+            />
+          </View>
+        )}
+
+        {/* Lista de grupos */}
         <FlatList
-          data={groups}
+          data={selectedTab === 'mis' ? groups : filteredPublicGroups}
           renderItem={renderGroupItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="people-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>No tienes grupos aún</Text>
-              <Text style={styles.emptySubtext}>
-                Crea un grupo o únete a uno existente
+              <Text style={styles.emptyText}>
+                {selectedTab === 'mis'
+                  ? 'No tienes grupos aún'
+                  : 'No hay grupos para mostrar'}
               </Text>
+              {selectedTab === 'mis' && (
+                <Text style={styles.emptySubtext}>
+                  Crea un grupo o únete a uno existente
+                </Text>
+              )}
             </View>
           }
         />
+
+        {/* Botón flotante para crear grupo */}
+        <TouchableOpacity style={styles.fab} onPress={handleCreateGroup}>
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -90,82 +161,109 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    position: 'relative',
   },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    borderRadius: 8,
+    margin: 16,
+    overflow: 'hidden',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabSelected: {
+    backgroundColor: '#1e3a8a',
+  },
+  tabText: {
     color: '#1e3a8a',
-    marginBottom: 16,
+    fontWeight: '600',
+    fontSize: 16,
   },
-  createButton: {
+  tabTextSelected: {
+    color: '#fff',
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: '#fff',
     borderRadius: 8,
-    alignSelf: 'flex-start',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  createButtonText: {
-    color: '#314E99',
-    fontWeight: '600',
-    marginLeft: 8,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#222',
+    backgroundColor: 'transparent',
+    padding: 0,
   },
   listContent: {
-    padding: 16,
+    padding: 8,
+    paddingBottom: 80,
   },
   groupCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  groupInfo: {
+  groupInfoCompact: {
     flex: 1,
+    minWidth: 0,
   },
   groupName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1e3a8a',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   memberInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   memberCount: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
     marginLeft: 4,
   },
   adminBadge: {
     backgroundColor: '#314E99',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 4,
     marginLeft: 8,
   },
   adminText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
+  },
+  joinButton: {
+    backgroundColor: '#1e3a8a',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginLeft: 8,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
   emptyContainer: {
     flex: 1,
@@ -174,15 +272,33 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     color: '#666',
     marginTop: 16,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
     color: '#999',
     marginTop: 8,
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 32,
+    backgroundColor: '#1e3a8a',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 6,
   },
 });
 
