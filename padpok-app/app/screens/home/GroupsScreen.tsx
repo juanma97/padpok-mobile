@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -14,6 +14,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types/navigation';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@app/lib/firebase';
+import { useAuth } from '@app/lib/AuthContext';
 
 // Si usas expo, puedes instalar este paquete para un control nativo:
 // import SegmentedControl from '@react-native-segmented-control/segmented-control';
@@ -32,49 +35,50 @@ const GroupsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [selectedTab, setSelectedTab] = React.useState<'mis' | 'explorar'>('mis');
   const [search, setSearch] = React.useState('');
+  const { user } = useAuth();
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Datos ficticios
-  const [groups] = React.useState<Group[]>([
-    { id: '1', name: 'Padel Friends', members: 10, isAdmin: true },
-    { id: '2', name: 'Tenis Lovers', members: 8, isAdmin: false },
-    { id: '3', name: 'Club Deportivo', members: 25, isAdmin: false },
-  ]);
+  useEffect(() => {
+    const fetchGroups = async () => {
+      setLoading(true);
+      const snapshot = await getDocs(collection(db, 'groups'));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setGroups(data);
+      setLoading(false);
+    };
+    fetchGroups();
+  }, []);
 
-  const publicGroups: Group[] = [
-    { id: '101', name: 'Padel Madrid', members: 34, isAdmin: false },
-    { id: '102', name: 'Tenis Barcelona', members: 21, isAdmin: false },
-    { id: '103', name: 'Amigos del Pádel', members: 12, isAdmin: false },
-    { id: '104', name: 'Padel Sur', members: 18, isAdmin: false },
-    { id: '105', name: 'Padel Norte', members: 27, isAdmin: false },
-    { id: '106', name: 'Padel Este', members: 15, isAdmin: false },
-    { id: '107', name: 'Padel Oeste', members: 19, isAdmin: false },
-  ];
-
-  const handleCreateGroup = () => {
-    navigation.navigate('CreateGroup');
-  };
+  // Filtrar grupos según el usuario
+  const myGroups = groups.filter(
+    g => g.admin === user?.uid || (g.members && g.members.includes(user?.uid))
+  );
+  const exploreGroups = groups.filter(
+    g => g.admin !== user?.uid && (!g.members || !g.members.includes(user?.uid))
+  );
 
   // Filtro de búsqueda para explorar grupos
-  const filteredPublicGroups = publicGroups.filter(g =>
+  const filteredPublicGroups = exploreGroups.filter(g =>
     g.name.toLowerCase().includes(search.toLowerCase())
   );
 
   // Navegar a los detalles del grupo
-  const handleGroupPress = (group: Group) => {
+  const handleGroupPress = (group: any) => {
     navigation.navigate('GroupDetails', { groupId: group.id });
   };
 
   // Renderizado de cada grupo
-  const renderGroupItem = ({ item }: { item: Group }) => (
+  const renderGroupItem = ({ item }: { item: any }) => (
     <TouchableOpacity style={styles.groupCard} onPress={() => handleGroupPress(item)}>
       <View style={styles.groupInfoCompact}>
         <Text style={styles.groupName}>{item.name}</Text>
         <View style={styles.memberInfo}>
           <Ionicons name="people-outline" size={14} color="#666" />
-          <Text style={styles.memberCount}>{item.members} miembros</Text>
+          <Text style={styles.memberCount}>{(item.members?.length || 0) + 1} miembros</Text>
         </View>
       </View>
-      {item.isAdmin && selectedTab === 'mis' && (
+      {item.admin === user?.uid && selectedTab === 'mis' && (
         <View style={styles.adminBadge}>
           <Text style={styles.adminText}>Admin</Text>
         </View>
@@ -105,6 +109,10 @@ const GroupsScreen = () => {
     </View>
   );
 
+  const handleCreateGroup = () => {
+    navigation.navigate('CreateGroup');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -127,27 +135,33 @@ const GroupsScreen = () => {
         )}
 
         {/* Lista de grupos */}
-        <FlatList
-          data={selectedTab === 'mis' ? groups : filteredPublicGroups}
-          renderItem={renderGroupItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="people-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>
-                {selectedTab === 'mis'
-                  ? 'No tienes grupos aún'
-                  : 'No hay grupos para mostrar'}
-              </Text>
-              {selectedTab === 'mis' && (
-                <Text style={styles.emptySubtext}>
-                  Crea un grupo o únete a uno existente
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Cargando grupos...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={selectedTab === 'mis' ? myGroups : filteredPublicGroups}
+            renderItem={renderGroupItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Ionicons name="people-outline" size={48} color="#ccc" />
+                <Text style={styles.emptyText}>
+                  {selectedTab === 'mis'
+                    ? 'No tienes grupos aún'
+                    : 'No hay grupos para mostrar'}
                 </Text>
-              )}
-            </View>
-          }
-        />
+                {selectedTab === 'mis' && (
+                  <Text style={styles.emptySubtext}>
+                    Crea un grupo o únete a uno existente
+                  </Text>
+                )}
+              </View>
+            }
+          />
+        )}
 
         {/* Botón flotante para crear grupo */}
         <TouchableOpacity style={styles.fab} onPress={handleCreateGroup}>

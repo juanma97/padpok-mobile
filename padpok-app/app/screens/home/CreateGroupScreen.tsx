@@ -8,12 +8,15 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '@app/types/navigation';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@app/lib/firebase';
+import { useAuth } from '@app/lib/AuthContext';
+import CustomDialog from '@app/components/CustomDialog';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -22,24 +25,66 @@ const CreateGroupScreen = () => {
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
+  const { user } = useAuth();
+  const [dialog, setDialog] = useState({ visible: false, title: '', message: '', onClose: () => {} });
+  const [loading, setLoading] = useState(false);
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      Alert.alert('Error', 'Por favor ingresa un nombre para el grupo');
+      setDialog({
+        visible: true,
+        title: 'Error',
+        message: 'Por favor ingresa un nombre para el grupo',
+        onClose: () => setDialog({ ...dialog, visible: false })
+      });
       return;
     }
-
-    // TODO: Implementar la lógica para crear el grupo en Firestore
-    Alert.alert(
-      'Grupo Creado',
-      'El grupo se ha creado exitosamente',
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack()
+    if (!user) {
+      setDialog({
+        visible: true,
+        title: 'Error',
+        message: 'Debes iniciar sesión para crear un grupo',
+        onClose: () => setDialog({ ...dialog, visible: false })
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'groups'), {
+        name: groupName.trim(),
+        description: description.trim(),
+        isPrivate,
+        admin: user.uid,
+        members: [],
+        matches: [],
+        ranking: {},
+        chat: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setDialog({
+        visible: true,
+        title: 'Grupo Creado',
+        message: 'El grupo se ha creado exitosamente',
+        onClose: () => {
+          setDialog({ ...dialog, visible: false });
+          navigation.navigate('Groups');
         }
-      ]
-    );
+      });
+      setGroupName('');
+      setDescription('');
+      setIsPrivate(false);
+    } catch (error) {
+      console.log(error);
+      setDialog({
+        visible: true,
+        title: 'Error',
+        message: 'Hubo un error al crear el grupo. Inténtalo de nuevo.',
+        onClose: () => setDialog({ ...dialog, visible: false })
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,10 +159,17 @@ const CreateGroupScreen = () => {
         <TouchableOpacity 
           style={styles.createButton}
           onPress={handleCreateGroup}
+          disabled={loading}
         >
-          <Text style={styles.createButtonText}>Crear Grupo</Text>
+          <Text style={styles.createButtonText}>{loading ? 'Creando...' : 'Crear Grupo'}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={dialog.onClose}
+      />
     </SafeAreaView>
   );
 };

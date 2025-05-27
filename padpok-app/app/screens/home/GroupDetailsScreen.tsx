@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,17 @@ import {
   StatusBar,
   TouchableOpacity,
   FlatList,
-  TextInput,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MatchCard from '@app/components/MatchCard';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import MatchChat from '@app/components/MatchChat';
+import { doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { db } from '@app/lib/firebase';
+import CustomDialog from '@app/components/CustomDialog';
+import { useAuth } from '@app/lib/AuthContext';
 
 // Datos ficticios para el grupo
 const group = {
@@ -71,8 +74,40 @@ const TABS = ['Partidos', 'Ranking', 'Chat'];
 
 export default function GroupDetailsScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { user } = useAuth();
+  const { groupId } = route.params as any;
   const [selectedTab, setSelectedTab] = useState('Partidos');
-  const [chatInput, setChatInput] = useState('');
+  const [group, setGroup] = useState<any>(null);
+  const [dialog, setDialog] = useState({ visible: false, title: '', message: '', onConfirm: () => {}, onClose: () => {} });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGroup = async () => {
+      setLoading(true);
+      const ref = doc(db, 'groups', groupId);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        setGroup({ id: snap.id, ...snap.data() });
+      }
+      setLoading(false);
+    };
+    fetchGroup();
+  }, [groupId]);
+
+  const handleDeleteGroup = () => {
+    setDialog({
+      visible: true,
+      title: 'Eliminar grupo',
+      message: '¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.',
+      onConfirm: async () => {
+        setDialog({ ...dialog, visible: false });
+        await deleteDoc(doc(db, 'groups', groupId));
+        navigation.goBack();
+      },
+      onClose: () => setDialog({ ...dialog, visible: false })
+    });
+  };
 
   // Renderizado de partidos
   const renderMatch = ({ item }: any) => (
@@ -129,17 +164,22 @@ export default function GroupDetailsScreen() {
             <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <Text style={styles.groupName}>{group.name}</Text>
+            <Text style={styles.groupName}>{group?.name}</Text>
             <View style={styles.headerRow}>
               <Ionicons name="people-outline" size={16} color="#1e3a8a" />
-              <Text style={styles.membersText}>{group.members} miembros</Text>
-              {group.isAdmin && (
+              <Text style={styles.membersText}>{group?.members} miembros</Text>
+              {group && group.admin === user?.uid && (
                 <View style={styles.adminBadge}>
                   <Text style={styles.adminText}>Admin</Text>
                 </View>
               )}
             </View>
           </View>
+          {group && group.admin === user?.uid && (
+            <TouchableOpacity onPress={handleDeleteGroup} style={{ marginLeft: 16 }}>
+              <Ionicons name="trash" size={22} color="#e11d48" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Tabs */}
@@ -176,7 +216,7 @@ export default function GroupDetailsScreen() {
             />
           )}
           {selectedTab === 'Chat' && (
-            <MatchChat matchId={group.id} />
+            <MatchChat matchId={group?.id} />
           )}
         </View>
 
@@ -187,6 +227,16 @@ export default function GroupDetailsScreen() {
           </TouchableOpacity>
         )}
       </SafeAreaView>
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        options={[
+          { text: 'Cancelar', onPress: dialog.onClose, style: { backgroundColor: '#aaa' } },
+          { text: 'Eliminar', onPress: dialog.onConfirm, style: { backgroundColor: '#e11d48' } }
+        ]}
+        onClose={dialog.onClose}
+      />
     </KeyboardAvoidingView>
   );
 }
