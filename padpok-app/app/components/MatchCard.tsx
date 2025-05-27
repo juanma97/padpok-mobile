@@ -8,12 +8,24 @@ interface MatchCardProps {
 }
 
 export default function MatchCard({ match }: MatchCardProps) {
-  const formattedDate = match.date ? match.date.toDate().toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  }) : 'Fecha no disponible';
+  let dateObj;
+  const dateValue: any = match.date;
+  if (dateValue instanceof Date) {
+    dateObj = dateValue;
+  } else if (dateValue && typeof dateValue.toDate === 'function') {
+    dateObj = dateValue.toDate();
+  } else {
+    dateObj = undefined;
+  }
+
+  const formattedDate = dateObj
+    ? dateObj.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : 'Fecha no disponible';
 
   return (
     <View style={styles.card}>

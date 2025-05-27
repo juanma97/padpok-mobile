@@ -27,6 +27,7 @@ import GroupsScreen from '@app/screens/home/GroupsScreen';
 
 // Types
 import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types/navigation';
+import GroupDetailsScreen from '../screens/home/GroupDetailsScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeTab = createBottomTabNavigator<HomeTabsParamList>();
@@ -215,6 +216,11 @@ const Navigation = () => {
         <RootStack.Screen 
           name="Notifications" 
           component={NotificationsScreen}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen 
+          name="GroupDetails" 
+          component={GroupDetailsScreen}
           options={{ headerShown: false }}
         />
       </RootStack.Navigator>

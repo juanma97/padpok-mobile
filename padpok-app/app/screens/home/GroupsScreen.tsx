@@ -59,9 +59,14 @@ const GroupsScreen = () => {
     g.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Navegar a los detalles del grupo
+  const handleGroupPress = (group: Group) => {
+    navigation.navigate('GroupDetails', { groupId: group.id });
+  };
+
   // Renderizado de cada grupo
   const renderGroupItem = ({ item }: { item: Group }) => (
-    <TouchableOpacity style={styles.groupCard}>
+    <TouchableOpacity style={styles.groupCard} onPress={() => handleGroupPress(item)}>
       <View style={styles.groupInfoCompact}>
         <Text style={styles.groupName}>{item.name}</Text>
         <View style={styles.memberInfo}>
