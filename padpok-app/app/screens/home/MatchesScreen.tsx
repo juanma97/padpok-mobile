@@ -155,23 +155,18 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const filteredAndSortedMatches = React.useMemo(() => {
     let processedMatches = [...matches];
-    console.log('userPreferences: ', userPreferences);
 
     if (showOnlyPreferences && user && userPreferences) {
       processedMatches = processedMatches.filter(match => {
-        console.log('match: ', match);
+
         // Filtrar por nivel
         if (userPreferences.level && match.level !== userPreferences.level) {
-          console.log('match.level no incluido');
           return false;
         }
         // Filtrar por días
         if (userPreferences.days && userPreferences.days.length > 0) {
-          console.log('userPreferences.days: ', userPreferences.days);
           const matchDay = getDayOfWeek(match.date);
-          console.log('matchDay: ', matchDay);
           if (!userPreferences.days.includes(matchDay)) {
-            console.log('matchDay no incluido');
             return false;
           }
         }
