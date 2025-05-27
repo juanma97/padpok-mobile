@@ -78,9 +78,11 @@ export default function GroupDetailsScreen() {
   const { user } = useAuth();
   const { groupId } = route.params as any;
   const [selectedTab, setSelectedTab] = useState('Partidos');
-  const [group, setGroup] = useState<any>(null);
+  type GroupType = { id: string; ranking?: Record<string, any>; matches?: any[]; members?: string[]; admin?: string; name?: string; [key: string]: any };
+  const [group, setGroup] = useState<GroupType | null>(null);
   const [dialog, setDialog] = useState({ visible: false, title: '', message: '', onConfirm: () => {}, onClose: () => {} });
   const [loading, setLoading] = useState(true);
+  const [usernames, setUsernames] = useState<{ [id: string]: string }>({});
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -88,7 +90,16 @@ export default function GroupDetailsScreen() {
       const ref = doc(db, 'groups', groupId);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        setGroup({ id: snap.id, ...snap.data() });
+        const groupData: GroupType = { id: snap.id, ...snap.data() };
+        setGroup(groupData);
+        // Obtener usernames de los ids del ranking
+        const rankingIds = groupData.ranking ? Object.keys(groupData.ranking) : [];
+        const usernamesObj: { [id: string]: string } = {};
+        for (const uid of rankingIds) {
+          const userSnap = await getDoc(doc(db, 'users', uid));
+          usernamesObj[uid] = userSnap.exists() ? userSnap.data().username || uid : uid;
+        }
+        setUsernames(usernamesObj);
       }
       setLoading(false);
     };
@@ -130,19 +141,19 @@ export default function GroupDetailsScreen() {
           )}
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.username}</Text>
+          <Text style={styles.username}>{usernames[item.id] || item.id}</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Ionicons name="trophy" size={16} color="#1e3a8a" />
-              <Text style={styles.statText}>{item.stats.points} pts</Text>
+              <Text style={styles.statText}>{item.points} pts</Text>
             </View>
             <View style={styles.statItem}>
               <Ionicons name="tennisball" size={16} color="#1e3a8a" />
-              <Text style={styles.statText}>{item.stats.matchesPlayed} partidos</Text>
+              <Text style={styles.statText}>{item.matchesPlayed} partidos</Text>
             </View>
             <View style={styles.statItem}>
               <Ionicons name="checkmark-circle" size={16} color="#1e3a8a" />
-              <Text style={styles.statText}>{item.stats.wins} victorias</Text>
+              <Text style={styles.statText}>{item.wins} victorias</Text>
             </View>
           </View>
         </View>
@@ -167,7 +178,7 @@ export default function GroupDetailsScreen() {
             <Text style={styles.groupName}>{group?.name}</Text>
             <View style={styles.headerRow}>
               <Ionicons name="people-outline" size={16} color="#1e3a8a" />
-              <Text style={styles.membersText}>{group?.members} miembros</Text>
+              <Text style={styles.membersText}>{((group?.members?.length || 0) + 1)} miembros</Text>
               {group && group.admin === user?.uid && (
                 <View style={styles.adminBadge}>
                   <Text style={styles.adminText}>Admin</Text>
@@ -199,7 +210,7 @@ export default function GroupDetailsScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Partidos' && (
             <FlatList
-              data={groupMatches}
+              data={Array.isArray(group?.matches) ? group.matches : []}
               renderItem={renderMatch}
               keyExtractor={item => item.id}
               contentContainerStyle={styles.listContent}
@@ -208,15 +219,15 @@ export default function GroupDetailsScreen() {
           )}
           {selectedTab === 'Ranking' && (
             <FlatList
-              data={groupRanking}
+              data={group ? Object.entries(group.ranking ?? {}).map(([id, stats]) => ({ id, ...(stats as any) })) : []}
               renderItem={renderRanking}
-              keyExtractor={item => item.id}
+              keyExtractor={item => String(item.id || '')}
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={<Text style={styles.emptyText}>No hay ranking aún.</Text>}
             />
           )}
-          {selectedTab === 'Chat' && (
-            <MatchChat matchId={group?.id} />
+          {selectedTab === 'Chat' && group?.id && (
+            <MatchChat matchId={group.id} />
           )}
         </View>
 

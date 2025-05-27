@@ -57,7 +57,14 @@ const CreateGroupScreen = () => {
         admin: user.uid,
         members: [],
         matches: [],
-        ranking: {},
+        ranking: {
+          [user.uid]: {
+            points: 0,
+            matchesPlayed: 0,
+            wins: 0,
+            losses: 0
+          }
+        },
         chat: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
