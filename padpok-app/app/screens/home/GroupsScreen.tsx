@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types/navigation';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { useAuth } from '@app/lib/AuthContext';
 
@@ -68,28 +68,57 @@ const GroupsScreen = () => {
     navigation.navigate('GroupDetails', { groupId: group.id });
   };
 
+  // Unirse a un grupo
+  const handleJoinGroup = async (group: any) => {
+    if (!user) return;
+    const groupRef = doc(db, 'groups', group.id);
+    // Evitar duplicados
+    const currentMembers = Array.isArray(group.members) ? group.members : [];
+    if (currentMembers.includes(user.uid)) return;
+    const updatedMembers = [...currentMembers, user.uid];
+    await updateDoc(groupRef, { members: updatedMembers });
+    // Refrescar grupos
+    const snapshot = await getDocs(collection(db, 'groups'));
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setGroups(data);
+    setSelectedTab('mis');
+    // Navegar a detalles del grupo
+    navigation.navigate('GroupDetails', { groupId: group.id });
+  };
+
   // Renderizado de cada grupo
-  const renderGroupItem = ({ item }: { item: any }) => (
-    <TouchableOpacity style={styles.groupCard} onPress={() => handleGroupPress(item)}>
-      <View style={styles.groupInfoCompact}>
-        <Text style={styles.groupName}>{item.name}</Text>
-        <View style={styles.memberInfo}>
-          <Ionicons name="people-outline" size={14} color="#666" />
-          <Text style={styles.memberCount}>{(item.members?.length || 0) + 1} miembros</Text>
+  const renderGroupItem = ({ item }: { item: any }) => {
+    const isMember = item.admin === user?.uid || (item.members && item.members.includes(user?.uid));
+    return (
+      <TouchableOpacity
+        style={styles.groupCard}
+        onPress={() => {
+          if (selectedTab === 'mis' || isMember) {
+            handleGroupPress(item);
+          }
+        }}
+        disabled={selectedTab === 'explorar' && !isMember}
+      >
+        <View style={styles.groupInfoCompact}>
+          <Text style={styles.groupName}>{item.name}</Text>
+          <View style={styles.memberInfo}>
+            <Ionicons name="people-outline" size={14} color="#666" />
+            <Text style={styles.memberCount}>{(item.members?.length || 0) + 1} miembros</Text>
+          </View>
         </View>
-      </View>
-      {item.admin === user?.uid && selectedTab === 'mis' && (
-        <View style={styles.adminBadge}>
-          <Text style={styles.adminText}>Admin</Text>
-        </View>
-      )}
-      {selectedTab === 'explorar' && (
-        <TouchableOpacity style={styles.joinButton}>
-          <Text style={styles.joinButtonText}>Unirse</Text>
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
+        {item.admin === user?.uid && selectedTab === 'mis' && (
+          <View style={styles.adminBadge}>
+            <Text style={styles.adminText}>Admin</Text>
+          </View>
+        )}
+        {selectedTab === 'explorar' && !isMember && (
+          <TouchableOpacity style={styles.joinButton} onPress={() => handleJoinGroup(item)}>
+            <Text style={styles.joinButtonText}>Unirse</Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   // Control de pestañas manual
   const renderTabs = () => (
