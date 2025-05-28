@@ -392,6 +392,23 @@ export default function GroupDetailsScreen() {
               <Ionicons name="trash" size={22} color="#e11d48" />
             </TouchableOpacity>
           )}
+          {/* Icono para salir del grupo si NO es admin */}
+          {group && group.admin !== user?.uid && Array.isArray(group.members) && user?.uid && group.members.includes(user.uid) && (
+            <TouchableOpacity
+              onPress={async () => {
+                if (!user?.uid || !Array.isArray(group.members)) return;
+                // Eliminar user.uid del array de members en Firestore
+                const groupRef = firestoreDoc(db, 'groups', group.id);
+                const updatedMembers = group.members.filter((id: string) => id !== user.uid);
+                await updateDoc(groupRef, { members: updatedMembers });
+                // Navegar a la pantalla de grupos y forzar refresh
+                navigation.navigate('Groups', { refresh: true });
+              }}
+              style={{ marginLeft: 16 }}
+            >
+              <Ionicons name="exit-outline" size={22} color="#e11d48" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Tabs */}

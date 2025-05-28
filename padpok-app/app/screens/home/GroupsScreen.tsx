@@ -11,7 +11,7 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types/navigation';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -33,6 +33,7 @@ interface Group {
 
 const GroupsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute();
   const [selectedTab, setSelectedTab] = React.useState<'mis' | 'explorar'>('mis');
   const [search, setSearch] = React.useState('');
   const { user } = useAuth();
@@ -49,6 +50,21 @@ const GroupsScreen = () => {
     };
     fetchGroups();
   }, []);
+
+  useEffect(() => {
+    if ((route as any).params?.refresh) {
+      const fetchGroups = async () => {
+        setLoading(true);
+        const snapshot = await getDocs(collection(db, 'groups'));
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setGroups(data);
+        setLoading(false);
+      };
+      fetchGroups();
+      // Limpiar el parámetro para evitar recargas infinitas
+      navigation.setParams && navigation.setParams({ refresh: undefined });
+    }
+  }, [route]);
 
   // Filtrar grupos según el usuario
   const myGroups = groups.filter(
