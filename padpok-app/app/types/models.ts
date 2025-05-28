@@ -36,6 +36,7 @@ export type Match = {
     team1: string[];
     team2: string[];
   };
+  admin?: string;
 };
 
 export type User = {

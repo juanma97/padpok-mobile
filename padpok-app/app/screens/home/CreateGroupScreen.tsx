@@ -55,7 +55,7 @@ const CreateGroupScreen = () => {
         description: description.trim(),
         isPrivate,
         admin: user.uid,
-        members: [],
+        members: [user.uid],
         matches: [],
         ranking: {
           [user.uid]: {
