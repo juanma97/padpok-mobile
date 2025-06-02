@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   StatusBar,
   TextInput,
-  Platform
+  Platform,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -39,6 +40,7 @@ const GroupsScreen = () => {
   const { user } = useAuth();
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -132,7 +134,7 @@ const GroupsScreen = () => {
           <Text style={styles.groupName}>{item.name}</Text>
           <View style={styles.memberInfo}>
             <Ionicons name="people-outline" size={14} color="#666" />
-            <Text style={styles.memberCount}>{(item.members?.length || 0) + 1} miembros</Text>
+            {item.members.length === 1 ? (<Text style={styles.memberCount}>{item.members?.length} miembro</Text>) : <Text style={styles.memberCount}>{item.members?.length} miembros</Text>}
           </View>
         </View>
         {item.admin === user?.uid && selectedTab === 'mis' && (
@@ -169,6 +171,15 @@ const GroupsScreen = () => {
 
   const handleCreateGroup = () => {
     navigation.navigate('CreateGroup');
+  };
+
+  // Pull-to-refresh para recargar grupos
+  const refreshGroups = async () => {
+    setRefreshing(true);
+    const snapshot = await getDocs(collection(db, 'groups'));
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setGroups(data);
+    setRefreshing(false);
   };
 
   return (
@@ -217,6 +228,14 @@ const GroupsScreen = () => {
                   </Text>
                 )}
               </View>
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refreshGroups}
+                colors={['#1e3a8a']}
+                tintColor="#1e3a8a"
+              />
             }
           />
         )}

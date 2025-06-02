@@ -14,6 +14,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MatchCard from '@app/components/MatchCard';
@@ -66,6 +67,7 @@ export default function GroupDetailsScreen() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -312,6 +314,26 @@ export default function GroupDetailsScreen() {
       setShowMatchDetails(false);
   };
 
+  // Pull-to-refresh para recargar grupo y usernames
+  const refreshGroup = async () => {
+    setRefreshing(true);
+    const ref = doc(db, 'groups', groupId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const groupData: GroupType = { id: snap.id, ...snap.data() };
+      setGroup(groupData);
+      // Recargar usernames del ranking
+      const rankingIds = groupData.ranking ? Object.keys(groupData.ranking) : [];
+      const usernamesObj: { [id: string]: string } = {};
+      for (const uid of rankingIds) {
+        const userSnap = await getDoc(doc(db, 'users', uid));
+        usernamesObj[uid] = userSnap.exists() ? userSnap.data().username || uid : uid;
+      }
+      setUsernames(usernamesObj);
+    }
+    setRefreshing(false);
+  };
+
   // Renderizado de partidos
   const renderMatch = ({ item }: { item: Match }) => (
     <TouchableOpacity onPress={() => {
@@ -429,11 +451,38 @@ export default function GroupDetailsScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Partidos' && (
             <FlatList
-              data={Array.isArray(group?.matches) ? group.matches : []}
+              data={
+                Array.isArray(group?.matches)
+                  ? group.matches.filter(m => {
+                      let matchDate;
+                      if (m.date instanceof Date) {
+                        matchDate = m.date;
+                      } else if (m.date && typeof m.date.toDate === 'function') {
+                        matchDate = m.date.toDate();
+                      } else if (m.date && typeof m.date === 'object' && 'seconds' in m.date) {
+                        // Firestore Timestamp en formato { seconds, nanoseconds }
+                        matchDate = new Date(m.date.seconds * 1000);
+                      } else if (typeof m.date === 'string' || typeof m.date === 'number') {
+                        matchDate = new Date(m.date);
+                      } else {
+                        matchDate = new Date();
+                      }
+                      return matchDate >= new Date();
+                    })
+                  : []
+              }
               renderItem={renderMatch}
               keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={<Text style={styles.emptyText}>No hay partidos en este grupo.</Text>}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={refreshGroup}
+                  colors={['#1e3a8a']}
+                  tintColor="#1e3a8a"
+                />
+              }
             />
           )}
           {selectedTab === 'Ranking' && (
@@ -443,6 +492,14 @@ export default function GroupDetailsScreen() {
               keyExtractor={item => String(item.id || '')}
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={<Text style={styles.emptyText}>No hay ranking aún.</Text>}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={refreshGroup}
+                  colors={['#1e3a8a']}
+                  tintColor="#1e3a8a"
+                />
+              }
             />
           )}
           {selectedTab === 'Chat' && group?.id && (
@@ -1228,10 +1285,10 @@ const styles = StyleSheet.create({
     color: '#1e3a8a',
   },
   team1Badge: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(49,78,153,0.1)',
   },
   team2Badge: {
-    backgroundColor: 'rgba(30,58,138,0.1)',
+    backgroundColor: 'rgba(220,38,38,0.1)',
   },
   noPlayersText: {
     fontSize: 16,
