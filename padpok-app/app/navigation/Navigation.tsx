@@ -117,30 +117,26 @@ const HomeTabs = () => {
         }}
       />
       <HomeTab.Screen 
+        name="CreateMatch" 
+        component={CreateMatchScreen} 
+        options={{ 
+          title: 'Crear Partido'
+        }}
+      />
+      <HomeTab.Screen 
         name="Groups" 
         component={GroupsScreen} 
         options={{ 
           title: 'Grupos'
         }}
       />
-      {user && (
-        <>
-          <HomeTab.Screen 
-            name="CreateMatch" 
-            component={CreateMatchScreen} 
-            options={{ 
-              title: 'Crear Partido'
-            }}
-          />
-          <HomeTab.Screen 
-            name="Profile" 
-            component={ProfileScreen} 
-            options={{ 
-              title: 'Mi Perfil'
-            }}
-          />
-        </>
-      )}
+      <HomeTab.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{ 
+          title: 'Mi Perfil'
+        }}
+      />
     </HomeTab.Navigator>
   );
 };
