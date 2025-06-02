@@ -11,28 +11,22 @@ import {
   StatusBar
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList, Match, Score } from '@app/types';
-import { doc, getDoc } from 'firebase/firestore';
+import { RootStackParamList } from '@app/types/navigation';
+import { Match, Score } from '@app/types/models';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { joinMatch, leaveMatch, getMatchUsers } from '@app/lib/matches';
 import ScoreForm from '@app/components/ScoreForm';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { HomeTabsParamList } from '@app/types';
 import UserProfileModal from '@app/components/UserProfileModal';
 
-type MatchDetailsScreenNavigationProp = CompositeNavigationProp<
-  NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>['navigation'],
-  BottomTabNavigationProp<HomeTabsParamList>
->;
-
-type Props = NativeStackScreenProps<HomeStackParamList, 'MatchDetails'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'MatchDetails'>;
 
 const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { match: initialMatch, matchId } = route.params;
+  const initialMatch = (route.params as any)?.match;
+  const matchId = (route.params as any)?.matchId;
   const [match, setMatch] = useState<Match | null>(initialMatch || null);
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -42,6 +36,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [userInfos, setUserInfos] = useState<{ [key: string]: { username: string; gender?: 'Masculino' | 'Femenino' } }>({});
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     const fetchMatch = async () => {
@@ -53,9 +48,9 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
             setMatch({
               ...matchData,
               id: matchDoc.id,
-              date: matchData.date.toDate(),
-              createdAt: matchData.createdAt.toDate(),
-              updatedAt: matchData.updatedAt?.toDate()
+              date: matchData.date && typeof (matchData.date as any).toDate === 'function' ? (matchData.date as any).toDate() : matchData.date,
+              createdAt: matchData.createdAt && typeof (matchData.createdAt as any).toDate === 'function' ? (matchData.createdAt as any).toDate() : matchData.createdAt,
+              updatedAt: matchData.updatedAt && typeof (matchData.updatedAt as any).toDate === 'function' ? (matchData.updatedAt as any).toDate() : matchData.updatedAt
             });
           }
         } catch (error) {
@@ -125,14 +120,17 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     setLoading(true);
     try {
       await joinMatch(match.id, user.uid, team, position);
-      setMatch(prev => ({
-        ...prev,
-        playersJoined: [...prev.playersJoined, user.uid],
-        teams: {
-          team1: team === 'team1' ? [...(prev.teams?.team1 || []), user.uid] : (prev.teams?.team1 || []),
-          team2: team === 'team2' ? [...(prev.teams?.team2 || []), user.uid] : (prev.teams?.team2 || [])
-        }
-      }));
+      setMatch((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          playersJoined: [...prev.playersJoined, user.uid],
+          teams: {
+            team1: team === 'team1' ? [...(prev.teams?.team1 || []), user.uid] : (prev.teams?.team1 || []),
+            team2: team === 'team2' ? [...(prev.teams?.team2 || []), user.uid] : (prev.teams?.team2 || [])
+          }
+        };
+      });
       setIsJoined(true);
       setShowTeamSelection(false);
       Alert.alert('Éxito', 'Te has unido al partido correctamente');
@@ -150,14 +148,17 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     setLoading(true);
     try {
       await leaveMatch(match.id, user.uid);
-      setMatch(prev => ({
-        ...prev,
-        playersJoined: prev.playersJoined.filter(id => id !== user.uid),
-        teams: {
-          team1: (prev.teams?.team1 || []).filter(id => id !== user.uid),
-          team2: (prev.teams?.team2 || []).filter(id => id !== user.uid)
-        }
-      }));
+      setMatch((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          playersJoined: prev.playersJoined.filter((id: string) => id !== user.uid),
+          teams: {
+            team1: (prev.teams?.team1 || []).filter((id: string) => id !== user.uid),
+            team2: (prev.teams?.team2 || []).filter((id: string) => id !== user.uid)
+          }
+        };
+      });
       setIsJoined(false);
       Alert.alert('Éxito', 'Has abandonado el partido correctamente');
     } catch (error) {
@@ -169,16 +170,30 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const handleScoreSubmitted = async (newScore: Score) => {
-    setMatch(prev => ({
-      ...prev,
-      score: newScore
-    }));
+    setMatch((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        score: newScore
+      };
+    });
     setShowScoreForm(false);
   };
 
   const handleUserPress = (userId: string) => {
     setSelectedUserId(userId);
     setShowUserProfile(true);
+  };
+
+  const handleDeleteMatch = async () => {
+    if (!match) return;
+    try {
+      await deleteDoc(doc(db, 'matches', match.id));
+      Alert.alert('Partido eliminado', 'El partido ha sido eliminado correctamente');
+      navigation.navigate('Matches', { refresh: true });
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo eliminar el partido');
+    }
   };
 
   const formattedDate = match.date.toLocaleDateString('es-ES', {
@@ -272,7 +287,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               {match.playersJoined.length > 0 ? (
                 <View style={styles.playersList}>
                   {/* Equipo 1 */}
-                  {match.teams?.team1.map((playerId, index) => (
+                  {match.teams?.team1.map((playerId: string, index: number) => (
                     <View key={playerId} style={styles.playerItem}>
                       <View style={styles.playerNumber}>
                         <Text style={styles.playerNumberText}>{index + 1}</Text>
@@ -300,7 +315,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                   ))}
 
                   {/* Equipo 2 */}
-                  {match.teams?.team2.map((playerId, index) => (
+                  {match.teams?.team2.map((playerId: string, index: number) => (
                     <View key={playerId} style={styles.playerItem}>
                       <View style={styles.playerNumber}>
                         <Text style={styles.playerNumberText}>{index + 1}</Text>
@@ -419,29 +434,64 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.buttonContainer}>
           {!match.score && (
-            <TouchableOpacity
-              style={[
-                styles.joinButton,
-                isJoined ? styles.leaveButton : null,
-                loading && styles.buttonDisabled,
-                match.playersJoined.length >= match.playersNeeded && !isJoined && styles.buttonDisabled
-              ]}
-              onPress={isJoined ? handleLeaveMatch : handleJoinMatch}
-              disabled={loading || (match.playersJoined.length >= match.playersNeeded && !isJoined)}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.joinButtonText}>
-                  {isJoined 
-                    ? 'Abandonar Partido' 
-                    : match.playersJoined.length >= match.playersNeeded 
-                      ? 'Partido Completo' 
-                      : 'Unirse al Partido'
+            (() => {
+              const isCreatorAndOnlyPlayer = !!match && match.createdBy === user?.uid && Array.isArray(match.playersJoined) && match.playersJoined.length === 1;
+              if (isCreatorAndOnlyPlayer && showDeleteConfirm) {
+                return (
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={{ color: '#e11d48', fontWeight: 'bold', marginBottom: 12, textAlign: 'center' }}>
+                      ¿Seguro que quieres eliminar este partido? Esta acción no se puede deshacer.
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <TouchableOpacity
+                        style={[styles.joinButton, { backgroundColor: '#aaa' }]}
+                        onPress={() => setShowDeleteConfirm(false)}
+                      >
+                        <Text style={styles.joinButtonText}>Cancelar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.joinButton, { backgroundColor: '#e11d48' }]}
+                        onPress={handleDeleteMatch}
+                      >
+                        <Text style={styles.joinButtonText}>Eliminar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              }
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.joinButton,
+                    isJoined ? styles.leaveButton : null,
+                    loading && styles.buttonDisabled,
+                    match.playersJoined.length >= match.playersNeeded && !isJoined && styles.buttonDisabled
+                  ]}
+                  onPress={
+                    isCreatorAndOnlyPlayer
+                      ? () => setShowDeleteConfirm(true)
+                      : isJoined
+                        ? handleLeaveMatch
+                        : handleJoinMatch
                   }
-                </Text>
-              )}
-            </TouchableOpacity>
+                  disabled={loading || (match.playersJoined.length >= match.playersNeeded && !isJoined)}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.joinButtonText}>
+                      {isCreatorAndOnlyPlayer
+                        ? 'Eliminar partido'
+                        : isJoined
+                          ? 'Abandonar Partido'
+                          : match.playersJoined.length >= match.playersNeeded
+                            ? 'Partido Completo'
+                            : 'Unirse al Partido'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })()
           )}
         </View>
       </View>

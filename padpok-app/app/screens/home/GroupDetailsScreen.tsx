@@ -165,6 +165,7 @@ export default function GroupDetailsScreen() {
   // 1. Función para actualizar un partido dentro del grupo en Firestore
   type GroupMatchUpdate = (matchId: string, updater: (match: Match) => Match) => Promise<void>;
   const updateGroupMatch: GroupMatchUpdate = async (matchId, updater) => {
+    console.log('updateGroupMatch', matchId, updater);
     if (!group) return;
     const groupRef = firestoreDoc(db, 'groups', group.id);
     const matches = Array.isArray(group.matches) ? group.matches : [];
@@ -275,9 +276,9 @@ export default function GroupDetailsScreen() {
       setMatchLoading(false);
     }
   };
-
   // 4. Función para añadir resultado a un partido en grupo
   const handleScoreGroupMatch = async (newScore: Score) => {
+    console.log('handleScoreGroupMatch', newScore);
     if (!selectedMatch) return;
     setMatchLoading(true);
     try {
@@ -811,6 +812,8 @@ export default function GroupDetailsScreen() {
                   onScoreSubmitted={handleScoreGroupMatch}
                   visible={showScoreForm}
                   onClose={() => setShowScoreForm(false)}
+                  collection="groups"
+                  groupId={group?.id}
                 />
                 <TeamSelectionModal
                   key={selectedMatch ? selectedMatch.id + '-' + selectedMatch.playersJoined.length : 'empty'}

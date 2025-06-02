@@ -1,6 +1,6 @@
 import { collection, doc, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove, query, where, orderBy, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import { Match, Score } from '@app/types';
+import { Match, Score } from '@app/types/index';
 import { checkAndUpdateMedals } from './medals';
 import { notifyMatchFull, notifyResultAdded, notifyResultConfirmed } from './notifications';
 
@@ -335,4 +335,34 @@ export const getUserMatchHistory = async (userId: string): Promise<MatchHistory[
     id: doc.id,
     ...doc.data()
   })) as MatchHistory[];
+};
+
+// Solo para partidos de grupos: /groups/{groupId}/matches/{matchId}
+export const updateGroupMatchScore = async (
+  groupId: string,
+  matchId: string,
+  score: Score
+): Promise<void> => {
+  console.log('updateGroupMatchScore', groupId, matchId, score);
+  const groupRef = doc(db, 'groups', groupId);
+  const groupDoc = await getDoc(groupRef);
+  if (!groupDoc.exists()) {
+    throw new Error('El grupo no existe');
+  }
+  const groupData = groupDoc.data();
+  const matches = groupData.matches || [];
+  const matchIndex = matches.findIndex((m: any) => m.id === matchId);
+  if (matchIndex === -1) throw new Error('El partido no existe en el grupo');
+
+  // Actualizar el score y updatedAt
+  matches[matchIndex].score = score;
+  matches[matchIndex].updatedAt = new Date();
+
+  await updateDoc(groupRef, { matches });
+
+  // Opcional: Si necesitas actualizar estadísticas, medallas, notificaciones, etc.
+  // Puedes obtener el match actualizado:
+  // const matchData = matches[matchIndex];
+  // await updatePlayerStats(matchData, score);
+  // ...
 }; 

@@ -92,7 +92,20 @@ const GroupsScreen = () => {
     const currentMembers = Array.isArray(group.members) ? group.members : [];
     if (currentMembers.includes(user.uid)) return;
     const updatedMembers = [...currentMembers, user.uid];
-    await updateDoc(groupRef, { members: updatedMembers });
+
+    // --- NUEVO: Actualizar ranking ---
+    const currentRanking = group.ranking || {};
+    if (!currentRanking[user.uid]) {
+      currentRanking[user.uid] = {
+        points: 0,
+        matchesPlayed: 0,
+        wins: 0,
+        losses: 0
+      };
+    }
+    // --- FIN NUEVO ---
+
+    await updateDoc(groupRef, { members: updatedMembers, ranking: currentRanking });
     // Refrescar grupos
     const snapshot = await getDocs(collection(db, 'groups'));
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

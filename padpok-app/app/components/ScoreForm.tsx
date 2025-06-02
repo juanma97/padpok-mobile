@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Modal, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { updateMatchScore, validateScore } from '@app/lib/matches';
-import { Score } from '@app/types';
+import { updateGroupMatchScore, updateMatchScore, validateScore } from '@app/lib/matches';
+import { Score } from '@app/types/index';
 
 interface ScoreFormProps {
   matchId: string;
   onScoreSubmitted: (score: Score) => void;
   visible: boolean;
   onClose: () => void;
+  collection?: 'matches' | 'groups';
+  groupId?: string;
 }
 
-const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visible, onClose }) => {
+const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visible, onClose, collection, groupId }) => {
   const [loading, setLoading] = useState(false);
   const [showSet3, setShowSet3] = useState(false);
   const [score, setScore] = useState<Score>({
@@ -21,7 +23,7 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
   });
 
   const handleScoreChange = (set: 'set1' | 'set2' | 'set3', team: 'team1' | 'team2', value: number) => {
-    setScore(prev => ({
+    setScore((prev: Score) => ({
       ...prev,
       [set]: {
         ...prev[set],
@@ -59,7 +61,12 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
 
     setLoading(true);
     try {
-      await updateMatchScore(matchId, scoreToSubmit);
+      if (collection === 'groups') {
+        if (!groupId) throw new Error('Falta groupId para partidos de grupo');
+        await updateGroupMatchScore(groupId, matchId, scoreToSubmit);
+      } else {
+        await updateMatchScore(matchId, scoreToSubmit);
+      }
       Alert.alert('Éxito', 'Resultado guardado correctamente');
       onScoreSubmitted(scoreToSubmit);
       onClose();
