@@ -167,7 +167,6 @@ export default function GroupDetailsScreen() {
   // 1. Función para actualizar un partido dentro del grupo en Firestore
   type GroupMatchUpdate = (matchId: string, updater: (match: Match) => Match) => Promise<void>;
   const updateGroupMatch: GroupMatchUpdate = async (matchId, updater) => {
-    console.log('updateGroupMatch', matchId, updater);
     if (!group) return;
     const groupRef = firestoreDoc(db, 'groups', group.id);
     const matches = Array.isArray(group.matches) ? group.matches : [];
@@ -451,26 +450,7 @@ export default function GroupDetailsScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Partidos' && (
             <FlatList
-              data={
-                Array.isArray(group?.matches)
-                  ? group.matches.filter(m => {
-                      let matchDate;
-                      if (m.date instanceof Date) {
-                        matchDate = m.date;
-                      } else if (m.date && typeof m.date.toDate === 'function') {
-                        matchDate = m.date.toDate();
-                      } else if (m.date && typeof m.date === 'object' && 'seconds' in m.date) {
-                        // Firestore Timestamp en formato { seconds, nanoseconds }
-                        matchDate = new Date(m.date.seconds * 1000);
-                      } else if (typeof m.date === 'string' || typeof m.date === 'number') {
-                        matchDate = new Date(m.date);
-                      } else {
-                        matchDate = new Date();
-                      }
-                      return matchDate >= new Date();
-                    })
-                  : []
-              }
+              data={group?.matches}
               renderItem={renderMatch}
               keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
               contentContainerStyle={styles.listContent}

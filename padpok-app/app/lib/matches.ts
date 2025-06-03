@@ -360,9 +360,33 @@ export const updateGroupMatchScore = async (
 
   await updateDoc(groupRef, { matches });
 
-  // Opcional: Si necesitas actualizar estadísticas, medallas, notificaciones, etc.
-  // Puedes obtener el match actualizado:
-  // const matchData = matches[matchIndex];
-  // await updatePlayerStats(matchData, score);
-  // ...
+  // --- NUEVO: Actualizar ranking del grupo ---
+  const ranking = groupData.ranking || {};
+  const matchData = matches[matchIndex];
+  const { teams } = matchData;
+  if (teams) {
+    const winningTeam = score.winner;
+    const losingTeam = winningTeam === 'team1' ? 'team2' : 'team1';
+
+    // Ganadores
+    for (const playerId of teams[winningTeam]) {
+      if (!ranking[playerId]) {
+        ranking[playerId] = { points: 0, matchesPlayed: 0, wins: 0, losses: 0 };
+      }
+      ranking[playerId].points += 3;
+      ranking[playerId].matchesPlayed += 1;
+      ranking[playerId].wins += 1;
+    }
+    // Perdedores
+    for (const playerId of teams[losingTeam]) {
+      if (!ranking[playerId]) {
+        ranking[playerId] = { points: 0, matchesPlayed: 0, wins: 0, losses: 0 };
+      }
+      ranking[playerId].points += 1;
+      ranking[playerId].matchesPlayed += 1;
+      ranking[playerId].losses += 1;
+    }
+    await updateDoc(groupRef, { ranking });
+  }
+  // --- FIN NUEVO ---
 }; 
