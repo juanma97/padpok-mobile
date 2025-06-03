@@ -56,6 +56,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     hours: [],
     level: null
   });
+  const [selectedTab, setSelectedTab] = useState<'disponibles' | 'mis'>('disponibles');
 
   const { user } = useAuth();
 
@@ -78,8 +79,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           createdAt: data.createdAt.toDate(),
           updatedAt: data.updatedAt?.toDate()
         } as Match;
-      }).filter(match => match.date >= new Date());
-
+      });
       setMatches(matchesData);
     } catch (error) {
       console.error('Error fetching matches:', error);
@@ -153,12 +153,15 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     setShowOnlyPreferences(prev => !prev);
   };
 
+  // Partidos disponibles (solo futuros)
   const filteredAndSortedMatches = React.useMemo(() => {
     let processedMatches = [...matches];
 
+    // Filtrar por fecha futura
+    processedMatches = processedMatches.filter(match => match.date >= new Date());
+
     if (showOnlyPreferences && user && userPreferences) {
       processedMatches = processedMatches.filter(match => {
-
         // Filtrar por nivel
         if (userPreferences.level && match.level !== userPreferences.level) {
           return false;
@@ -188,6 +191,12 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
   }, [matches, sortOrder, showOnlyPreferences, user, userPreferences]);
+
+  // Mis partidos (todos los que me he unido)
+  const myMatches = React.useMemo(() => {
+    if (!user) return [];
+    return matches.filter(match => match.playersJoined.includes(user.uid));
+  }, [matches, user]);
 
   const handleMatchPress = (match: Match) => {
     if (!user) {
@@ -258,13 +267,36 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={styles.container}>
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'disponibles' && styles.tabSelected]}
+            onPress={() => setSelectedTab('disponibles')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'disponibles' && styles.tabTextSelected]}>Disponibles</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'mis' && styles.tabSelected]}
+            onPress={() => setSelectedTab('mis')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
+          </TouchableOpacity>
+        </View>
+        {/* Controles de filtro y orden */}
         <View style={styles.header}>
-          <Text style={styles.title}>Partidos Disponibles</Text>
+          <Text style={styles.title}>Partidos</Text>
           <View style={styles.controlsContainer}>
             {user && (
               <TouchableOpacity 
                 style={[styles.filterButton, showOnlyPreferences && styles.filterButtonActive]}
-                onPress={togglePreferencesFilter}
+                onPress={() => {
+                  if (selectedTab === 'disponibles') {
+                    togglePreferencesFilter();
+                  } else {
+                    // Opcional: puedes mostrar un aviso si quieres
+                  }
+                }}
+                disabled={selectedTab !== 'disponibles'}
               >
                 <Ionicons 
                   name={showOnlyPreferences ? 'filter' : 'filter-outline'} 
@@ -276,7 +308,6 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
                 </Text>
               </TouchableOpacity>
             )}
-            
             <TouchableOpacity 
               style={styles.sortButton}
               onPress={toggleSortOrder}
@@ -292,27 +323,54 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {filteredAndSortedMatches.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>{matches.length === 0 ? 'No hay partidos disponibles' : 'No hay partidos que coincidan con tus preferencias'}</Text>
-          </View>
+        {/* Lista según tab */}
+        {selectedTab === 'disponibles' ? (
+          filteredAndSortedMatches.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>{matches.length === 0 ? 'No hay partidos disponibles' : 'No hay partidos que coincidan con tus preferencias'}</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredAndSortedMatches}
+              renderItem={renderMatchItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={['#1e3a8a']}
+                  tintColor="#1e3a8a"
+                />
+              }
+            />
+          )
         ) : (
-          <FlatList
-            data={filteredAndSortedMatches}
-            renderItem={renderMatchItem}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={['#1e3a8a']}
-                tintColor="#1e3a8a"
-              />
-            }
-          />
+          myMatches.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No te has unido a ningún partido</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={myMatches}
+              renderItem={renderMatchItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={['#1e3a8a']}
+                  tintColor="#1e3a8a"
+                />
+              }
+            />
+          )
         )}
+        {/* FAB para crear partido */}
+        <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')}>
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -440,6 +498,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    borderRadius: 8,
+    margin: 16,
+    overflow: 'hidden',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabSelected: {
+    backgroundColor: '#1e3a8a',
+  },
+  tabText: {
+    color: '#1e3a8a',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  tabTextSelected: {
+    color: '#fff',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#1e3a8a',
+    borderRadius: 50,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

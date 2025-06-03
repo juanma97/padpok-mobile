@@ -40,6 +40,7 @@ export default function GroupDetailsScreen() {
   const { user } = useAuth();
   const { groupId } = route.params as any;
   const [selectedTab, setSelectedTab] = useState('Partidos');
+  const [partidosTab, setPartidosTab] = useState<'disponibles' | 'mis'>('disponibles');
   type GroupType = { id: string; ranking?: Record<string, any>; matches?: any[]; members?: string[]; admin?: string; name?: string; [key: string]: any };
   const [group, setGroup] = useState<GroupType | null>(null);
   const [dialog, setDialog] = useState({ visible: false, title: '', message: '', onConfirm: () => {}, onClose: () => {} });
@@ -384,6 +385,24 @@ export default function GroupDetailsScreen() {
     );
   };
 
+  // Partidos disponibles (futuros)
+  const disponibles = Array.isArray(group?.matches)
+    ? group.matches.filter(m => {
+        let matchDate;
+        if (m.date instanceof Date) matchDate = m.date;
+        else if (m.date && typeof m.date.toDate === 'function') matchDate = m.date.toDate();
+        else if (m.date && typeof m.date === 'object' && 'seconds' in m.date) matchDate = new Date(m.date.seconds * 1000);
+        else if (typeof m.date === 'string' || typeof m.date === 'number') matchDate = new Date(m.date);
+        else matchDate = new Date();
+        return matchDate >= new Date();
+      })
+    : [];
+
+  // Mis partidos (todos los que me he unido)
+  const misPartidos = Array.isArray(group?.matches) && user
+    ? group.matches.filter(m => m.playersJoined && m.playersJoined.includes(user.uid))
+    : [];
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -449,21 +468,57 @@ export default function GroupDetailsScreen() {
         {/* Contenido según tab */}
         <View style={styles.contentContainer}>
           {selectedTab === 'Partidos' && (
-            <FlatList
-              data={group?.matches}
-              renderItem={renderMatch}
-              keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
-              contentContainerStyle={styles.listContent}
-              ListEmptyComponent={<Text style={styles.emptyText}>No hay partidos en este grupo.</Text>}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={refreshGroup}
-                  colors={['#1e3a8a']}
-                  tintColor="#1e3a8a"
+            <>
+              {/* Subtabs de Partidos */}
+              <View style={styles.tabsContainer}>
+                <TouchableOpacity
+                  style={[styles.tab, partidosTab === 'disponibles' && styles.tabSelected]}
+                  onPress={() => setPartidosTab('disponibles')}
+                >
+                  <Text style={[styles.tabText, partidosTab === 'disponibles' && styles.tabTextSelected]}>Disponibles</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tab, partidosTab === 'mis' && styles.tabSelected]}
+                  onPress={() => setPartidosTab('mis')}
+                >
+                  <Text style={[styles.tabText, partidosTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
+                </TouchableOpacity>
+              </View>
+              {/* Lista según subtab */}
+              {partidosTab === 'disponibles' ? (
+                <FlatList
+                  data={disponibles}
+                  renderItem={renderMatch}
+                  keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
+                  contentContainerStyle={styles.listContent}
+                  ListEmptyComponent={<Text style={styles.emptyText}>No hay partidos en este grupo.</Text>}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={refreshGroup}
+                      colors={['#1e3a8a']}
+                      tintColor="#1e3a8a"
+                    />
+                  }
                 />
-              }
-            />
+              ) : (
+                <FlatList
+                  data={misPartidos}
+                  renderItem={renderMatch}
+                  keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
+                  contentContainerStyle={styles.listContent}
+                  ListEmptyComponent={<Text style={styles.emptyText}>No te has unido a ningún partido</Text>}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={refreshGroup}
+                      colors={['#1e3a8a']}
+                      tintColor="#1e3a8a"
+                    />
+                  }
+                />
+              )}
+            </>
           )}
           {selectedTab === 'Ranking' && (
             <FlatList
@@ -823,7 +878,15 @@ export default function GroupDetailsScreen() {
                       const now = new Date();
                       const timeDiff = matchDate.getTime() - now.getTime();
                       const minutesRemaining = Math.ceil(timeDiff / (1000 * 60));
-                      if (timeDiff <= 0) {
+                      if (selectedMatch.playersJoined.length < 4 && timeDiff <= 0) {
+                        return (
+                          <View style={[styles.addScoreButton, styles.addScoreButtonDisabled, { marginTop: 24, width: '100%', alignSelf: 'center', backgroundColor: '#000' }]}>
+                            <Text style={styles.addScoreText}>Partido incompleto</Text>
+                            <Text style={styles.addScoreText}>No se alcanzó el número de jugadores</Text>
+                          </View>
+                        );
+                      }
+                      if (timeDiff <= 0 && selectedMatch.playersJoined.length === 4) {
                         return (
                           <TouchableOpacity style={styles.addScoreButton} onPress={() => setShowScoreForm(true)}>
                             <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
