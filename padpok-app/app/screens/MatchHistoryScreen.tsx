@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, Match } from '../types';
+import { RootStackParamList } from '../types';
 import { useAuth } from '@app/lib/AuthContext';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
@@ -33,11 +33,10 @@ export default function MatchHistoryScreen() {
 
     try {
       setLoading(true);
-      const matchesRef = collection(db, 'matches');
+      const matchesRef = collection(db, 'matchHistory');
       const q = query(
         matchesRef,
-        where('playersJoined', 'array-contains', user.uid),
-        where('score', '!=', null),
+        where('userId', '==', user.uid),
         orderBy('date', 'desc')
       );
 
@@ -45,9 +44,9 @@ export default function MatchHistoryScreen() {
       const historyMatches: HistoryMatch[] = [];
 
       querySnapshot.forEach((doc) => {
-        const match = doc.data() as Match;
-        if (match.score && match.teams) {
-          const userTeam = match.teams.team1.includes(user.uid) ? 'team1' : 'team2';
+        const match = doc.data() as any;
+        if (match) {
+          const userTeam = match.team;
           const isWinner = match.score.winner === userTeam;
           
           const scoreString = `${match.score.set1.team1}-${match.score.set1.team2}, ${match.score.set2.team1}-${match.score.set2.team2}${
@@ -106,29 +105,61 @@ export default function MatchHistoryScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {matches.length > 0 ? (
-        <FlatList
-          data={matches}
-          renderItem={renderMatch}
-          keyExtractor={(item) => item.id}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="tennisball-outline" size={48} color="#9ca3af" />
-          <Text style={styles.emptyText}>No hay partidos en tu historial</Text>
-          <Text style={styles.emptySubtext}>
-            Los partidos completados aparecerán aquí
-          </Text>
-        </View>
-      )}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Historial de Partidos</Text>
+      </View>
+      <View style={styles.container}>
+        {matches.length > 0 ? (
+          <FlatList
+            data={matches}
+            renderItem={renderMatch}
+            keyExtractor={(item) => item.id}
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="tennisball-outline" size={48} color="#9ca3af" />
+            <Text style={styles.emptyText}>No hay partidos en tu historial</Text>
+            <Text style={styles.emptySubtext}>
+              Los partidos completados aparecerán aquí
+            </Text>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    zIndex: 10,
+  },
+  backButton: {
+    padding: 6,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e3a8a',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',

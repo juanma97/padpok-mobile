@@ -99,6 +99,19 @@ export const updateMatchScore = async (matchId: string, score: Score): Promise<v
     ...matchData,
     id: matchId
   }, score);
+
+  // Añadir al historial de todos los jugadores
+  if (matchData.teams) {
+    const allPlayers = [...matchData.teams.team1, ...matchData.teams.team2];
+    for (const playerId of allPlayers) {
+      const team = matchData.teams.team1.includes(playerId) ? 'team1' : 'team2';
+      const position = matchData.teams[team][0] === playerId ? 'first' : 'second';
+      const partnerId = matchData.teams[team].find((id: string) => id !== playerId);
+      const opponentIds = matchData.teams[team === 'team1' ? 'team2' : 'team1'];
+      const result = (score.winner === team) ? 'win' : 'loss';
+      await addMatchToHistory(matchId, playerId, result, team, position, partnerId, opponentIds);
+    }
+  }
 };
 
 // Función para confirmar un resultado
@@ -291,7 +304,7 @@ export const addMatchToHistory = async (
     position,
     partnerId,
     opponentIds,
-    createdAt: serverTimestamp()
+    createdAt: new Date()
   });
 
   // Actualizar estadísticas del usuario
@@ -335,6 +348,68 @@ export const getUserMatchHistory = async (userId: string): Promise<MatchHistory[
     id: doc.id,
     ...doc.data()
   })) as MatchHistory[];
+};
+
+// Añadir partido de grupo al historial
+export const addGroupMatchToHistory = async (
+  groupId: string,
+  matchId: string,
+  userId: string,
+  result: 'win' | 'loss',
+  team: 'team1' | 'team2',
+  position: 'first' | 'second',
+  partnerId?: string,
+  opponentIds: string[] = []
+): Promise<void> => {
+  // Obtener el grupo y buscar el partido en el array matches
+  const groupRef = doc(db, 'groups', groupId);
+  const groupDoc = await getDoc(groupRef);
+  if (!groupDoc.exists()) {
+    throw new Error('El grupo no existe');
+  }
+  const groupData = groupDoc.data();
+  const matchData = (groupData.matches || []).find((m: any) => m.id === matchId);
+  if (!matchData) {
+    throw new Error('El partido no existe en el grupo');
+  }
+  const historyRef = collection(db, 'matchHistory');
+  await addDoc(historyRef, {
+    matchId,
+    groupId,
+    userId,
+    date: matchData.date,
+    result,
+    score: matchData.score,
+    team,
+    position,
+    partnerId,
+    opponentIds,
+    createdAt: new Date()
+  });
+
+  // Actualizar estadísticas del usuario
+  const userRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userRef);
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    const stats = userData.stats || {
+      matchesPlayed: 0,
+      matchesWon: 0,
+      matchesLost: 0,
+      currentStreak: 0,
+      bestStreak: 0
+    };
+    stats.matchesPlayed += 1;
+    if (result === 'win') {
+      stats.matchesWon += 1;
+      stats.currentStreak += 1;
+      stats.bestStreak = Math.max(stats.bestStreak, stats.currentStreak);
+    } else {
+      stats.matchesLost += 1;
+      stats.currentStreak = 0;
+    }
+    await updateDoc(userRef, { stats });
+  }
 };
 
 // Solo para partidos de grupos: /groups/{groupId}/matches/{matchId}
@@ -399,6 +474,15 @@ export const updateGroupMatchScore = async (
         ...matchData,
         score
       });
+    }
+    // Añadir al historial de todos los jugadores
+    for (const playerId of allPlayers) {
+      const team = matchData.teams.team1.includes(playerId) ? 'team1' : 'team2';
+      const position = matchData.teams[team][0] === playerId ? 'first' : 'second';
+      const partnerId = matchData.teams[team].find((id: string) => id !== playerId);
+      const opponentIds = matchData.teams[team === 'team1' ? 'team2' : 'team1'];
+      const result = (score.winner === team) ? 'win' : 'loss';
+      await addGroupMatchToHistory(groupId, matchId, playerId, result, team, position, partnerId, opponentIds);
     }
   }
 }; 
