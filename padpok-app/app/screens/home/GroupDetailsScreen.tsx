@@ -69,6 +69,7 @@ export default function GroupDetailsScreen() {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [sortBy, setSortBy] = useState<'points' | 'matchesPlayed' | 'wins'>('points');
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -521,21 +522,76 @@ export default function GroupDetailsScreen() {
             </>
           )}
           {selectedTab === 'Ranking' && (
-            <FlatList
-              data={group ? Object.entries(group.ranking ?? {}).map(([id, stats]) => ({ id, ...(stats as any) })) : []}
-              renderItem={renderRanking}
-              keyExtractor={item => String(item.id || '')}
-              contentContainerStyle={styles.listContent}
-              ListEmptyComponent={<Text style={styles.emptyText}>No hay ranking aún.</Text>}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={refreshGroup}
-                  colors={['#1e3a8a']}
-                  tintColor="#1e3a8a"
-                />
-              }
-            />
+            <>
+              {/* Botones de ordenamiento */}
+              <View style={styles.sortContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.sortButton,
+                    sortBy === 'points' && styles.sortButtonActive
+                  ]}
+                  onPress={() => setSortBy('points')}
+                >
+                  <Text style={[
+                    styles.sortButtonText,
+                    sortBy === 'points' && styles.sortButtonTextActive
+                  ]}>
+                    Puntos
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.sortButton,
+                    sortBy === 'matchesPlayed' && styles.sortButtonActive
+                  ]}
+                  onPress={() => setSortBy('matchesPlayed')}
+                >
+                  <Text style={[
+                    styles.sortButtonText,
+                    sortBy === 'matchesPlayed' && styles.sortButtonTextActive
+                  ]}>
+                    Partidos
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.sortButton,
+                    sortBy === 'wins' && styles.sortButtonActive
+                  ]}
+                  onPress={() => setSortBy('wins')}
+                >
+                  <Text style={[
+                    styles.sortButtonText,
+                    sortBy === 'wins' && styles.sortButtonTextActive
+                  ]}>
+                    Victorias
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={group ? [...Object.entries(group.ranking ?? {}).map(([id, stats]) => ({ id, ...(stats as any) }))].sort((a, b) => {
+                  if (sortBy === 'points') {
+                    return (b.points || 0) - (a.points || 0);
+                  } else if (sortBy === 'matchesPlayed') {
+                    return (b.matchesPlayed || 0) - (a.matchesPlayed || 0);
+                  } else {
+                    return (b.wins || 0) - (a.wins || 0);
+                  }
+                }) : []}
+                renderItem={renderRanking}
+                keyExtractor={item => String(item.id || '')}
+                contentContainerStyle={styles.listContent}
+                ListEmptyComponent={<Text style={styles.emptyText}>No hay ranking aún.</Text>}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={refreshGroup}
+                    colors={['#1e3a8a']}
+                    tintColor="#1e3a8a"
+                  />
+                }
+              />
+            </>
           )}
           {selectedTab === 'Chat' && group?.id && (
             <MatchChat matchId={group.id} />
@@ -886,7 +942,8 @@ export default function GroupDetailsScreen() {
                           </View>
                         );
                       }
-                      if (timeDiff <= 0 && selectedMatch.playersJoined.length === 4) {
+                      if (timeDiff <= 0 
+                        && selectedMatch.playersJoined.length === 4) {
                         return (
                           <TouchableOpacity style={styles.addScoreButton} onPress={() => setShowScoreForm(true)}>
                             <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
@@ -1425,5 +1482,28 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     backgroundColor: '#e5e7eb',
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  sortButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+  },
+  sortButtonActive: {
+    backgroundColor: '#1e3a8a',
+  },
+  sortButtonText: {
+    color: '#4b5563',
+    fontWeight: '600',
+  },
+  sortButtonTextActive: {
+    color: '#fff',
   },
 }); 

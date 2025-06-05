@@ -19,6 +19,7 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
   const [score, setScore] = useState<Score>({
     set1: { team1: 0, team2: 0 },
     set2: { team1: 0, team2: 0 },
+    set3: { team1: 0, team2: 0 },
     winner: 'team1'
   });
 

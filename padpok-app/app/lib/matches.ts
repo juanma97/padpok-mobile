@@ -343,7 +343,6 @@ export const updateGroupMatchScore = async (
   matchId: string,
   score: Score
 ): Promise<void> => {
-  console.log('updateGroupMatchScore', groupId, matchId, score);
   const groupRef = doc(db, 'groups', groupId);
   const groupDoc = await getDoc(groupRef);
   if (!groupDoc.exists()) {
@@ -389,4 +388,17 @@ export const updateGroupMatchScore = async (
     await updateDoc(groupRef, { ranking });
   }
   // --- FIN NUEVO ---
+  // Actualizar las estadísticas de los jugadores
+  await updatePlayerStats(matchData, score);
+
+  // Actualizar las medallas de todos los jugadores
+  if (matchData.teams) {
+    const allPlayers = [...matchData.teams.team1, ...matchData.teams.team2];
+    for (const playerId of allPlayers) {
+      await checkAndUpdateMedals(playerId, {
+        ...matchData,
+        score
+      });
+    }
+  }
 }; 
