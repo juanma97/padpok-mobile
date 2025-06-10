@@ -243,6 +243,16 @@ const Navigation = () => {
           component={GroupDetailsScreen}
           options={{ headerShown: false }}
         />
+        <RootStack.Screen 
+          name="Medals" 
+          component={MedalsScreen}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen 
+          name="Notifications" 
+          component={NotificationsScreen}
+          options={{ headerShown: false }}
+        />
       </RootStack.Navigator>
     </NavigationContainer>
   );

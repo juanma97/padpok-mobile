@@ -1,13 +1,23 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SIZES, FONTS, SPACING } from '@app/constants/theme';
 
 interface CustomDialogProps {
   visible: boolean;
   title?: string;
   message: string;
   onClose: () => void;
-  options?: { text: string; onPress?: () => void; style?: object }[];
+  options?: { text: string; onPress?: () => void; style?: object; type?: 'default' | 'error' | 'success' | 'warning' }[];
+  type?: 'info' | 'error' | 'success' | 'warning';
 }
+
+const ICONS = {
+  info: { name: 'information-circle-outline', color: COLORS.primary },
+  error: { name: 'close-circle-outline', color: COLORS.error },
+  success: { name: 'checkmark-circle-outline', color: COLORS.success },
+  warning: { name: 'alert-circle-outline', color: COLORS.warning },
+};
 
 const CustomDialog: React.FC<CustomDialogProps> = ({
   visible,
@@ -15,7 +25,9 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
   message,
   onClose,
   options = [{ text: 'OK', onPress: onClose }],
+  type = 'info',
 }) => {
+  const icon = ICONS[type] || ICONS.info;
   return (
     <Modal
       visible={visible}
@@ -25,17 +37,29 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.dialog}>
+          <View style={styles.iconWrapper}>
+            <Ionicons name={icon.name as any} size={SIZES.xl} color={icon.color} />
+          </View>
           {title && <Text style={styles.title}>{title}</Text>}
           <Text style={styles.message}>{message}</Text>
           <View style={styles.optionsRow}>
             {options.map((option, idx) => (
               <TouchableOpacity
                 key={idx}
-                style={[styles.button, option.style]}
+                style={[
+                  styles.button,
+                  option.type === 'error' && styles.buttonError,
+                  option.type === 'success' && styles.buttonSuccess,
+                  option.type === 'warning' && styles.buttonWarning,
+                  option.style,
+                ]}
                 onPress={() => {
                   option.onPress?.();
                   onClose();
                 }}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={option.text}
               >
                 <Text style={styles.buttonText}>{option.text}</Text>
               </TouchableOpacity>
@@ -50,48 +74,75 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   dialog: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    minWidth: 280,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: SPACING.xl,
+    minWidth: 300,
     alignItems: 'center',
-    elevation: 5,
-    marginHorizontal: 32,
+    elevation: 8,
+    marginHorizontal: 24,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+  },
+  iconWrapper: {
+    marginBottom: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 12,
-    color: '#1e3a8a',
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.lg,
+    marginBottom: SPACING.sm,
+    color: COLORS.primary,
     textAlign: 'center',
   },
   message: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 20,
+    fontSize: SIZES.md,
+    color: COLORS.dark,
+    marginBottom: SPACING.lg,
     textAlign: 'center',
+    fontFamily: FONTS.regular,
   },
   optionsRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     width: '100%',
+    gap: SPACING.md,
   },
   button: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#1e3a8a',
-    marginLeft: 8,
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.md,
+  },
+  buttonError: {
+    backgroundColor: COLORS.error,
+  },
+  buttonSuccess: {
+    backgroundColor: COLORS.success,
+  },
+  buttonWarning: {
+    backgroundColor: COLORS.warning,
   },
 });
 

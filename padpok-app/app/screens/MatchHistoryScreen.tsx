@@ -7,6 +7,7 @@ import { useAuth } from '@app/lib/AuthContext';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SIZES, FONTS, SPACING } from '@app/constants/theme';
 
 type MatchHistoryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MatchHistory'>;
 
@@ -72,27 +73,64 @@ export default function MatchHistoryScreen() {
   };
 
   const renderMatch = ({ item }: { item: HistoryMatch }) => (
-    <View style={styles.matchItem}>
-      <View style={styles.matchHeader}>
-        <Text style={styles.date}>{new Date(item.date).toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}</Text>
-        <View style={[
-          styles.resultBadge,
-          item.result === 'victoria' ? styles.victoryBadge : styles.defeatBadge
-        ]}>
-          <Text style={[
-            styles.resultText,
-            item.result === 'victoria' ? styles.victoryText : styles.defeatText
-          ]}>
-            {item.result.toUpperCase()}
-          </Text>
-        </View>
+    <View style={{
+      backgroundColor: COLORS.white,
+      padding: SPACING.lg,
+      borderRadius: 20,
+      marginBottom: SPACING.md,
+      borderWidth: 2,
+      borderColor: item.result === 'victoria' ? COLORS.success : COLORS.error,
+      shadowColor: COLORS.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: SPACING.lg,
+    }}>
+      <View style={{
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: item.result === 'victoria' ? COLORS.success + '22' : COLORS.error + '22',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: SPACING.md,
+        borderWidth: 2,
+        borderColor: item.result === 'victoria' ? COLORS.success : COLORS.error,
+      }}>
+        <Ionicons name="tennisball-outline" size={SIZES.lg} color={item.result === 'victoria' ? COLORS.success : COLORS.error} />
       </View>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.score}>{item.score}</Text>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium }}>
+            {new Date(item.date).toLocaleDateString('es-ES', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })}
+          </Text>
+          <View style={{
+            paddingHorizontal: SPACING.md,
+            paddingVertical: SPACING.xs,
+            borderRadius: 16,
+            backgroundColor: item.result === 'victoria' ? COLORS.success : COLORS.error,
+          }}>
+            <Text style={{
+              fontSize: SIZES.xs,
+              fontFamily: FONTS.bold,
+              color: COLORS.white,
+              letterSpacing: 1,
+            }}>
+              {item.result.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+        <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.bold, color: COLORS.primary, marginBottom: 2 }}>{item.title}</Text>
+        <View style={{ height: 1, backgroundColor: COLORS.border, marginVertical: 6, borderRadius: 1 }} />
+        <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.regular }}>{item.score}</Text>
+      </View>
     </View>
   );
 
@@ -105,27 +143,44 @@ export default function MatchHistoryScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.md,
+        paddingTop: SPACING.sm,
+        paddingBottom: SPACING.sm,
+        backgroundColor: COLORS.background,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+        zIndex: 10,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        elevation: 2,
+      }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 6, marginRight: 8 }}>
+          <Ionicons name="arrow-back" size={SIZES.lg} color={COLORS.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Historial de Partidos</Text>
+        <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary }}>Historial de Partidos</Text>
       </View>
-      <View style={styles.container}>
+      <View style={{ flex: 1, backgroundColor: COLORS.background }}>
         {matches.length > 0 ? (
           <FlatList
             data={matches}
             renderItem={renderMatch}
             keyExtractor={(item) => item.id}
-            style={styles.list}
-            contentContainerStyle={styles.listContent}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: SPACING.lg }}
           />
         ) : (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="tennisball-outline" size={48} color="#9ca3af" />
-            <Text style={styles.emptyText}>No hay partidos en tu historial</Text>
-            <Text style={styles.emptySubtext}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <Ionicons name="tennisball-outline" size={SIZES.xl} color={COLORS.gray} />
+            <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.gray, marginTop: SPACING.lg, marginBottom: SPACING.sm }}>
+              No hay partidos en tu historial
+            </Text>
+            <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.regular, textAlign: 'center' }}>
               Los partidos completados aparecerán aquí
             </Text>
           </View>

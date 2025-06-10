@@ -15,6 +15,7 @@ import { getUserNotifications, markNotificationAsRead } from '@app/lib/notificat
 import { Notification } from '@app/types';
 import { useNavigation } from '@react-navigation/native';
 import { Timestamp } from 'firebase/firestore';
+import { COLORS, SIZES, FONTS, SPACING } from '@app/constants/theme';
 
 // Datos mock para pruebas
 const mockNotifications: Notification[] = [
@@ -123,35 +124,6 @@ const NotificationsScreen = () => {
     }
   };
 
-  const renderNotification = ({ item }: { item: Notification }) => (
-    <TouchableOpacity 
-      style={[styles.notificationItem, !item.read && styles.unreadNotification]}
-      onPress={() => handleNotificationPress(item)}
-    >
-      <View style={styles.notificationIcon}>
-        <Ionicons 
-          name={getNotificationIcon(item.type)} 
-          size={24} 
-          color="#1e3a8a" 
-        />
-      </View>
-      <View style={styles.notificationContent}>
-        <Text style={styles.notificationTitle}>
-          {getNotificationTitle(item.type)}
-        </Text>
-        <Text style={styles.matchTitle}>{item.matchTitle}</Text>
-        <Text style={styles.notificationTime}>
-          {item.createdAt.toDate().toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -161,31 +133,83 @@ const NotificationsScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <SafeAreaView style={{ backgroundColor: COLORS.primary }} edges={['top']}>
+        <View style={{ backgroundColor: COLORS.primary, padding: SPACING.lg, flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity 
-            style={styles.backButton}
+            style={{ marginRight: SPACING.md }}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={SIZES.lg} color={COLORS.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notificaciones</Text>
+          <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.white }}>Notificaciones</Text>
         </View>
       </SafeAreaView>
 
       {notifications.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="notifications-off-outline" size={48} color="#9ca3af" />
-          <Text style={styles.emptyText}>No tienes notificaciones</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg }}>
+          <Ionicons name="notifications-off-outline" size={SIZES.xl} color={COLORS.gray} />
+          <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.gray, marginTop: SPACING.lg }}>
+            No tienes notificaciones
+          </Text>
         </View>
       ) : (
         <FlatList
           data={notifications}
-          renderItem={renderNotification}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={{
+                flexDirection: 'row',
+                backgroundColor: item.read ? COLORS.white : COLORS.light,
+                borderRadius: 12,
+                padding: SPACING.lg,
+                marginBottom: SPACING.md,
+                shadowColor: COLORS.shadow,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 2,
+                borderWidth: item.read ? 1 : 2,
+                borderColor: item.read ? COLORS.border : COLORS.primary,
+                alignItems: 'center',
+              }}
+              onPress={() => handleNotificationPress(item)}
+              activeOpacity={0.85}
+            >
+              <View style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: COLORS.light,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: SPACING.lg,
+                borderWidth: 1,
+                borderColor: item.read ? COLORS.border : COLORS.primary,
+              }}>
+                <Ionicons 
+                  name={getNotificationIcon(item.type)} 
+                  size={SIZES.lg} 
+                  color={item.read ? COLORS.gray : COLORS.primary} 
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.bold, color: COLORS.primary, marginBottom: 2 }}>{getNotificationTitle(item.type)}</Text>
+                <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.regular, marginBottom: 2 }}>{item.matchTitle}</Text>
+                <Text style={{ fontSize: SIZES.xs, color: COLORS.gray, fontFamily: FONTS.medium }}>
+                  {item.createdAt.toDate().toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
           keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={{ padding: SPACING.lg }}
         />
       )}
     </View>
