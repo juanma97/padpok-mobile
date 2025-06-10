@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Modal, StyleShe
 import { Ionicons } from '@expo/vector-icons';
 import { updateGroupMatchScore, updateMatchScore, validateScore } from '@app/lib/matches';
 import { Score } from '@app/types/index';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 interface ScoreFormProps {
   matchId: string;
@@ -86,174 +87,166 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Añadir Resultado</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#666" />
+      <View style={{
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <View style={{
+          backgroundColor: COLORS.white,
+          borderRadius: 20,
+          padding: SPACING.xl,
+          width: '92%',
+          maxHeight: '85%',
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.12,
+          shadowRadius: 16,
+          elevation: 8,
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg }}>
+            <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary }}>Añadir Resultado</Text>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Ionicons name="close" size={24} color={COLORS.gray} />
             </TouchableOpacity>
           </View>
-          
           {/* Set 1 */}
-          <View style={styles.setContainer}>
-            <Text style={styles.setTitle}>Set 1</Text>
-            <View style={styles.scoreContainer}>
-              <View style={styles.teamContainer}>
-                <Text style={styles.teamLabel}>Equipo 1</Text>
-                <View style={styles.scoreInput}>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set1', 'team1', Math.max(0, score.set1.team1 - 1))}
-                  >
-                    <Ionicons name="remove" size={20} color="#1e3a8a" />
+          <View style={{ marginBottom: SPACING.md }}>
+            <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: 8 }}>Set 1</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+              {/* Equipo 1 */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginBottom: 4 }}>Equipo 1</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, padding: 6, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 }}>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set1', 'team1', Math.max(0, score.set1.team1 - 1))}>
+                    <Ionicons name="remove" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
-                  <Text style={styles.scoreText}>{score.set1.team1}</Text>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set1', 'team1', score.set1.team1 + 1)}
-                  >
-                    <Ionicons name="add" size={20} color="#1e3a8a" />
+                  <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginHorizontal: 10 }}>{score.set1.team1}</Text>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set1', 'team1', score.set1.team1 + 1)}>
+                    <Ionicons name="add" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
-              
-              <View style={styles.teamContainer}>
-                <Text style={styles.teamLabel}>Equipo 2</Text>
-                <View style={styles.scoreInput}>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set1', 'team2', Math.max(0, score.set1.team2 - 1))}
-                  >
-                    <Ionicons name="remove" size={20} color="#1e3a8a" />
+              {/* Equipo 2 */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginBottom: 4 }}>Equipo 2</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, padding: 6, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 }}>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set1', 'team2', Math.max(0, score.set1.team2 - 1))}>
+                    <Ionicons name="remove" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
-                  <Text style={styles.scoreText}>{score.set1.team2}</Text>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set1', 'team2', score.set1.team2 + 1)}
-                  >
-                    <Ionicons name="add" size={20} color="#1e3a8a" />
+                  <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginHorizontal: 10 }}>{score.set1.team2}</Text>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set1', 'team2', score.set1.team2 + 1)}>
+                    <Ionicons name="add" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           </View>
-          
           {/* Set 2 */}
-          <View style={styles.setContainer}>
-            <Text style={styles.setTitle}>Set 2</Text>
-            <View style={styles.scoreContainer}>
-              <View style={styles.teamContainer}>
-                <Text style={styles.teamLabel}>Equipo 1</Text>
-                <View style={styles.scoreInput}>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set2', 'team1', Math.max(0, score.set2.team1 - 1))}
-                  >
-                    <Ionicons name="remove" size={20} color="#1e3a8a" />
+          <View style={{ marginBottom: SPACING.md }}>
+            <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: 8 }}>Set 2</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+              {/* Equipo 1 */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginBottom: 4 }}>Equipo 1</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, padding: 6, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 }}>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set2', 'team1', Math.max(0, score.set2.team1 - 1))}>
+                    <Ionicons name="remove" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
-                  <Text style={styles.scoreText}>{score.set2.team1}</Text>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set2', 'team1', score.set2.team1 + 1)}
-                  >
-                    <Ionicons name="add" size={20} color="#1e3a8a" />
+                  <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginHorizontal: 10 }}>{score.set2.team1}</Text>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set2', 'team1', score.set2.team1 + 1)}>
+                    <Ionicons name="add" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
-              
-              <View style={styles.teamContainer}>
-                <Text style={styles.teamLabel}>Equipo 2</Text>
-                <View style={styles.scoreInput}>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set2', 'team2', Math.max(0, score.set2.team2 - 1))}
-                  >
-                    <Ionicons name="remove" size={20} color="#1e3a8a" />
+              {/* Equipo 2 */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginBottom: 4 }}>Equipo 2</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, padding: 6, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 }}>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set2', 'team2', Math.max(0, score.set2.team2 - 1))}>
+                    <Ionicons name="remove" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
-                  <Text style={styles.scoreText}>{score.set2.team2}</Text>
-                  <TouchableOpacity 
-                    style={styles.scoreButton}
-                    onPress={() => handleScoreChange('set2', 'team2', score.set2.team2 + 1)}
-                  >
-                    <Ionicons name="add" size={20} color="#1e3a8a" />
+                  <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginHorizontal: 10 }}>{score.set2.team2}</Text>
+                  <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set2', 'team2', score.set2.team2 + 1)}>
+                    <Ionicons name="add" size={22} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           </View>
-          
           {/* Opción para mostrar Set 3 */}
           <TouchableOpacity 
-            style={styles.set3Toggle}
+            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
             onPress={() => setShowSet3(!showSet3)}
           >
             <Ionicons 
               name={showSet3 ? 'chevron-down' : 'chevron-forward'} 
               size={20} 
-              color="#1e3a8a" 
+              color={COLORS.primary} 
             />
-            <Text style={styles.set3ToggleText}>
+            <Text style={{ marginLeft: 5, color: COLORS.primary, fontFamily: FONTS.medium }}>
               {showSet3 ? 'Ocultar Set 3' : 'Añadir Set 3 (Opcional)'}
             </Text>
           </TouchableOpacity>
-          
           {/* Set 3 (condicional) */}
           {showSet3 && (
-            <View style={styles.setContainer}>
-              <Text style={styles.setTitle}>Set 3</Text>
-              <View style={styles.scoreContainer}>
-                <View style={styles.teamContainer}>
-                  <Text style={styles.teamLabel}>Equipo 1</Text>
-                  <View style={styles.scoreInput}>
-                    <TouchableOpacity 
-                      style={styles.scoreButton}
-                      onPress={() => handleScoreChange('set3', 'team1', Math.max(0, score.set3!.team1 - 1))}
-                    >
-                      <Ionicons name="remove" size={20} color="#1e3a8a" />
+            <View style={{ marginBottom: SPACING.md }}>
+              <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: 8 }}>Set 3</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                {/* Equipo 1 */}
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginBottom: 4 }}>Equipo 1</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, padding: 6, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 }}>
+                    <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set3', 'team1', Math.max(0, score.set3!.team1 - 1))}>
+                      <Ionicons name="remove" size={22} color={COLORS.primary} />
                     </TouchableOpacity>
-                    <Text style={styles.scoreText}>{score.set3!.team1}</Text>
-                    <TouchableOpacity 
-                      style={styles.scoreButton}
-                      onPress={() => handleScoreChange('set3', 'team1', score.set3!.team1 + 1)}
-                    >
-                      <Ionicons name="add" size={20} color="#1e3a8a" />
+                    <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginHorizontal: 10 }}>{score.set3!.team1}</Text>
+                    <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set3', 'team1', score.set3!.team1 + 1)}>
+                      <Ionicons name="add" size={22} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
                 </View>
-                
-                <View style={styles.teamContainer}>
-                  <Text style={styles.teamLabel}>Equipo 2</Text>
-                  <View style={styles.scoreInput}>
-                    <TouchableOpacity 
-                      style={styles.scoreButton}
-                      onPress={() => handleScoreChange('set3', 'team2', Math.max(0, score.set3!.team2 - 1))}
-                    >
-                      <Ionicons name="remove" size={20} color="#1e3a8a" />
+                {/* Equipo 2 */}
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginBottom: 4 }}>Equipo 2</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, borderRadius: 12, padding: 6, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 1 }}>
+                    <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set3', 'team2', Math.max(0, score.set3!.team2 - 1))}>
+                      <Ionicons name="remove" size={22} color={COLORS.primary} />
                     </TouchableOpacity>
-                    <Text style={styles.scoreText}>{score.set3!.team2}</Text>
-                    <TouchableOpacity 
-                      style={styles.scoreButton}
-                      onPress={() => handleScoreChange('set3', 'team2', score.set3!.team2 + 1)}
-                    >
-                      <Ionicons name="add" size={20} color="#1e3a8a" />
+                    <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginHorizontal: 10 }}>{score.set3!.team2}</Text>
+                    <TouchableOpacity style={{ padding: 6 }} onPress={() => handleScoreChange('set3', 'team2', score.set3!.team2 + 1)}>
+                      <Ionicons name="add" size={22} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
             </View>
           )}
-          
-          {/* Botón de envío */}
+          {/* Botón de envío premium */}
           <TouchableOpacity 
-            style={styles.submitButton}
+            style={{
+              backgroundColor: COLORS.primary,
+              padding: 18,
+              borderRadius: 16,
+              alignItems: 'center',
+              marginTop: 12,
+              shadowColor: COLORS.shadow,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.14,
+              shadowRadius: 12,
+              elevation: 4,
+              transform: [{ scale: loading ? 0.98 : 1 }],
+              opacity: loading ? 0.7 : 1,
+            }}
             onPress={handleSubmit}
             disabled={loading}
+            activeOpacity={0.85}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Guardar Resultado</Text>
+              <Text style={{ color: '#fff', fontSize: SIZES.md, fontFamily: FONTS.bold }}>Guardar Resultado</Text>
             )}
           </TouchableOpacity>
         </View>

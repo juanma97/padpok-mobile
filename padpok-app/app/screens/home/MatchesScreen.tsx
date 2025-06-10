@@ -21,6 +21,8 @@ import { useAuth } from '@app/lib/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@app/types';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import MatchCard from '@app/components/MatchCard';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 type RootNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -225,39 +227,14 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const renderMatchItem = ({ item }: { item: Match }) => (
-    <TouchableOpacity
-      style={styles.matchItem}
-      onPress={() => handleMatchPress(item)}
-    >
-      <View style={styles.matchHeader}>
-        <Text style={styles.matchTitle}>{item.title}</Text>
-        <Text style={styles.matchDate}>
-          {item.date.toLocaleDateString('es-ES', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </Text>
-      </View>
-      <View style={styles.matchInfo}>
-        <View style={styles.infoRow}>
-          <Ionicons name="location-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>{item.location}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Ionicons name="people-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>
-            {item.playersJoined.length}/{item.playersNeeded} jugadores
-          </Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Ionicons name="trophy-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>{item.level}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+    <MatchCard match={item} onPress={() => handleMatchPress(item)} />
+  );
+
+  // Icono para estado vacío
+  const EmptyIcon = () => (
+    <View style={styles.emptyIconWrapper}>
+      <Ionicons name="tennisball-outline" size={SIZES.xxl * 2} color={COLORS.lightGray} />
+    </View>
   );
 
   if (loading && !refreshing) {
@@ -270,7 +247,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <View style={styles.container}>
         {/* Controles de filtro y orden */}
         <View style={styles.header}>
@@ -279,13 +256,18 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity 
                 style={[styles.filterButton, showOnlyPreferences && styles.filterButtonActive]}
                 onPress={togglePreferencesFilter}
+                activeOpacity={0.85}
               >
                 <Ionicons 
                   name={showOnlyPreferences ? 'filter' : 'filter-outline'} 
-                  size={20} 
-                  color={showOnlyPreferences ? '#fff' : '#1e3a8a'} 
+                  size={SIZES.lg} 
+                  color={showOnlyPreferences ? COLORS.white : COLORS.primary} 
                 />
-                <Text style={[styles.filterButtonText, showOnlyPreferences && styles.filterButtonTextActive]}>
+                <Text
+                  style={[styles.filterButtonText, showOnlyPreferences && styles.filterButtonTextActive]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {showOnlyPreferences ? 'Filtros activos' : 'Filtrar por preferencias'}
                 </Text>
               </TouchableOpacity>
@@ -293,11 +275,12 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
             <TouchableOpacity 
               style={styles.sortButton}
               onPress={toggleSortOrder}
+              activeOpacity={0.85}
             >
               <Ionicons 
                 name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'} 
-                size={20} 
-                color="#1e3a8a" 
+                size={SIZES.lg} 
+                color={COLORS.primary} 
               />
               <Text style={styles.sortButtonText}>
                 {sortOrder === 'asc' ? 'Más antiguos' : 'Más recientes'}
@@ -310,12 +293,14 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[styles.tab, selectedTab === 'disponibles' && styles.tabSelected]}
             onPress={() => setSelectedTab('disponibles')}
+            activeOpacity={0.85}
           >
             <Text style={[styles.tabText, selectedTab === 'disponibles' && styles.tabTextSelected]}>Disponibles</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, selectedTab === 'mis' && styles.tabSelected]}
             onPress={() => setSelectedTab('mis')}
+            activeOpacity={0.85}
           >
             <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
           </TouchableOpacity>
@@ -324,7 +309,8 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
         {selectedTab === 'disponibles' ? (
           filteredAndSortedMatches.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No hay partidos disponibles proximamente</Text>
+              <EmptyIcon />
+              <Text style={styles.emptyText}>No hay partidos disponibles próximamente</Text>
             </View>
           ) : (
             <FlatList
@@ -336,8 +322,8 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  colors={['#1e3a8a']}
-                  tintColor="#1e3a8a"
+                  colors={[COLORS.primary]}
+                  tintColor={COLORS.primary}
                 />
               }
             />
@@ -345,6 +331,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : (
           myMatches.length === 0 ? (
             <View style={styles.emptyContainer}>
+              <EmptyIcon />
               <Text style={styles.emptyText}>No te has unido a ningún partido</Text>
             </View>
           ) : (
@@ -357,16 +344,16 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  colors={['#1e3a8a']}
-                  tintColor="#1e3a8a"
+                  colors={[COLORS.primary]}
+                  tintColor={COLORS.primary}
                 />
               }
             />
           )
         )}
         {/* FAB para crear partido */}
-        {user && <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')}>
-          <Ionicons name="add" size={28} color="#fff" />
+        {user && <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')} activeOpacity={0.85}>
+          <Ionicons name="add" size={SIZES.xl} color={COLORS.white} />
         </TouchableOpacity>}
       </View>
     </SafeAreaView>
@@ -376,160 +363,164 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
+  },
+  pageTitleWrapper: {
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  pageTitle: {
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   header: {
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: SPACING.lg,
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
-    marginBottom: 12,
+    borderBottomColor: COLORS.border,
   },
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.xs,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: COLORS.light,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
-    gap: 8,
-    flex: 1,
+    gap: SPACING.sm,
+    maxWidth: '60%',
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
   },
   filterButtonActive: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 2,
   },
   filterButtonText: {
-    color: '#1e3a8a',
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.md,
   },
   filterButtonTextActive: {
-    color: '#fff',
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
   },
   sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: COLORS.light,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
-    gap: 8,
+    gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
   },
   sortButtonText: {
-    color: '#1e3a8a',
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.md,
   },
   listContent: {
-    padding: 16,
-  },
-  matchItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  matchHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  matchTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e3a8a',
-    flex: 1,
-  },
-  matchDate: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-  },
-  matchInfo: {
-    gap: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
+    padding: SPACING.lg,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: SPACING.xl,
+    gap: SPACING.md,
+  },
+  emptyIconWrapper: {
+    marginBottom: SPACING.md,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: SIZES.md,
+    color: COLORS.gray,
     textAlign: 'center',
+    fontFamily: FONTS.medium,
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
-    borderRadius: 8,
-    margin: 16,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 12,
+    margin: SPACING.lg,
     overflow: 'hidden',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
   tabSelected: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 2,
   },
   tabText: {
-    color: '#1e3a8a',
-    fontWeight: '600',
-    fontSize: 16,
+    color: COLORS.primary,
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.md,
   },
   tabTextSelected: {
-    color: '#fff',
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
   },
   fab: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#1e3a8a',
+    bottom: SPACING.xxl,
+    right: SPACING.xxl,
+    backgroundColor: COLORS.primary,
     borderRadius: 50,
     width: 56,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
   },
 });
 

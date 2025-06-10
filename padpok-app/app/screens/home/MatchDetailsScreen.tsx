@@ -22,6 +22,7 @@ import ScoreForm from '@app/components/ScoreForm';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
 import UserProfileModal from '@app/components/UserProfileModal';
 import CustomDialog from '@app/components/CustomDialog';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MatchDetails'>;
 
@@ -183,8 +184,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const handleUserPress = (userId: string) => {
-    setSelectedUserId(userId);
-    setShowUserProfile(true);
+
   };
 
   const handleDeleteMatch = async () => {
@@ -227,94 +227,126 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={styles.mainContainer}>
         <ScrollView style={styles.scrollView}>
-          <View style={styles.header}>
+          {/* Header premium con sombra y alineación */}
+          <View style={{
+            backgroundColor: COLORS.white,
+            borderRadius: 16,
+            paddingVertical: SPACING.md,
+            paddingHorizontal: SPACING.lg,
+            marginBottom: SPACING.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+            shadowColor: COLORS.shadow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.10,
+            shadowRadius: 8,
+            elevation: 4,
+          }}>
             <TouchableOpacity 
-              style={styles.backButton}
+              style={{ padding: 8, marginRight: 8 }}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
+              <Ionicons name="arrow-back" size={SIZES.lg} color={COLORS.primary} />
             </TouchableOpacity>
-            <Text style={styles.title}>{match.title}</Text>
+            <Text style={{
+              flex: 1,
+              fontSize: SIZES.lg,
+              fontFamily: FONTS.bold,
+              color: COLORS.primary,
+              textAlign: 'center',
+              marginRight: 8,
+            }}>{match.title}</Text>
             {isJoined && (
               <TouchableOpacity 
-                style={styles.chatButton}
+                style={{ padding: 8, backgroundColor: COLORS.lightGray, borderRadius: 8 }}
                 onPress={() => navigation.navigate('MatchChat', { matchId: match.id })}
               >
-                <View style={styles.chatButtonContent}>
-                  <Ionicons name="chatbubble-outline" size={20} color="#1e3a8a" />
-                  <Text style={styles.chatButtonText}>Chat</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="chatbubble-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={{ marginLeft: 4, color: COLORS.primary, fontFamily: FONTS.medium, fontSize: SIZES.sm }}>Chat</Text>
                 </View>
               </TouchableOpacity>
             )}
           </View>
 
           <View style={styles.content}>
-            <View style={styles.mainInfoCard}>
-              <View style={styles.mainInfoRow}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="location-outline" size={28} color="#1e3a8a" />
+            <View style={[styles.mainInfoCard, {
+              backgroundColor: COLORS.white,
+              borderRadius: 16,
+              padding: SPACING.lg,
+              marginBottom: SPACING.md,
+              shadowColor: COLORS.shadow,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.10,
+              shadowRadius: 8,
+              elevation: 4,
+              justifyContent: 'center',
+            }]}
+            >
+              <Text style={{
+                fontSize: SIZES.lg,
+                fontFamily: FONTS.bold,
+                color: COLORS.primary,
+                marginBottom: SPACING.md,
+                textAlign: 'left',
+              }}>{match.title}</Text>
+              <View style={{ gap: SPACING.sm }}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="location-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{match.location}</Text>
                 </View>
-                <View style={styles.mainInfoTextContainer}>
-                  <Text style={styles.mainInfoLabel}>Lugar</Text>
-                  <Text style={styles.mainInfoText}>{match.location}</Text>
+                <View style={styles.infoRow}>
+                  <Ionicons name="calendar-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{formattedDate}</Text>
                 </View>
-              </View>
-
-              <View style={styles.mainInfoRow}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="calendar-outline" size={28} color="#1e3a8a" />
+                <View style={styles.infoRow}>
+                  <Ionicons name="trophy-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{match.level}</Text>
                 </View>
-                <View style={styles.mainInfoTextContainer}>
-                  <Text style={styles.mainInfoLabel}>Fecha y hora</Text>
-                  <Text style={styles.mainInfoText}>{formattedDate}</Text>
+                <View style={styles.infoRow}>
+                  <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{match.ageRange}</Text>
                 </View>
-              </View>
-
-              <View style={styles.mainInfoRow}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="trophy-outline" size={28} color="#1e3a8a" />
-                </View>
-                <View style={styles.mainInfoTextContainer}>
-                  <Text style={styles.mainInfoLabel}>Nivel</Text>
-                  <Text style={styles.mainInfoText}>{match.level}</Text>
-                </View>
-              </View>
-
-              <View style={styles.mainInfoRow}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="people-outline" size={28} color="#1e3a8a" />
-                </View>
-                <View style={styles.mainInfoTextContainer}>
-                  <Text style={styles.mainInfoLabel}>Rango de edad</Text>
-                  <Text style={styles.mainInfoText}>{match.ageRange}</Text>
+                <View style={styles.infoRow}>
+                  <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{match.playersJoined.length}/{match.playersNeeded} jugadores</Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.playersCard}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>Jugadores</Text>
-                <View style={styles.playersCount}>
-                  <Text style={styles.playersCountText}>
-                    {match.playersJoined.length}/{match.playersNeeded}
-                  </Text>
+            {/* Tarjeta de jugadores con estilo premium */}
+            <View style={[
+              styles.playersCard,
+              {
+                backgroundColor: COLORS.white,
+                borderRadius: 16,
+                padding: SPACING.lg,
+                marginBottom: SPACING.md,
+                shadowColor: COLORS.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.10,
+                shadowRadius: 8,
+                elevation: 4,
+              },
+            ]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md }}>
+                <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary }}>Jugadores</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.lightGray, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: 16, minWidth: 48, justifyContent: 'center' }}>
+                  <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} style={{ marginRight: 2 }} />
+                  <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.medium }}>{match.playersJoined.length}/{match.playersNeeded}</Text>
                 </View>
               </View>
-
               {match.playersJoined.length > 0 ? (
-                <View style={styles.playersList}>
+                <View style={{ marginTop: 8 }}>
                   {/* Equipo 1 */}
                   {match.teams?.team1.map((playerId: string, index: number) => (
-                    <View key={playerId} style={styles.playerItem}>
-                      <View style={styles.playerNumber}>
-                        <Text style={styles.playerNumberText}>{index + 1}</Text>
+                    <View key={playerId} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.lightGray }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.lightGray, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                        <Text style={{ color: COLORS.primary, fontFamily: FONTS.bold }}>{index + 1}</Text>
                       </View>
-                      <TouchableOpacity 
-                        style={styles.playerNameContainer}
-                        onPress={() => handleUserPress(playerId)}
-                      >
+                      <TouchableOpacity style={{ flex: 1, paddingVertical: 4 }} onPress={() => handleUserPress(playerId)}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={styles.playerName}>
+                          <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.regular }}>
                             {playerId === auth.currentUser?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
                           </Text>
                           {userInfos[playerId]?.gender === 'Masculino' && (
@@ -325,24 +357,20 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                           )}
                         </View>
                       </TouchableOpacity>
-                      <View style={[styles.teamBadge, styles.team1Badge]}>
-                        <Text style={styles.teamBadgeText}>Equipo 1</Text>
+                      <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginLeft: 8, backgroundColor: 'rgba(49,78,153,0.1)' }}>
+                        <Text style={{ fontSize: 12, fontFamily: FONTS.medium, color: COLORS.primary }}>Equipo 1</Text>
                       </View>
                     </View>
                   ))}
-
                   {/* Equipo 2 */}
                   {match.teams?.team2.map((playerId: string, index: number) => (
-                    <View key={playerId} style={styles.playerItem}>
-                      <View style={styles.playerNumber}>
-                        <Text style={styles.playerNumberText}>{index + 1}</Text>
+                    <View key={playerId} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.lightGray }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.lightGray, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                        <Text style={{ color: COLORS.primary, fontFamily: FONTS.bold }}>{index + 1}</Text>
                       </View>
-                      <TouchableOpacity 
-                        style={styles.playerNameContainer}
-                        onPress={() => handleUserPress(playerId)}
-                      >
+                      <TouchableOpacity style={{ flex: 1, paddingVertical: 4 }} onPress={() => handleUserPress(playerId)}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={styles.playerName}>
+                          <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.regular }}>
                             {playerId === auth.currentUser?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
                           </Text>
                           {userInfos[playerId]?.gender === 'Masculino' && (
@@ -353,44 +381,48 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                           )}
                         </View>
                       </TouchableOpacity>
-                      <View style={[styles.teamBadge, styles.team2Badge]}>
-                        <Text style={styles.teamBadgeText}>Equipo 2</Text>
+                      <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginLeft: 8, backgroundColor: 'rgba(220,38,38,0.1)' }}>
+                        <Text style={{ fontSize: 12, fontFamily: FONTS.medium, color: COLORS.primary }}>Equipo 2</Text>
                       </View>
                     </View>
                   ))}
                 </View>
               ) : (
-                <Text style={styles.noPlayersText}>Aún no hay jugadores apuntados</Text>
+                <Text style={{ color: COLORS.gray, fontStyle: 'italic', textAlign: 'center', marginVertical: 16, fontFamily: FONTS.regular }}>Aún no hay jugadores apuntados</Text>
               )}
             </View>
 
-            {/* Resultado del partido (si existe) */}
+            {/* Sección de resultado con estilo premium */}
             {match.score && (
-              <View style={styles.scoreSection}>
-                <Text style={styles.scoreTitle}>Resultado</Text>
-                <View style={styles.scoreContainer}>
-                  <View style={styles.scoreSet}>
-                    <Text style={styles.scoreSetTitle}>Set 1</Text>
-                    <Text style={styles.scoreSetValue}>
-                      {match.score.set1.team1} - {match.score.set1.team2}
-                    </Text>
+              <View style={{
+                backgroundColor: COLORS.lightGray,
+                borderRadius: 16,
+                padding: SPACING.lg,
+                marginBottom: SPACING.md,
+                shadowColor: COLORS.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.10,
+                shadowRadius: 8,
+                elevation: 2,
+              }}>
+                <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginBottom: SPACING.md }}>Resultado</Text>
+                <View style={{ backgroundColor: COLORS.white, borderRadius: 8, padding: SPACING.md }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.medium }}>Set 1</Text>
+                    <Text style={{ fontSize: SIZES.md, color: COLORS.primary, fontFamily: FONTS.bold }}>{match.score.set1.team1} - {match.score.set1.team2}</Text>
                   </View>
-                  <View style={styles.scoreSet}>
-                    <Text style={styles.scoreSetTitle}>Set 2</Text>
-                    <Text style={styles.scoreSetValue}>
-                      {match.score.set2.team1} - {match.score.set2.team2}
-                    </Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.medium }}>Set 2</Text>
+                    <Text style={{ fontSize: SIZES.md, color: COLORS.primary, fontFamily: FONTS.bold }}>{match.score.set2.team1} - {match.score.set2.team2}</Text>
                   </View>
                   {match.score.set3 && (
-                    <View style={styles.scoreSet}>
-                      <Text style={styles.scoreSetTitle}>Set 3</Text>
-                      <Text style={styles.scoreSetValue}>
-                        {match.score.set3.team1} - {match.score.set3.team2}
-                      </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.medium }}>Set 3</Text>
+                      <Text style={{ fontSize: SIZES.md, color: COLORS.primary, fontFamily: FONTS.bold }}>{match.score.set3.team1} - {match.score.set3.team2}</Text>
                     </View>
                   )}
-                  <View style={styles.winnerContainer}>
-                    <Text style={styles.winnerText}>
+                  <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: COLORS.lightGray }}>
+                    <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.bold, color: '#22C55E' }}>
                       Ganador: Equipo {match.score.winner === 'team1' ? '1' : '2'}
                     </Text>
                   </View>
@@ -398,31 +430,65 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               </View>
             )}
 
-            {/* Formulario de resultados (condicional) */}
+            {/* Formulario de resultado con estilo premium */}
             {!match.score && isJoined && (
-              <View style={styles.scoreFormContainer}>
+              <View style={{
+                marginBottom: SPACING.md,
+                backgroundColor: COLORS.white,
+                borderRadius: 16,
+                padding: SPACING.lg,
+                shadowColor: COLORS.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.10,
+                shadowRadius: 8,
+                elevation: 2,
+              }}>
                 {(() => {
                   const now = new Date();
                   const matchDate = match.date;
                   const timeDiff = matchDate.getTime() - now.getTime();
                   const minutesRemaining = Math.ceil(timeDiff / (1000 * 60));
-                  
                   if (timeDiff <= 0) {
                     return (
                       <TouchableOpacity 
-                        style={styles.addScoreButton}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: COLORS.primary,
+                          padding: 16,
+                          borderRadius: 12,
+                          shadowColor: COLORS.shadow,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.10,
+                          shadowRadius: 8,
+                          elevation: 2,
+                          marginBottom: 4,
+                        }}
                         onPress={() => setShowScoreForm(true)}
                       >
-                        <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
-                        <Text style={styles.addScoreText}>Añadir Resultado</Text>
+                        <Ionicons name="add-circle-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16, fontFamily: FONTS.medium }}>Añadir Resultado</Text>
                       </TouchableOpacity>
                     );
                   }
-                  
                   return (
-                    <View style={[styles.addScoreButton, styles.addScoreButtonDisabled]}>
-                      <Ionicons name="time-outline" size={20} color="#fff" style={styles.addScoreIcon} />
-                      <Text style={styles.addScoreText}>
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: COLORS.lightGray,
+                      padding: 16,
+                      borderRadius: 12,
+                      shadowColor: COLORS.shadow,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.10,
+                      shadowRadius: 8,
+                      elevation: 1,
+                      marginBottom: 4,
+                    }}>
+                      <Ionicons name="time-outline" size={20} color={COLORS.primary} style={{ marginRight: 8 }} />
+                      <Text style={{ color: COLORS.gray, fontWeight: '600', fontSize: 16, fontFamily: FONTS.medium }}>
                         {minutesRemaining > 60 
                           ? `El partido comienza en ${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
                           : `El partido comienza en ${minutesRemaining}m`}
@@ -449,7 +515,12 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
           </View>
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={{
+          padding: 0,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          marginTop: 0,
+        }}>
           {!match.score && (
             (() => {
               const isCreatorAndOnlyPlayer = !!match && match.createdBy === user?.uid && Array.isArray(match.playersJoined) && match.playersJoined.length === 1;
@@ -461,16 +532,34 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 12 }}>
                       <TouchableOpacity
-                        style={[styles.joinButton, { backgroundColor: '#aaa' }]}
+                        style={{
+                          backgroundColor: '#aaa',
+                          padding: 16,
+                          borderRadius: 12,
+                          shadowColor: COLORS.shadow,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.10,
+                          shadowRadius: 8,
+                          elevation: 1,
+                        }}
                         onPress={() => setShowDeleteConfirm(false)}
                       >
-                        <Text style={styles.joinButtonText}>Cancelar</Text>
+                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Cancelar</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.joinButton, { backgroundColor: '#e11d48' }]}
+                        style={{
+                          backgroundColor: '#e11d48',
+                          padding: 16,
+                          borderRadius: 12,
+                          shadowColor: COLORS.shadow,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.10,
+                          shadowRadius: 8,
+                          elevation: 2,
+                        }}
                         onPress={handleDeleteMatch}
                       >
-                        <Text style={styles.joinButtonText}>Eliminar</Text>
+                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Eliminar</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -478,12 +567,18 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               }
               return (
                 <TouchableOpacity
-                  style={[
-                    styles.joinButton,
-                    isJoined ? styles.leaveButton : null,
-                    loading && styles.buttonDisabled,
-                    match.playersJoined.length >= match.playersNeeded && !isJoined && styles.buttonDisabled
-                  ]}
+                  style={{
+                    backgroundColor: isJoined ? '#dc2626' : COLORS.primary,
+                    padding: 16,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    shadowColor: COLORS.shadow,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.10,
+                    shadowRadius: 8,
+                    elevation: 2,
+                    marginBottom: 4,
+                  }}
                   onPress={
                     isCreatorAndOnlyPlayer
                       ? () => setShowDeleteConfirm(true)
@@ -496,7 +591,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                   {loading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={styles.joinButtonText}>
+                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', fontFamily: FONTS.bold }}>
                       {isCreatorAndOnlyPlayer
                         ? 'Eliminar partido'
                         : isJoined
@@ -541,24 +636,6 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    flex: 1,
-    color: '#314E99',
-  },
   content: {
     padding: 16,
   },
@@ -573,29 +650,16 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  mainInfoRow: {
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: SPACING.sm,
+    marginBottom: 2,
   },
-  iconContainer: {
-    backgroundColor: 'rgba(49,78,153,0.1)',
-    padding: 12,
-    borderRadius: 12,
-    marginRight: 16,
-  },
-  mainInfoTextContainer: {
-    flex: 1,
-  },
-  mainInfoLabel: {
-    fontSize: 14,
-    color: '#1D1B20',
-    marginBottom: 4,
-  },
-  mainInfoText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#314E99',
+  infoText: {
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.regular,
   },
   playersCard: {
     backgroundColor: '#FFFFFF',

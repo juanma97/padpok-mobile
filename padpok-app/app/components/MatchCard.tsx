@@ -2,12 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Match } from '@app/types/index';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 interface MatchCardProps {
   match: Match;
+  onPress?: () => void;
 }
 
-export default function MatchCard({ match }: MatchCardProps) {
+export default function MatchCard({ match, onPress }: MatchCardProps) {
   let dateObj;
   const dateValue: any = match.date;
   if (dateValue instanceof Date) {
@@ -28,10 +30,15 @@ export default function MatchCard({ match }: MatchCardProps) {
     : 'Fecha no disponible';
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={onPress}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{match.title}</Text>
         <View style={styles.playersCount}>
+          <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} style={{ marginRight: 2 }} />
           <Text style={styles.playersCountText}>
             {match.playersJoined.length}/{match.playersNeeded}
           </Text>
@@ -40,70 +47,83 @@ export default function MatchCard({ match }: MatchCardProps) {
 
       <View style={styles.cardContent}>
         <View style={styles.infoRow}>
-          <Ionicons name="location-outline" size={20} color="#1e3a8a" />
+          <Ionicons name="location-outline" size={SIZES.md} color={COLORS.primary} />
           <Text style={styles.infoText}>{match.location}</Text>
         </View>
 
         <View style={styles.infoRow}>
-          <Ionicons name="calendar-outline" size={20} color="#1e3a8a" />
+          <Ionicons name="calendar-outline" size={SIZES.md} color={COLORS.primary} />
           <Text style={styles.infoText}>{formattedDate}</Text>
         </View>
 
         <View style={styles.infoRow}>
-          <Ionicons name="people-outline" size={20} color="#1e3a8a" />
+          <Ionicons name="trophy-outline" size={SIZES.md} color={COLORS.primary} />
+          <Text style={styles.infoText}>{match.level}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} />
           <Text style={styles.infoText}>{match.ageRange}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
+    minHeight: 120,
+    justifyContent: 'center',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    flex: 1,
+    marginRight: SPACING.sm,
   },
   playersCount: {
-    backgroundColor: '#e5e7eb',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 16,
+    minWidth: 48,
+    justifyContent: 'center',
   },
   playersCountText: {
-    fontSize: 14,
-    color: '#4b5563',
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.medium,
   },
   cardContent: {
-    gap: 8,
+    gap: SPACING.sm,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
+    marginBottom: 2,
   },
   infoText: {
-    fontSize: 14,
-    color: '#4b5563',
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.regular,
   },
 }); 

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -104,11 +105,16 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
             styles.logoContainer,
             {
               transform: [{ scale: scaleAnim }, { translateY }],
+              shadowColor: COLORS.shadow,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.18,
+              shadowRadius: 16,
+              elevation: 8,
             },
           ]}
         >
           <View style={styles.ballContainer}>
-            <Ionicons name="tennisball" size={80} color="#FFFFFF" />
+            <Ionicons name="tennisball" size={SIZES.huge * 2} color={COLORS.primary} />
           </View>
           <Text style={styles.title}>PADPOK</Text>
           <Text style={styles.subtitle}>Tu app de pádel</Text>
@@ -119,9 +125,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
             <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
           </View>
           <Text style={styles.loadingText}>
-            {loadingProgress < 0.3 ? 'Cargando...' :
-             loadingProgress < 0.6 ? 'Preparando...' :
+            {loadingProgress < 0.3 ? 'Cargando' :
+             loadingProgress < 0.6 ? 'Preparando' :
              '¡Casi listo!'}
+            <Text style={{ color: COLORS.accent }}>...</Text>
           </Text>
         </View>
       </View>
@@ -132,7 +139,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#314E99',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -142,25 +149,38 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: SPACING.xxl,
   },
   ballContainer: {
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 50,
+    marginBottom: SPACING.xl,
+    backgroundColor: COLORS.white,
+    padding: SPACING.xl,
+    borderRadius: 80,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
   },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    letterSpacing: 2,
+    fontSize: SIZES.xxl,
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
+    marginBottom: SPACING.sm,
+    letterSpacing: 4,
+    textShadowColor: COLORS.shadow,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   subtitle: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.medium,
+    color: COLORS.accent,
     letterSpacing: 1,
+    marginBottom: SPACING.xl,
+    textShadowColor: COLORS.shadow,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   progressWrapper: {
     alignItems: 'center',
@@ -168,21 +188,23 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     width: '100%',
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 2,
+    height: 6,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: SPACING.sm,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 2,
+    backgroundColor: COLORS.accent,
+    borderRadius: 3,
   },
   loadingText: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 14,
+    color: COLORS.white,
+    fontSize: SIZES.md,
+    fontFamily: FONTS.regular,
     letterSpacing: 0.5,
+    marginTop: 2,
   },
 });
 

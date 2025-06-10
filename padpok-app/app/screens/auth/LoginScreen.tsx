@@ -19,6 +19,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/aut
 import type { AuthStackParamList } from '@app/types/navigation';
 import { NativeStackScreenProps, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomDialog from '@app/components/CustomDialog';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 const LoginScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList, 'Login'>>();
@@ -204,113 +205,119 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 24,
+    padding: SPACING.lg,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: SPACING.xl,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.lg,
   },
   logoCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.lightGray,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: SPACING.md,
     borderWidth: 2,
-    borderColor: '#314E99',
+    borderColor: COLORS.primary,
   },
   logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#314E99',
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
     letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1D1B20',
-    marginBottom: 8,
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.dark,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#1D1B20',
+    fontSize: SIZES.md,
+    fontFamily: FONTS.regular,
+    color: COLORS.dark,
     opacity: 0.7,
     textAlign: 'center',
   },
   formContainer: {
-    gap: 16,
+    gap: SPACING.md,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.lightGray,
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
   },
   inputIcon: {
-    marginRight: 12,
-    color: '#1D1B20',
+    marginRight: SPACING.sm,
+    color: COLORS.dark,
     opacity: 0.7,
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: '#1D1B20',
+    paddingVertical: SPACING.md,
+    fontSize: SIZES.md,
+    color: COLORS.dark,
+    fontFamily: FONTS.regular,
   },
   eyeIcon: {
-    padding: 8,
+    padding: SPACING.xs,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
   },
   forgotPasswordText: {
-    color: '#314E99',
-    fontSize: 14,
+    color: COLORS.primary,
+    fontSize: SIZES.sm,
+    fontFamily: FONTS.medium,
   },
   button: {
-    backgroundColor: '#314E99',
-    padding: 16,
+    backgroundColor: COLORS.primary,
+    padding: SPACING.md,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: SPACING.xs,
   },
   buttonDisabled: {
-    backgroundColor: '#1D1B20',
+    backgroundColor: COLORS.dark,
     opacity: 0.5,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 18,
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.lg,
   },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
-    gap: 8,
+    marginTop: SPACING.xl,
+    gap: SPACING.xs,
   },
   registerText: {
-    color: '#1D1B20',
+    color: COLORS.dark,
     opacity: 0.7,
+    fontFamily: FONTS.regular,
   },
   registerLink: {
-    color: '#314E99',
-    fontWeight: 'bold',
+    color: COLORS.primary,
+    fontFamily: FONTS.bold,
   },
 });
 

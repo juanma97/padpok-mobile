@@ -21,6 +21,7 @@ import { AuthStackParamList } from '@app/types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MEDALS } from '@app/types/medals';
 import CustomDialog from '@app/components/CustomDialog';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 const RegisterScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList, 'Register'>>();
@@ -345,126 +346,133 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 24,
+    padding: SPACING.lg,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: SPACING.xl,
   },
   backButton: {
     position: 'absolute',
     left: 0,
     top: 0,
-    padding: 8,
+    padding: SPACING.sm,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.lg,
   },
   logoCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.lightGray,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: SPACING.md,
     borderWidth: 2,
-    borderColor: '#314E99',
+    borderColor: COLORS.primary,
   },
   logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#314E99',
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
     letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1D1B20',
-    marginBottom: 8,
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.dark,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#1D1B20',
+    fontSize: SIZES.md,
+    fontFamily: FONTS.regular,
+    color: COLORS.dark,
     opacity: 0.7,
     textAlign: 'center',
   },
   formContainer: {
-    gap: 16,
+    gap: SPACING.md,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.lightGray,
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
   },
   inputIcon: {
-    marginRight: 12,
-    color: '#1D1B20',
+    marginRight: SPACING.sm,
+    color: COLORS.dark,
     opacity: 0.7,
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: '#1D1B20',
+    paddingVertical: SPACING.md,
+    fontSize: SIZES.md,
+    color: COLORS.dark,
+    fontFamily: FONTS.regular,
   },
   eyeIcon: {
-    padding: 8,
+    padding: SPACING.xs,
   },
   button: {
-    backgroundColor: '#314E99',
-    padding: 16,
+    backgroundColor: COLORS.primary,
+    padding: SPACING.md,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: SPACING.xs,
   },
   buttonDisabled: {
-    backgroundColor: '#1D1B20',
+    backgroundColor: COLORS.dark,
     opacity: 0.5,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 18,
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.lg,
   },
   levelContainer: {
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   levelLabel: {
-    color: '#1D1B20',
+    color: COLORS.dark,
     opacity: 0.7,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
+    fontFamily: FONTS.medium,
   },
   levelOptions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
   },
   levelOption: {
     flex: 1,
-    padding: 12,
+    padding: SPACING.md,
     borderRadius: 8,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.lightGray,
     alignItems: 'center',
   },
   levelOptionSelected: {
-    backgroundColor: '#314E99',
+    backgroundColor: COLORS.primary,
   },
   levelText: {
-    color: '#1D1B20',
+    color: COLORS.dark,
+    fontFamily: FONTS.regular,
   },
   levelTextSelected: {
-    color: '#FFFFFF',
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
   },
 });
 
