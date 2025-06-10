@@ -9,7 +9,8 @@ import {
   StatusBar,
   TextInput,
   Platform,
-  RefreshControl
+  RefreshControl,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,6 +19,8 @@ import { RootStackParamList } from '@app/types/navigation';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { useAuth } from '@app/lib/AuthContext';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import SegmentedControl from '@app/components/SegmentedControl';
 
 // Si usas expo, puedes instalar este paquete para un control nativo:
 // import SegmentedControl from '@react-native-segmented-control/segmented-control';
@@ -32,12 +35,17 @@ interface Group {
   isAdmin: boolean;
 }
 
+const tabOptions = [
+  { label: 'Mis Grupos', value: 'mis' },
+  { label: 'Explorar Grupos', value: 'explorar' },
+];
+
 const GroupsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
+  const { user } = useAuth();
   const [selectedTab, setSelectedTab] = React.useState<'mis' | 'explorar'>('mis');
   const [search, setSearch] = React.useState('');
-  const { user } = useAuth();
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -129,45 +137,29 @@ const GroupsScreen = () => {
           }
         }}
         disabled={selectedTab === 'explorar' && !isMember}
+        activeOpacity={0.85}
       >
         <View style={styles.groupInfoCompact}>
           <Text style={styles.groupName}>{item.name}</Text>
           <View style={styles.memberInfo}>
-            <Ionicons name="people-outline" size={14} color="#666" />
-            {item.members.length === 1 ? (<Text style={styles.memberCount}>{item.members?.length} miembro</Text>) : <Text style={styles.memberCount}>{item.members?.length} miembros</Text>}
+            <Ionicons name="people-outline" size={SIZES.sm} color={COLORS.gray} />
+            <Text style={styles.memberCount}>{item.members?.length} miembro{item.members?.length === 1 ? '' : 's'}</Text>
           </View>
         </View>
         {item.admin === user?.uid && selectedTab === 'mis' && (
           <View style={styles.adminBadge}>
+            <Ionicons name="star" size={SIZES.sm} color={COLORS.white} style={{ marginRight: 2 }} />
             <Text style={styles.adminText}>Admin</Text>
           </View>
         )}
         {selectedTab === 'explorar' && !isMember && (
-          <TouchableOpacity style={styles.joinButton} onPress={() => handleJoinGroup(item)}>
+          <TouchableOpacity style={styles.joinButton} onPress={() => handleJoinGroup(item)} activeOpacity={0.85}>
             <Text style={styles.joinButtonText}>Unirse</Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
     );
   };
-
-  // Control de pestañas manual
-  const renderTabs = () => (
-    <View style={styles.tabsContainer}>
-      <TouchableOpacity
-        style={[styles.tab, selectedTab === 'mis' && styles.tabSelected]}
-        onPress={() => setSelectedTab('mis')}
-      >
-        <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Grupos</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.tab, selectedTab === 'explorar' && styles.tabSelected]}
-        onPress={() => setSelectedTab('explorar')}
-      >
-        <Text style={[styles.tabText, selectedTab === 'explorar' && styles.tabTextSelected]}>Explorar Grupos</Text>
-      </TouchableOpacity>
-    </View>
-  );
 
   const handleCreateGroup = () => {
     navigation.navigate('CreateGroup');
@@ -184,25 +176,33 @@ const GroupsScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.light} />
       <View style={styles.container}>
-        {/* Tabs */}
-        {renderTabs()}
-
+        {/* Header premium con tabs */}
+        <View style={styles.header}>
+          <SegmentedControl
+            options={tabOptions.map(o => o.label)}
+            value={tabOptions.find(o => o.value === selectedTab)?.label || tabOptions[0].label}
+            onChange={label => {
+              const found = tabOptions.find(o => o.label === label);
+              if (found) setSelectedTab(found.value as 'mis' | 'explorar');
+            }}
+            style={{ marginBottom: SPACING.md }}
+          />
+        </View>
         {/* Buscador solo en explorar */}
         {selectedTab === 'explorar' && (
           <View style={styles.searchContainer}>
-            <Ionicons name="search" size={18} color="#888" style={{ marginRight: 8 }} />
+            <Ionicons name="search" size={SIZES.md} color={COLORS.gray} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
               placeholder="Buscar grupo..."
               value={search}
               onChangeText={setSearch}
-              placeholderTextColor="#aaa"
+              placeholderTextColor={COLORS.gray}
             />
           </View>
         )}
-
         {/* Lista de grupos */}
         {loading ? (
           <View style={styles.emptyContainer}>
@@ -216,7 +216,7 @@ const GroupsScreen = () => {
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Ionicons name="people-outline" size={48} color="#ccc" />
+                <Ionicons name="people-outline" size={SIZES.xl} color={COLORS.lightGray} />
                 <Text style={styles.emptyText}>
                   {selectedTab === 'mis'
                     ? 'No tienes grupos aún'
@@ -233,16 +233,15 @@ const GroupsScreen = () => {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={refreshGroups}
-                colors={['#1e3a8a']}
-                tintColor="#1e3a8a"
+                colors={[COLORS.primary]}
+                tintColor={COLORS.primary}
               />
             }
           />
         )}
-
-        {/* Botón flotante para crear grupo */}
-        <TouchableOpacity style={styles.fab} onPress={handleCreateGroup}>
-          <Ionicons name="add" size={28} color="#fff" />
+        {/* FAB premium */}
+        <TouchableOpacity style={styles.fab} onPress={handleCreateGroup} activeOpacity={0.85}>
+          <Ionicons name="add" size={SIZES.xl} color={COLORS.white} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -252,79 +251,82 @@ const GroupsScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.light,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
     position: 'relative',
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
-    borderRadius: 8,
-    margin: 16,
-    overflow: 'hidden',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  tabSelected: {
-    backgroundColor: '#1e3a8a',
-  },
-  tabText: {
-    color: '#1e3a8a',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  tabTextSelected: {
-    color: '#fff',
+  header: {
+    padding: SPACING.lg,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: SPACING.lg,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: '#222',
+    fontSize: SIZES.md,
+    color: COLORS.dark,
     backgroundColor: 'transparent',
     padding: 0,
+    fontFamily: FONTS.regular,
   },
   listContent: {
-    padding: 8,
-    paddingBottom: 80,
+    padding: SPACING.lg,
+    paddingBottom: 100,
   },
   groupCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   groupInfoCompact: {
     flex: 1,
     minWidth: 0,
   },
   groupName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e3a8a',
+    fontSize: SIZES.md,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
     marginBottom: 2,
   },
   memberInfo: {
@@ -332,34 +334,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   memberCount: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: SIZES.sm,
+    color: COLORS.gray,
     marginLeft: 4,
+    fontFamily: FONTS.medium,
   },
   adminBadge: {
-    backgroundColor: '#314E99',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
     marginLeft: 8,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   adminText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: SIZES.xs,
+    fontFamily: FONTS.bold,
+    marginLeft: 2,
   },
   joinButton: {
-    backgroundColor: '#1e3a8a',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 10,
     alignSelf: 'center',
     marginLeft: 8,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   joinButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.sm,
   },
   emptyContainer: {
     flex: 1,
@@ -368,33 +384,35 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   emptyText: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#666',
+    fontSize: SIZES.md,
+    fontFamily: FONTS.medium,
+    color: COLORS.gray,
     marginTop: 16,
     textAlign: 'center',
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: SIZES.sm,
+    color: COLORS.gray,
     marginTop: 8,
     textAlign: 'center',
+    fontFamily: FONTS.regular,
   },
   fab: {
     position: 'absolute',
     right: 24,
     bottom: 32,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: COLORS.primary,
     width: 56,
     height: 56,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
     elevation: 6,
+    zIndex: 10,
   },
 });
 

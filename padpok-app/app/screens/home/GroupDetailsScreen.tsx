@@ -15,6 +15,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MatchCard from '@app/components/MatchCard';
@@ -30,9 +31,18 @@ import { Match, Score } from '@app/types/models';
 import { getMatchUsers } from '@app/lib/matches';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
 import ScoreForm from '@app/components/ScoreForm';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import SegmentedControl from '@app/components/SegmentedControl';
 
-
-const TABS = ['Partidos', 'Ranking', 'Chat'];
+const TABS = [
+  { label: 'Partidos', value: 'Partidos' },
+  { label: 'Ranking', value: 'Ranking' },
+  { label: 'Chat', value: 'Chat' },
+];
+const PARTIDOS_TABS = [
+  { label: 'Disponibles', value: 'disponibles' },
+  { label: 'Mis Partidos', value: 'mis' },
+];
 
 export default function GroupDetailsScreen() {
   const navigation = useNavigation();
@@ -336,19 +346,19 @@ export default function GroupDetailsScreen() {
 
   // Renderizado de partidos
   const renderMatch = ({ item }: { item: Match }) => (
-    <TouchableOpacity onPress={() => {
-      setSelectedMatch(item);
-      setShowMatchDetails(true);
-      setIsJoined(!!user && item.playersJoined.includes(user.uid));
-      // Cargar info de usuarios
-      if (item.playersJoined.length > 0) {
-        getMatchUsers(item.playersJoined).then(setUserInfos);
-      } else {
-        setUserInfos({});
-      }
-    }}>
-      <MatchCard match={item} />
-    </TouchableOpacity>
+    <MatchCard
+      match={item}
+      onPress={() => {
+        setSelectedMatch(item);
+        setShowMatchDetails(true);
+        setIsJoined(!!user && item.playersJoined.includes(user.uid));
+        if (item.playersJoined.length > 0) {
+          getMatchUsers(item.playersJoined).then(setUserInfos);
+        } else {
+          setUserInfos({});
+        }
+      }}
+    />
   );
 
   // Renderizado de ranking
@@ -356,28 +366,50 @@ export default function GroupDetailsScreen() {
     const isTopThree = index < 3;
     const medalColor = index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : '#CD7F32';
     return (
-      <View style={styles.userCard}>
-        <View style={styles.rankContainer}>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        borderRadius: 16,
+        padding: SPACING.lg,
+        marginBottom: SPACING.md,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        elevation: 2,
+      }}>
+        <View style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: 'rgba(30,58,138,0.08)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginRight: SPACING.md,
+        }}>
           {isTopThree ? (
-            <Ionicons name="medal" size={24} color={medalColor} />
+            <Ionicons name="medal" size={SIZES.lg} color={medalColor} />
           ) : (
-            <Text style={styles.rankNumber}>{index + 1}</Text>
+            <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary }}>{index + 1}</Text>
           )}
         </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.username}>{usernames[item.id] || item.id}</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Ionicons name="trophy" size={16} color="#1e3a8a" />
-              <Text style={styles.statText}>{item.points} pts</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: SIZES.lg, fontFamily: FONTS.bold, color: COLORS.primary, marginBottom: SPACING.xs }}>
+            {usernames[item.id] || item.id}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+              <Ionicons name="trophy" size={SIZES.md} color={COLORS.primary} />
+              <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginLeft: 4 }}>{item.points} pts.</Text>
             </View>
-            <View style={styles.statItem}>
-              <Ionicons name="tennisball" size={16} color="#1e3a8a" />
-              <Text style={styles.statText}>{item.matchesPlayed} partidos</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+              <Ionicons name="tennisball" size={SIZES.md} color={COLORS.primary} />
+              <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginLeft: 4 }}>{item.matchesPlayed} part.</Text>
             </View>
-            <View style={styles.statItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#1e3a8a" />
-              <Text style={styles.statText}>{item.wins} victorias</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+              <Ionicons name="checkmark-circle" size={SIZES.md} color={COLORS.primary} />
+              <Text style={{ fontSize: SIZES.sm, color: COLORS.gray, fontFamily: FONTS.medium, marginLeft: 4 }}>{item.wins} vict.</Text>
             </View>
           </View>
         </View>
@@ -390,8 +422,7 @@ export default function GroupDetailsScreen() {
     ? group.matches.filter(m => {
         let matchDate;
         if (m.date instanceof Date) matchDate = m.date;
-        else if (m.date && typeof m.date.toDate === 'function') matchDate = m.date.toDate();
-        else if (m.date && typeof m.date === 'object' && 'seconds' in m.date) matchDate = new Date(m.date.seconds * 1000);
+        else if (m.date && typeof m.date.toDate === 'function') matchDate = (m.date as any).toDate();
         else if (typeof m.date === 'string' || typeof m.date === 'number') matchDate = new Date(m.date);
         else matchDate = new Date();
         return matchDate >= new Date();
@@ -410,19 +441,20 @@ export default function GroupDetailsScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-        {/* Header del grupo */}
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.light} />
+        {/* Header premium */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Volver" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <Ionicons name="arrow-back" size={SIZES.xl} color={COLORS.primary} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.groupName}>{group?.name}</Text>
             <View style={styles.headerRow}>
-              <Ionicons name="people-outline" size={16} color="#1e3a8a" />
+              <Ionicons name="people-outline" size={SIZES.sm} color={COLORS.primary} />
               <Text style={styles.membersText}>{((group?.members?.length || 0) + 1)} miembros</Text>
               {group && group.admin === user?.uid && (
                 <View style={styles.adminBadge}>
+                  <Ionicons name="star" size={SIZES.sm} color={COLORS.white} style={{ marginRight: 2 }} />
                   <Text style={styles.adminText}>Admin</Text>
                 </View>
               )}
@@ -430,7 +462,7 @@ export default function GroupDetailsScreen() {
           </View>
           {group && group.admin === user?.uid && (
             <TouchableOpacity onPress={handleDeleteGroup} style={{ marginLeft: 16 }}>
-              <Ionicons name="trash" size={22} color="#e11d48" />
+              <Ionicons name="trash" size={SIZES.lg} color={COLORS.error} />
             </TouchableOpacity>
           )}
           {/* Icono para salir del grupo si NO es admin */}
@@ -443,46 +475,43 @@ export default function GroupDetailsScreen() {
                 const updatedMembers = group.members.filter((id: string) => id !== user.uid);
                 await updateDoc(groupRef, { members: updatedMembers });
                 // Navegar a la pantalla de grupos y forzar refresh
-                navigation.navigate('Groups', { refresh: true });
+                navigation.navigate('Home', { screen: 'Groups', params: { refresh: true } });
               }}
               style={{ marginLeft: 16 }}
             >
-              <Ionicons name="exit-outline" size={22} color="#e11d48" />
+              <Ionicons name="exit-outline" size={SIZES.md} color={COLORS.error} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          {TABS.map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, selectedTab === tab && styles.tabSelected]}
-              onPress={() => setSelectedTab(tab)}
-            >
-              <Text style={[styles.tabText, selectedTab === tab && styles.tabTextSelected]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
+        {/* Tabs premium */}
+        <View style={styles.tabsWrapper}>
+          <SegmentedControl
+            options={TABS.map(t => t.label)}
+            value={TABS.find(t => t.value === selectedTab)?.label || TABS[0].label}
+            onChange={label => {
+              const found = TABS.find(t => t.label === label);
+              if (found) setSelectedTab(found.value);
+            }}
+            style={{ marginBottom: SPACING.md }}
+          />
         </View>
 
         {/* Contenido según tab */}
         <View style={styles.contentContainer}>
           {selectedTab === 'Partidos' && (
             <>
-              {/* Subtabs de Partidos */}
-              <View style={styles.tabsContainer}>
-                <TouchableOpacity
-                  style={[styles.tab, partidosTab === 'disponibles' && styles.tabSelected]}
-                  onPress={() => setPartidosTab('disponibles')}
-                >
-                  <Text style={[styles.tabText, partidosTab === 'disponibles' && styles.tabTextSelected]}>Disponibles</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.tab, partidosTab === 'mis' && styles.tabSelected]}
-                  onPress={() => setPartidosTab('mis')}
-                >
-                  <Text style={[styles.tabText, partidosTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
-                </TouchableOpacity>
+              {/* Subtabs premium */}
+              <View style={styles.tabsWrapper}>
+                <SegmentedControl
+                  options={PARTIDOS_TABS.map(t => t.label)}
+                  value={PARTIDOS_TABS.find(t => t.value === partidosTab)?.label || PARTIDOS_TABS[0].label}
+                  onChange={label => {
+                    const found = PARTIDOS_TABS.find(t => t.label === label);
+                    if (found) setPartidosTab(found.value as 'disponibles' | 'mis');
+                  }}
+                  style={{ marginBottom: SPACING.md }}
+                />
               </View>
               {/* Lista según subtab */}
               {partidosTab === 'disponibles' ? (
@@ -496,8 +525,8 @@ export default function GroupDetailsScreen() {
                     <RefreshControl
                       refreshing={refreshing}
                       onRefresh={refreshGroup}
-                      colors={['#1e3a8a']}
-                      tintColor="#1e3a8a"
+                      colors={[COLORS.primary]}
+                      tintColor={COLORS.primary}
                     />
                   }
                 />
@@ -512,8 +541,8 @@ export default function GroupDetailsScreen() {
                     <RefreshControl
                       refreshing={refreshing}
                       onRefresh={refreshGroup}
-                      colors={['#1e3a8a']}
-                      tintColor="#1e3a8a"
+                      colors={[COLORS.primary]}
+                      tintColor={COLORS.primary}
                     />
                   }
                 />
@@ -522,50 +551,20 @@ export default function GroupDetailsScreen() {
           )}
           {selectedTab === 'Ranking' && (
             <>
-              {/* Botones de ordenamiento */}
-              <View style={styles.sortContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.sortButton,
-                    sortBy === 'points' && styles.sortButtonActive
-                  ]}
-                  onPress={() => setSortBy('points')}
-                >
-                  <Text style={[
-                    styles.sortButtonText,
-                    sortBy === 'points' && styles.sortButtonTextActive
-                  ]}>
-                    Puntos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.sortButton,
-                    sortBy === 'matchesPlayed' && styles.sortButtonActive
-                  ]}
-                  onPress={() => setSortBy('matchesPlayed')}
-                >
-                  <Text style={[
-                    styles.sortButtonText,
-                    sortBy === 'matchesPlayed' && styles.sortButtonTextActive
-                  ]}>
-                    Partidos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.sortButton,
-                    sortBy === 'wins' && styles.sortButtonActive
-                  ]}
-                  onPress={() => setSortBy('wins')}
-                >
-                  <Text style={[
-                    styles.sortButtonText,
-                    sortBy === 'wins' && styles.sortButtonTextActive
-                  ]}>
-                    Victorias
-                  </Text>
-                </TouchableOpacity>
+              {/* SegmentedControl para ordenamiento */}
+              <View style={styles.tabsWrapper}>
+                <SegmentedControl
+                  options={['Puntos', 'Partidos', 'Victorias']}
+                  value={
+                    sortBy === 'points' ? 'Puntos' : sortBy === 'matchesPlayed' ? 'Partidos' : 'Victorias'
+                  }
+                  onChange={label => {
+                    if (label === 'Puntos') setSortBy('points');
+                    else if (label === 'Partidos') setSortBy('matchesPlayed');
+                    else setSortBy('wins');
+                  }}
+                  style={{ marginBottom: SPACING.md }}
+                />
               </View>
               <FlatList
                 data={group ? [...Object.entries(group.ranking ?? {}).map(([id, stats]) => ({ id, ...(stats as any) }))].sort((a, b) => {
@@ -585,8 +584,8 @@ export default function GroupDetailsScreen() {
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={refreshGroup}
-                    colors={['#1e3a8a']}
-                    tintColor="#1e3a8a"
+                    colors={[COLORS.primary]}
+                    tintColor={COLORS.primary}
                   />
                 }
               />
@@ -597,189 +596,224 @@ export default function GroupDetailsScreen() {
           )}
         </View>
 
-        {/* Botón flotante para crear partido solo en la pestaña de Partidos */}
+        {/* FAB premium para crear partido solo en la pestaña de Partidos */}
         {selectedTab === 'Partidos' && (
           <>
-            <TouchableOpacity style={styles.fab} onPress={() => setShowCreateMatch(true)}>
-              <Ionicons name="calendar-outline" size={28} color="#fff" />
+            <TouchableOpacity style={styles.fab} onPress={() => setShowCreateMatch(true)} activeOpacity={0.85}>
+              <Ionicons name="calendar-outline" size={SIZES.xl} color={COLORS.white} />
             </TouchableOpacity>
-            <Modal isVisible={showCreateMatch} onBackdropPress={() => setShowCreateMatch(false)}>
+            {/* Sheet premium para crear partido */}
+            <Modal
+              isVisible={showCreateMatch}
+              onBackdropPress={() => setShowCreateMatch(false)}
+              style={{ margin: 0, justifyContent: 'flex-end' }}
+              backdropOpacity={0.25}
+              animationIn="slideInUp"
+              animationOut="slideOutDown"
+              useNativeDriver
+            >
               <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '90%', justifyContent: 'flex-start' }}>
-                  <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 18, color: '#1e3a8a', textAlign: 'center' }}>Crear Partido en el Grupo</Text>
-                  {/* Título */}
-                  <Text style={{ fontWeight: '600', color: '#1e3a8a', marginBottom: 6 }}>Título del partido *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Partido amistoso nivel medio"
-                    value={matchForm.title}
-                    onChangeText={text => setMatchForm(f => ({ ...f, title: text }))}
-                    placeholderTextColor="#999"
-                  />
-                  {/* Ubicación */}
-                  <Text style={{ fontWeight: '600', color: '#1e3a8a', marginBottom: 6, marginTop: 8 }}>Ubicación *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Club Deportivo Norte - Pista 3"
-                    value={matchForm.location}
-                    onChangeText={text => setMatchForm(f => ({ ...f, location: text }))}
-                    placeholderTextColor="#999"
-                  />
-                  {/* Descripción */}
-                  <Text style={{ fontWeight: '600', color: '#1e3a8a', marginBottom: 6, marginTop: 8 }}>Descripción</Text>
-                  <TextInput
-                    style={[styles.input, { height: 70, textAlignVertical: 'top' }]}
-                    placeholder="Añade detalles adicionales..."
-                    value={matchForm.description}
-                    onChangeText={text => setMatchForm(f => ({ ...f, description: text }))}
-                    multiline
-                    numberOfLines={3}
-                    placeholderTextColor="#999"
-                  />
-                  {/* Nivel */}
-                  <Text style={{ fontWeight: '600', color: '#1e3a8a', marginBottom: 6, marginTop: 8 }}>Nivel *</Text>
-                  <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-                    {['Principiante', 'Intermedio', 'Avanzado'].map(option => (
-                      <TouchableOpacity
-                        key={option}
-                        style={{
-                          flex: 1,
-                          backgroundColor: matchForm.level === option ? '#1e3a8a' : '#e5e7eb',
-                          padding: 10,
-                          borderRadius: 8,
-                          marginHorizontal: 2
-                        }}
-                        onPress={() => setMatchForm(f => ({ ...f, level: option }))}
-                      >
-                        <Text style={{ color: matchForm.level === option ? '#fff' : '#1e3a8a', textAlign: 'center' }}>{option}</Text>
-                      </TouchableOpacity>
-                    ))}
+                <View style={styles.sheetContainer}>
+                  {/* Header sheet */}
+                  <View style={styles.sheetHeader}>
+                    <TouchableOpacity onPress={() => setShowCreateMatch(false)} style={styles.sheetCloseButton} accessibilityRole="button" accessibilityLabel="Cerrar">
+                      <Ionicons name="close" size={SIZES.xl} color={COLORS.primary} />
+                    </TouchableOpacity>
+                    <Text style={styles.sheetTitle}>Crear Partido en el Grupo</Text>
                   </View>
-                  {/* Fecha */}
-                  <Text style={{ fontWeight: '600', color: '#1e3a8a', marginBottom: 6, marginTop: 8 }}>Fecha y hora *</Text>
-                  <TouchableOpacity
-                    style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-                    onPress={() => setShowDatePicker(true)}
-                  >
-                    <Text style={{ color: matchForm.date ? '#222' : '#999' }}>
-                      {matchForm.date instanceof Date
-                        ? matchForm.date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-                        : 'Selecciona la fecha'}
-                    </Text>
-                    <Ionicons name="calendar-outline" size={20} color="#666" />
-                  </TouchableOpacity>
-                  {showDatePicker && (
-                    <View style={{ backgroundColor: '#f5f5f5', borderRadius: 12, padding: 8, marginVertical: 8 }}>
-                      <DateTimePicker
-                        value={matchForm.date || new Date()}
-                        mode="date"
-                        onChange={(event, selectedDate) => {
-                          setShowDatePicker(false);
-                          if (selectedDate) {
-                            const currentTime = matchForm.date || new Date();
-                            selectedDate.setHours(currentTime.getHours());
-                            selectedDate.setMinutes(currentTime.getMinutes());
-                            setMatchForm(f => ({ ...f, date: selectedDate }));
-                            setTimeout(() => setShowTimePicker(true), 300);
-                          }
-                        }}
-                        minimumDate={new Date()}
-                        display="default"
+                  {/* Formulario en secciones */}
+                  <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+                    {/* Sección: Información básica */}
+                    <View style={styles.sheetSection}>
+                      <Text style={styles.sheetSectionTitle}>Información básica</Text>
+                      <Text style={styles.sheetLabel}>Título *</Text>
+                      <TextInput
+                        style={styles.sheetInput}
+                        placeholder="Ej: Partido amistoso nivel medio"
+                        value={matchForm.title}
+                        onChangeText={text => setMatchForm(f => ({ ...f, title: text }))}
+                        placeholderTextColor={COLORS.gray}
+                        autoCapitalize="sentences"
+                        maxLength={40}
+                        accessibilityLabel="Título del partido"
+                      />
+                      <Text style={styles.sheetLabel}>Ubicación *</Text>
+                      <TextInput
+                        style={styles.sheetInput}
+                        placeholder="Ej: Club Deportivo Norte - Pista 3"
+                        value={matchForm.location}
+                        onChangeText={text => setMatchForm(f => ({ ...f, location: text }))}
+                        placeholderTextColor={COLORS.gray}
+                        autoCapitalize="sentences"
+                        maxLength={60}
+                        accessibilityLabel="Ubicación del partido"
                       />
                     </View>
-                  )}
-                  <TouchableOpacity
-                    style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }]}
-                    onPress={() => setShowTimePicker(true)}
-                  >
-                    <Text style={{ color: matchForm.date ? '#222' : '#999' }}>
-                      {matchForm.date instanceof Date
-                        ? matchForm.date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                        : 'Selecciona la hora'}
-                    </Text>
-                    <Ionicons name="time-outline" size={20} color="#666" />
-                  </TouchableOpacity>
-                  {showTimePicker && (
-                    <View style={{ backgroundColor: '#f5f5f5', borderRadius: 12, padding: 8, marginVertical: 8 }}>
-                      <DateTimePicker
-                        value={matchForm.date || new Date()}
-                        mode="time"
-                        is24Hour={true}
-                        onChange={(event, selectedTime) => {
-                          setShowTimePicker(false);
-                          if (selectedTime) {
-                            const newDate = new Date(matchForm.date || new Date());
-                            newDate.setHours(selectedTime.getHours());
-                            newDate.setMinutes(selectedTime.getMinutes());
-                            setMatchForm(f => ({ ...f, date: newDate }));
-                          }
-                        }}
-                        display="default"
+                    {/* Sección: Detalles */}
+                    <View style={styles.sheetSection}>
+                      <Text style={styles.sheetSectionTitle}>Detalles</Text>
+                      <Text style={styles.sheetLabel}>Descripción</Text>
+                      <TextInput
+                        style={[styles.sheetInput, styles.sheetTextArea]}
+                        placeholder="Añade detalles adicionales..."
+                        value={matchForm.description}
+                        onChangeText={text => setMatchForm(f => ({ ...f, description: text }))}
+                        multiline
+                        numberOfLines={3}
+                        placeholderTextColor={COLORS.gray}
+                        accessibilityLabel="Descripción del partido"
+                        maxLength={200}
                       />
+                      <Text style={styles.sheetLabel}>Nivel *</Text>
+                      <SegmentedControl
+                        options={['Principiante', 'Intermedio', 'Avanzado']}
+                        value={matchForm.level}
+                        onChange={option => setMatchForm(f => ({ ...f, level: option }))}
+                        style={{ marginBottom: SPACING.md }}
+                      />
+                      <Text style={styles.sheetLabel}>Rango de edad *</Text>
+                      <View style={styles.sheetAgeRangeRow}>
+                        {['18-25', '26-35', '36-45', '46+', 'todas las edades'].map(option => (
+                          <TouchableOpacity
+                            key={option}
+                            style={[
+                              styles.sheetAgeRangeOption,
+                              matchForm.ageRange === option && styles.sheetAgeRangeOptionSelected
+                            ]}
+                            onPress={() => setMatchForm(f => ({ ...f, ageRange: option }))}
+                            accessibilityRole="button"
+                            accessibilityLabel={option}
+                          >
+                            <Text style={[
+                              styles.sheetAgeRangeText,
+                              matchForm.ageRange === option && styles.sheetAgeRangeTextSelected
+                            ]}>{option}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
-                  )}
-                  {/* Rango de edad */}
-                  <Text style={{ fontWeight: '600', color: '#1e3a8a', marginBottom: 6, marginTop: 8 }}>Rango de edad *</Text>
-                  <View style={{ flexDirection: 'row', marginBottom: 8, flexWrap: 'wrap' }}>
-                    {['18-25', '26-35', '36-45', '46+', 'todas las edades'].map(option => (
+                    {/* Sección: Fecha y hora */}
+                    <View style={styles.sheetSection}>
+                      <Text style={styles.sheetSectionTitle}>Fecha y hora</Text>
+                      <Text style={styles.sheetLabel}>Fecha *</Text>
                       <TouchableOpacity
-                        key={option}
-                        style={{
-                          flex: 1,
-                          minWidth: '40%',
-                          backgroundColor: matchForm.ageRange === option ? '#1e3a8a' : '#e5e7eb',
-                          padding: 10,
-                          borderRadius: 8,
-                          margin: 2
-                        }}
-                        onPress={() => setMatchForm(f => ({ ...f, ageRange: option }))}
+                        style={styles.sheetInput}
+                        onPress={() => setShowDatePicker(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Seleccionar fecha"
                       >
-                        <Text style={{ color: matchForm.ageRange === option ? '#fff' : '#1e3a8a', textAlign: 'center' }}>{option}</Text>
+                        <Text style={{ color: matchForm.date ? COLORS.dark : COLORS.gray, fontFamily: FONTS.medium }}>
+                          {matchForm.date instanceof Date
+                            ? matchForm.date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                            : 'Selecciona la fecha'}
+                        </Text>
+                        <Ionicons name="calendar-outline" size={SIZES.md} color={COLORS.primary} style={{ position: 'absolute', right: 12, top: 14 }} />
                       </TouchableOpacity>
-                    ))}
+                      {showDatePicker && (
+                        <View style={styles.sheetDatePickerWrapper}>
+                          <DateTimePicker
+                            value={matchForm.date || new Date()}
+                            mode="date"
+                            onChange={(event, selectedDate) => {
+                              setShowDatePicker(false);
+                              if (selectedDate) {
+                                const currentTime = matchForm.date || new Date();
+                                selectedDate.setHours(currentTime.getHours());
+                                selectedDate.setMinutes(currentTime.getMinutes());
+                                setMatchForm(f => ({ ...f, date: selectedDate }));
+                                setTimeout(() => setShowTimePicker(true), 300);
+                              }
+                            }}
+                            minimumDate={new Date()}
+                            display="default"
+                          />
+                        </View>
+                      )}
+                      <Text style={styles.sheetLabel}>Hora *</Text>
+                      <TouchableOpacity
+                        style={styles.sheetInput}
+                        onPress={() => setShowTimePicker(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Seleccionar hora"
+                      >
+                        <Text style={{ color: matchForm.date ? COLORS.dark : COLORS.gray, fontFamily: FONTS.medium }}>
+                          {matchForm.date instanceof Date
+                            ? matchForm.date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                            : 'Selecciona la hora'}
+                        </Text>
+                        <Ionicons name="time-outline" size={SIZES.md} color={COLORS.primary} style={{ position: 'absolute', right: 12, top: 14 }} />
+                      </TouchableOpacity>
+                      {showTimePicker && (
+                        <View style={styles.sheetDatePickerWrapper}>
+                          <DateTimePicker
+                            value={matchForm.date || new Date()}
+                            mode="time"
+                            is24Hour={true}
+                            onChange={(event, selectedTime) => {
+                              setShowTimePicker(false);
+                              if (selectedTime) {
+                                const newDate = new Date(matchForm.date || new Date());
+                                newDate.setHours(selectedTime.getHours());
+                                newDate.setMinutes(selectedTime.getMinutes());
+                                setMatchForm(f => ({ ...f, date: newDate }));
+                              }
+                            }}
+                            display="default"
+                          />
+                        </View>
+                      )}
+                    </View>
+                  </ScrollView>
+                  {/* Botón fijo premium */}
+                  <View style={styles.sheetButtonWrapper}>
+                    <TouchableOpacity
+                      style={[styles.sheetCreateButton, creating && { opacity: 0.7 }]}
+                      onPress={handleCreateMatchInGroup}
+                      disabled={creating}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel="Crear partido"
+                    >
+                      {creating ? (
+                        <ActivityIndicator color={COLORS.white} />
+                      ) : (
+                        <Text style={styles.sheetCreateButtonText}>Crear Partido</Text>
+                      )}
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: '#1e3a8a',
-                      borderRadius: 8,
-                      paddingVertical: 14,
-                      paddingHorizontal: 32,
-                      alignSelf: 'center',
-                      marginTop: 24,
-                      minWidth: 180,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 2,
-                    }}
-                    onPress={handleCreateMatchInGroup}
-                    disabled={creating}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>{creating ? 'Creando...' : 'Crear Partido'}</Text>
-                  </TouchableOpacity>
                 </View>
               </TouchableWithoutFeedback>
             </Modal>
           </>
         )}
 
-        {/* Modal de detalles de partido */}
-        <Modal isVisible={showMatchDetails} onBackdropPress={() => setShowMatchDetails(false)}>
+        {/* Modal de detalles de partido como sheet premium */}
+        <Modal
+          isVisible={showMatchDetails}
+          onBackdropPress={() => setShowMatchDetails(false)}
+          style={{ margin: 0, justifyContent: 'flex-end' }}
+          backdropOpacity={0.25}
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          useNativeDriver
+        >
           {selectedMatch && (
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 0, maxHeight: '95%', flex: 1, overflow: 'hidden' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', backgroundColor: '#fff' }}>
-                <TouchableOpacity onPress={() => setShowMatchDetails(false)} style={{ padding: 8, marginRight: 8 }}>
-                  <Ionicons name="close" size={24} color="#1e3a8a" />
+            <View style={styles.sheetContainer}>
+              {/* Header sheet */}
+              <View style={styles.sheetHeader}>
+                <TouchableOpacity onPress={() => setShowMatchDetails(false)} style={styles.sheetCloseButton} accessibilityRole="button" accessibilityLabel="Cerrar">
+                  <Ionicons name="close" size={SIZES.xl} color={COLORS.primary} />
                 </TouchableOpacity>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', flex: 1, color: '#314E99' }}>{selectedMatch.title}</Text>
+                <Text style={styles.sheetTitle} numberOfLines={1}>{selectedMatch.title}</Text>
               </View>
-              <ScrollView style={{ flex: 1, backgroundColor: '#F0F0F0' }} contentContainerStyle={{ padding: 16 }}>
-                {/* Info principal */}
-                <View style={styles.mainInfoCard}>
+              {/* Contenido en secciones visuales */}
+              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+                {/* Sección: Información principal */}
+                <View style={styles.sheetSection}>
+                  <Text style={styles.sheetSectionTitle}>Información del partido</Text>
                   <View style={styles.mainInfoRow}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name="location-outline" size={28} color="#1e3a8a" />
+                      <Ionicons name="location-outline" size={28} color={COLORS.primary} />
                     </View>
                     <View style={styles.mainInfoTextContainer}>
                       <Text style={styles.mainInfoLabel}>Lugar</Text>
@@ -788,7 +822,7 @@ export default function GroupDetailsScreen() {
                   </View>
                   <View style={styles.mainInfoRow}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name="calendar-outline" size={28} color="#1e3a8a" />
+                      <Ionicons name="calendar-outline" size={28} color={COLORS.primary} />
                     </View>
                     <View style={styles.mainInfoTextContainer}>
                       <Text style={styles.mainInfoLabel}>Fecha y hora</Text>
@@ -810,7 +844,7 @@ export default function GroupDetailsScreen() {
                   </View>
                   <View style={styles.mainInfoRow}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name="trophy-outline" size={28} color="#1e3a8a" />
+                      <Ionicons name="trophy-outline" size={28} color={COLORS.primary} />
                     </View>
                     <View style={styles.mainInfoTextContainer}>
                       <Text style={styles.mainInfoLabel}>Nivel</Text>
@@ -819,7 +853,7 @@ export default function GroupDetailsScreen() {
                   </View>
                   <View style={styles.mainInfoRow}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name="people-outline" size={28} color="#1e3a8a" />
+                      <Ionicons name="people-outline" size={28} color={COLORS.primary} />
                     </View>
                     <View style={styles.mainInfoTextContainer}>
                       <Text style={styles.mainInfoLabel}>Rango de edad</Text>
@@ -827,8 +861,9 @@ export default function GroupDetailsScreen() {
                     </View>
                   </View>
                 </View>
-                {/* Jugadores */}
-                <View style={styles.playersCard}>
+                {/* Sección: Jugadores */}
+                <View style={styles.sheetSection}>
+                  <Text style={styles.sheetSectionTitle}>Jugadores</Text>
                   <View style={styles.cardHeader}>
                     <Text style={styles.cardTitle}>Jugadores</Text>
                     <View style={styles.playersCount}>
@@ -839,7 +874,7 @@ export default function GroupDetailsScreen() {
                     <View style={styles.playersList}>
                       {/* Equipo 1 */}
                       {selectedMatch.teams?.team1.map((playerId, index) => (
-                        <View key={playerId} style={[styles.playerItem, { justifyContent: 'space-between', width: '100%' }]}>
+                        <View key={playerId} style={[styles.playerItem, { justifyContent: 'space-between', width: '100%' }]}> 
                           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                             <View style={styles.playerNumber}>
                               <Text style={styles.playerNumberText}>{index + 1}</Text>
@@ -863,7 +898,7 @@ export default function GroupDetailsScreen() {
                       ))}
                       {/* Equipo 2 */}
                       {selectedMatch.teams?.team2.map((playerId, index) => (
-                        <View key={playerId} style={[styles.playerItem, { justifyContent: 'space-between', width: '100%' }]}>
+                        <View key={playerId} style={[styles.playerItem, { justifyContent: 'space-between', width: '100%' }]}> 
                           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                             <View style={styles.playerNumber}>
                               <Text style={styles.playerNumberText}>{index + 1}</Text>
@@ -890,10 +925,10 @@ export default function GroupDetailsScreen() {
                     <Text style={styles.noPlayersText}>Aún no hay jugadores apuntados</Text>
                   )}
                 </View>
-                {/* Resultado del partido (si existe) */}
+                {/* Sección: Resultado del partido (si existe) */}
                 {selectedMatch.score && (
-                  <View style={styles.scoreSection}>
-                    <Text style={styles.scoreTitle}>Resultado</Text>
+                  <View style={styles.sheetSection}>
+                    <Text style={styles.sheetSectionTitle}>Resultado</Text>
                     <View style={styles.scoreContainer}>
                       <View style={styles.scoreSet}>
                         <Text style={styles.scoreSetTitle}>Set 1</Text>
@@ -917,10 +952,9 @@ export default function GroupDetailsScreen() {
                 )}
                 {/* Formulario de resultados (condicional) */}
                 {!selectedMatch.score && isJoined && (
-                  <View style={{ flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+                  <View style={styles.sheetSection}>
                     {(() => {
                       let matchDate = selectedMatch.date;
-                      // Asegurar que matchDate es un objeto Date
                       if (!(matchDate instanceof Date)) {
                         if (matchDate && typeof (matchDate as any).toDate === 'function') {
                           matchDate = (matchDate as any).toDate();
@@ -935,14 +969,13 @@ export default function GroupDetailsScreen() {
                       const minutesRemaining = Math.ceil(timeDiff / (1000 * 60));
                       if (selectedMatch.playersJoined.length < 4 && timeDiff <= 0) {
                         return (
-                          <View style={[styles.addScoreButton, styles.addScoreButtonDisabled, { marginTop: 24, width: '100%', alignSelf: 'center', backgroundColor: '#000' }]}>
+                          <View style={[styles.addScoreButton, styles.addScoreButtonDisabled, { marginTop: 24, width: '100%', alignSelf: 'center', backgroundColor: '#000' }]}> 
                             <Text style={styles.addScoreText}>Partido incompleto</Text>
                             <Text style={styles.addScoreText}>No se alcanzó el número de jugadores</Text>
                           </View>
                         );
                       }
-                      if (timeDiff <= 0 
-                        && selectedMatch.playersJoined.length === 4) {
+                      if (timeDiff <= 0 && selectedMatch.playersJoined.length === 4) {
                         return (
                           <TouchableOpacity style={styles.addScoreButton} onPress={() => setShowScoreForm(true)}>
                             <Ionicons name="add-circle-outline" size={20} color="#fff" style={styles.addScoreIcon} />
@@ -951,7 +984,7 @@ export default function GroupDetailsScreen() {
                         );
                       }
                       return (
-                        <View style={[styles.addScoreButton, styles.addScoreButtonDisabled, { marginTop: 24, width: '100%', alignSelf: 'center' }]}>
+                        <View style={[styles.addScoreButton, styles.addScoreButtonDisabled, { marginTop: 24, width: '100%', alignSelf: 'center' }]}> 
                           <Ionicons name="time-outline" size={20} color="#fff" style={styles.addScoreIcon} />
                           <Text style={styles.addScoreText}>
                             {minutesRemaining > 60
@@ -979,9 +1012,9 @@ export default function GroupDetailsScreen() {
                   match={selectedMatch}
                 />
               </ScrollView>
-              {/* Botón para unirse o abandonar */}
+              {/* Botón fijo premium para unirse/abandonar/eliminar */}
               {!selectedMatch.score && (
-                <View style={{ padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0' }}>
+                <View style={styles.sheetButtonWrapper}>
                   {(() => {
                     const isCreatorAndOnlyPlayer = selectedMatch?.createdBy === user?.uid && selectedMatch.playersJoined.length === 1;
                     if (isCreatorAndOnlyPlayer && showDeleteConfirm) {
@@ -1066,84 +1099,84 @@ export default function GroupDetailsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.light,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.border,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: SPACING.lg,
   },
   backButton: {
-    marginRight: 12,
+    marginRight: SPACING.md,
+    padding: 4,
   },
   headerInfo: {
     flex: 1,
   },
   groupName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
     marginBottom: 4,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
   membersText: {
-    fontSize: 14,
-    color: '#1e3a8a',
+    fontSize: SIZES.sm,
+    color: COLORS.primary,
     marginLeft: 4,
+    fontFamily: FONTS.medium,
   },
   adminBadge: {
-    backgroundColor: '#314E99',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
     marginLeft: 8,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   adminText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: SIZES.xs,
+    fontFamily: FONTS.bold,
+    marginLeft: 2,
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
-    borderRadius: 8,
-    margin: 16,
-    overflow: 'hidden',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  tabSelected: {
-    backgroundColor: '#1e3a8a',
-  },
-  tabText: {
-    color: '#1e3a8a',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  tabTextSelected: {
-    color: '#fff',
+  tabsWrapper: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: 0,
   },
   contentContainer: {
     flex: 1,
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 80,
+    padding: SPACING.lg,
+    paddingBottom: 100,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: SIZES.md,
+    fontFamily: FONTS.medium,
+    color: COLORS.gray,
     textAlign: 'center',
     marginTop: 32,
   },
@@ -1151,17 +1184,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 24,
     bottom: 32,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: COLORS.primary,
     width: 56,
     height: 56,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
     elevation: 6,
+    zIndex: 10,
   },
   // Ranking styles reutilizados
   userCard: {
@@ -1482,27 +1516,155 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     backgroundColor: '#e5e7eb',
   },
-  sortContainer: {
+  sheetContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    minHeight: Dimensions.get('window').height * 0.85,
+    maxHeight: Dimensions.get('window').height * 0.98,
+    paddingBottom: 0,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 12,
+    overflow: 'hidden',
+  },
+  sheetHeader: {
     flexDirection: 'row',
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 8,
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
+    zIndex: 2,
+  },
+  sheetCloseButton: {
+    marginRight: SPACING.md,
+    padding: 4,
+  },
+  sheetTitle: {
+    flex: 1,
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginRight: SIZES.xl + SPACING.md,
+  },
+  sheetSection: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  sheetSectionTitle: {
+    fontSize: SIZES.md,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+  sheetLabel: {
+    fontSize: SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.primary,
     marginBottom: 4,
+    marginTop: 8,
   },
-  sortButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+  sheetInput: {
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: SPACING.md,
+    fontSize: SIZES.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    fontFamily: FONTS.regular,
+    color: COLORS.dark,
+    marginBottom: 8,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  sortButtonActive: {
-    backgroundColor: '#1e3a8a',
+  sheetTextArea: {
+    height: 70,
+    textAlignVertical: 'top',
   },
-  sortButtonText: {
-    color: '#4b5563',
-    fontWeight: '600',
+  sheetAgeRangeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
   },
-  sortButtonTextActive: {
-    color: '#fff',
+  sheetAgeRangeOption: {
+    flex: 1,
+    minWidth: '40%',
+    backgroundColor: COLORS.light,
+    padding: 10,
+    borderRadius: 8,
+    margin: 2,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  sheetAgeRangeOptionSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  sheetAgeRangeText: {
+    color: COLORS.primary,
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.sm,
+  },
+  sheetAgeRangeTextSelected: {
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+  },
+  sheetDatePickerWrapper: {
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 8,
+    marginVertical: 8,
+  },
+  sheetButtonWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.white,
+    padding: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 10,
+  },
+  sheetCreateButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  sheetCreateButtonText: {
+    color: COLORS.white,
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.bold,
   },
 }); 

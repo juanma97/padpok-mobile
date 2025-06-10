@@ -8,6 +8,8 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +19,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { useAuth } from '@app/lib/AuthContext';
 import CustomDialog from '@app/components/CustomDialog';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,7 +27,6 @@ const CreateGroupScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
   const { user } = useAuth();
   const [dialog, setDialog] = useState({ visible: false, title: '', message: '', onClose: () => {} });
   const [loading, setLoading] = useState(false);
@@ -53,7 +55,7 @@ const CreateGroupScreen = () => {
       await addDoc(collection(db, 'groups'), {
         name: groupName.trim(),
         description: description.trim(),
-        isPrivate,
+        isPrivate: false,
         admin: user.uid,
         members: [user.uid],
         matches: [],
@@ -75,12 +77,11 @@ const CreateGroupScreen = () => {
         message: 'El grupo se ha creado exitosamente',
         onClose: () => {
           setDialog({ ...dialog, visible: false });
-          navigation.navigate('Groups');
+          navigation.navigate('Home', { screen: 'Groups', params: { refresh: true } });
         }
       });
       setGroupName('');
       setDescription('');
-      setIsPrivate(false);
     } catch (error) {
       setDialog({
         visible: true,
@@ -95,18 +96,23 @@ const CreateGroupScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <ScrollView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.light} />
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Header premium */}
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Ionicons name="arrow-back" size={24} color="#1e3a8a" />
+            <Ionicons name="arrow-back" size={SIZES.xl} color={COLORS.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Crear Nuevo Grupo</Text>
         </View>
 
+        {/* Formulario premium */}
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Nombre del Grupo</Text>
@@ -115,7 +121,11 @@ const CreateGroupScreen = () => {
               value={groupName}
               onChangeText={setGroupName}
               placeholder="Ingresa el nombre del grupo"
-              placeholderTextColor="#999"
+              placeholderTextColor={COLORS.gray}
+              autoCapitalize="words"
+              returnKeyType="done"
+              maxLength={40}
+              accessibilityLabel="Nombre del grupo"
             />
           </View>
 
@@ -126,48 +136,30 @@ const CreateGroupScreen = () => {
               value={description}
               onChangeText={setDescription}
               placeholder="Describe el propósito del grupo"
-              placeholderTextColor="#999"
+              placeholderTextColor={COLORS.gray}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
+              accessibilityLabel="Descripción del grupo"
+              maxLength={200}
             />
           </View>
-
-          <TouchableOpacity 
-            style={styles.privacyToggle}
-            onPress={() => setIsPrivate(!isPrivate)}
-          >
-            <View style={styles.toggleContainer}>
-              <Ionicons 
-                name={isPrivate ? "lock-closed" : "lock-open"} 
-                size={24} 
-                color="#1e3a8a" 
-              />
-              <View style={styles.toggleTextContainer}>
-                <Text style={styles.toggleTitle}>
-                  {isPrivate ? 'Grupo Privado' : 'Grupo Público'}
-                </Text>
-                <Text style={styles.toggleDescription}>
-                  {isPrivate 
-                    ? 'Solo miembros invitados pueden unirse' 
-                    : 'Cualquier persona puede solicitar unirse'}
-                </Text>
-              </View>
-            </View>
-            <Ionicons 
-              name="chevron-forward" 
-              size={24} 
-              color="#666" 
-            />
-          </TouchableOpacity>
         </View>
 
+        {/* Botón premium */}
         <TouchableOpacity 
-          style={styles.createButton}
+          style={[styles.createButton, loading && { opacity: 0.7 }]}
           onPress={handleCreateGroup}
           disabled={loading}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Crear grupo"
         >
-          <Text style={styles.createButtonText}>{loading ? 'Creando...' : 'Crear Grupo'}</Text>
+          {loading ? (
+            <ActivityIndicator color={COLORS.white} />
+          ) : (
+            <Text style={styles.createButtonText}>Crear Grupo</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
       <CustomDialog
@@ -183,89 +175,88 @@ const CreateGroupScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.light,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.border,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: SPACING.lg,
   },
   backButton: {
-    marginRight: 16,
+    marginRight: SPACING.md,
+    padding: 4,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
+    flex: 1,
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginRight: SIZES.xl + SPACING.md, // para compensar el espacio del botón de back
   },
   form: {
-    padding: 16,
+    padding: SPACING.lg,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e3a8a',
+    fontSize: SIZES.md,
+    fontFamily: FONTS.medium,
+    color: COLORS.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.md,
+    fontSize: SIZES.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: COLORS.border,
+    fontFamily: FONTS.regular,
+    color: COLORS.dark,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
   },
   textArea: {
     height: 100,
-  },
-  privacyToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  toggleTextContainer: {
-    marginLeft: 12,
-  },
-  toggleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e3a8a',
-  },
-  toggleDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+    textAlignVertical: 'top',
   },
   createButton: {
-    backgroundColor: '#314E99',
-    margin: 16,
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    margin: SPACING.lg,
+    padding: SPACING.lg,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 4,
   },
   createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.bold,
   },
 });
 

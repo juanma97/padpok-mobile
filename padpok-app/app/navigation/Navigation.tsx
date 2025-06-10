@@ -214,16 +214,7 @@ const Navigation = () => {
             <RootStack.Screen 
               name="CreateGroup" 
               component={CreateGroupScreen}
-              options={{
-                headerShown: true,
-                header: ({ navigation, route, options }) => (
-                  <AppBar
-                    title="Crear Grupo"
-                    showBackButton
-                    onBackPress={() => navigation.goBack()}
-                  />
-                ),
-              }}
+              options={{ headerShown: false }}
             />
           </>
         )}

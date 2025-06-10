@@ -17,6 +17,8 @@ import { db, auth } from '@app/lib/firebase';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import CustomDialog from '@app/components/CustomDialog';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import SegmentedControl from '@app/components/SegmentedControl';
 
 type Props = NativeStackScreenProps<CreateStackParamList, 'CreateMatch'>;
 
@@ -101,7 +103,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
           {
             text: 'OK',
             onPress: () => {
-              navigation.navigate('Matches', { refresh: true });
+              navigation.navigate('Home', { screen: 'Matches', params: { refresh: true } });
             },
           },
         ]
@@ -207,46 +209,92 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   return (
-    <ScrollView style={styles.scrollView}>
-      <View style={styles.container}>
-        <Text style={styles.pageTitle}>Crear Partido</Text>
-
-        {renderFormField('Título del partido', 'title', 'Ej: Partido amistoso nivel medio', { required: true })}
-        {renderFormField('Ubicación', 'location', 'Ej: Club Deportivo Norte - Pista 3', { required: true })}
-
-        {/* Botón de destacar partido */}
-        <TouchableOpacity
-          style={styles.highlightButton}
-          onPress={handleHighlightClick}
-          disabled={highlightLoading}
-        >
-          <View style={styles.highlightContent}>
-            <Ionicons name="star" size={20} color="#FFD700" />
-            <Text style={styles.highlightText}>Destacar este partido</Text>
-            {highlightLoading ? (
-              <ActivityIndicator size="small" color="#FFD700" />
-            ) : (
-              <Ionicons name="chevron-forward" size={20} color="#FFD700" />
-            )}
+    <ScrollView style={{ flex: 1, backgroundColor: COLORS.lightGray }}>
+      <View style={{ padding: SPACING.lg }}>
+        {/* Tarjeta: Info principal */}
+        <View style={{
+          backgroundColor: COLORS.white,
+          borderRadius: 16,
+          padding: SPACING.lg,
+          marginBottom: SPACING.lg,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.10,
+          shadowRadius: 8,
+          elevation: 2,
+        }}>
+          {renderFormField('Título del partido', 'title', 'Ej: Partido amistoso nivel medio', { required: true })}
+          {renderFormField('Ubicación', 'location', 'Ej: Club Deportivo Norte - Pista 3', { required: true })}
+        </View>
+        {/* Tarjeta: Fecha y hora */}
+        <View style={{
+          backgroundColor: COLORS.white,
+          borderRadius: 16,
+          padding: SPACING.lg,
+          marginBottom: SPACING.lg,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.10,
+          shadowRadius: 8,
+          elevation: 2,
+        }}>
+          <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: 8 }}>Fecha y hora</Text>
+          <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+            <TouchableOpacity 
+              style={{
+                flex: 1,
+                backgroundColor: COLORS.lightGray,
+                padding: 16,
+                borderRadius: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 0,
+                shadowColor: COLORS.shadow,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 1,
+              }}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={{ color: COLORS.gray, fontFamily: FONTS.medium }}>
+                {formData.date?.toLocaleDateString('es-ES', {
+                  weekday: 'short',
+                  year: '2-digit',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </Text>
+              <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={{
+                flex: 1,
+                backgroundColor: COLORS.lightGray,
+                padding: 16,
+                borderRadius: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 0,
+                shadowColor: COLORS.shadow,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 1,
+              }}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={{ color: COLORS.gray, fontFamily: FONTS.medium }}>
+                {formData.date?.toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Text>
+              <Ionicons name="time-outline" size={20} color={COLORS.primary} />
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-
-        <View style={styles.formItem}>
-          <Text style={styles.label}>Fecha del partido*</Text>
-          <TouchableOpacity 
-            style={styles.dateSelector}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text>
-              {formData.date?.toLocaleDateString('es-ES', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </Text>
-            <Ionicons name="calendar-outline" size={20} color="#666" />
-          </TouchableOpacity>
           {showDatePicker && (
             <View>
               <DateTimePicker
@@ -257,39 +305,23 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               />
               {Platform.OS === 'ios' && (
-                <View style={styles.iosButtons}>
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 10, backgroundColor: COLORS.lightGray, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
                   <TouchableOpacity 
-                    style={styles.iosButton}
+                    style={{ paddingHorizontal: 20, paddingVertical: 10, marginLeft: 10 }}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.iosButtonText}>Cancelar</Text>
+                    <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={styles.iosButton}
+                    style={{ paddingHorizontal: 20, paddingVertical: 10, marginLeft: 10 }}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.iosButtonText}>Aceptar</Text>
+                    <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Aceptar</Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
           )}
-        </View>
-
-        <View style={styles.formItem}>
-          <Text style={styles.label}>Hora del partido*</Text>
-          <TouchableOpacity 
-            style={styles.dateSelector}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text>
-              {formData.date?.toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </Text>
-            <Ionicons name="time-outline" size={20} color="#666" />
-          </TouchableOpacity>
           {showTimePicker && (
             <View>
               <DateTimePicker
@@ -300,82 +332,141 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               />
               {Platform.OS === 'ios' && (
-                <View style={styles.iosButtons}>
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 10, backgroundColor: COLORS.lightGray, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
                   <TouchableOpacity 
-                    style={styles.iosButton}
+                    style={{ paddingHorizontal: 20, paddingVertical: 10, marginLeft: 10 }}
                     onPress={() => setShowTimePicker(false)}
                   >
-                    <Text style={styles.iosButtonText}>Cancelar</Text>
+                    <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={styles.iosButton}
+                    style={{ paddingHorizontal: 20, paddingVertical: 10, marginLeft: 10 }}
                     onPress={() => setShowTimePicker(false)}
                   >
-                    <Text style={styles.iosButtonText}>Aceptar</Text>
+                    <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Aceptar</Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
           )}
         </View>
-
-        <View style={styles.formItem}>
-          <Text style={styles.label}>Nivel*</Text>
-          <View style={styles.levelContainer}>
-            {['Principiante', 'Intermedio', 'Avanzado'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.levelOption,
-                  formData.level === option && styles.levelOptionSelected
-                ]}
-                onPress={() => setFormData((prev: Partial<Match>) => ({ ...prev, level: option as Match['level'] }))}
-              >
-                <Text style={[
-                  styles.levelText,
-                  formData.level === option && styles.levelTextSelected
-                ]}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.formItem}>
-          <Text style={styles.label}>Rango de edad*</Text>
-          <View style={styles.ageRangeContainer}>
+        {/* Tarjeta: Nivel y edad */}
+        <View style={{
+          backgroundColor: COLORS.white,
+          borderRadius: 16,
+          padding: SPACING.lg,
+          marginBottom: SPACING.lg,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.10,
+          shadowRadius: 8,
+          elevation: 2,
+        }}>
+          <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: 8 }}>Nivel</Text>
+          <SegmentedControl
+            options={['Principiante', 'Intermedio', 'Avanzado']}
+            value={formData.level as string}
+            onChange={(option) => setFormData((prev) => ({ ...prev, level: option as Match['level'] }))}
+            style={{ marginBottom: SPACING.md }}
+          />
+          <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: 8 }}>Rango de edad</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {['18-25', '26-35', '36-45', '46+', 'todas las edades'].map((option) => (
               <TouchableOpacity
                 key={option}
-                style={[
-                  styles.ageRangeOption,
-                  formData.ageRange === option && styles.ageRangeOptionSelected
-                ]}
+                style={{
+                  flex: 1,
+                  minWidth: '48%',
+                  padding: 14,
+                  borderRadius: 10,
+                  backgroundColor: formData.ageRange === option ? COLORS.primary : COLORS.lightGray,
+                  alignItems: 'center',
+                  marginBottom: 8,
+                  shadowColor: COLORS.shadow,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 4,
+                  elevation: formData.ageRange === option ? 2 : 0,
+                }}
                 onPress={() => setFormData((prev: Partial<Match>) => ({ ...prev, ageRange: option as Match['ageRange'] }))}
               >
-                <Text style={[
-                  styles.ageRangeText,
-                  formData.ageRange === option && styles.ageRangeTextSelected
-                ]}>
-                  {option}
-                </Text>
+                <Text style={{
+                  color: formData.ageRange === option ? COLORS.white : COLORS.primary,
+                  fontFamily: formData.ageRange === option ? FONTS.bold : FONTS.medium,
+                  fontSize: SIZES.md,
+                }}>{option}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
-
-        {renderFormField('Descripción', 'description', 'Añade detalles adicionales...', { multiline: true })}
-
+        {/* Tarjeta: Descripción */}
+        <View style={{
+          backgroundColor: COLORS.white,
+          borderRadius: 16,
+          padding: SPACING.lg,
+          marginBottom: SPACING.lg,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.10,
+          shadowRadius: 8,
+          elevation: 2,
+        }}>
+          {renderFormField('Descripción', 'description', 'Añade detalles adicionales...', { multiline: true })}
+        </View>
+        {/* Botón de destacar partido */}
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={{
+            backgroundColor: COLORS.primary,
+            padding: 16,
+            borderRadius: 12,
+            marginBottom: SPACING.lg,
+            borderWidth: 1,
+            borderColor: '#FFD700',
+            shadowColor: COLORS.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.10,
+            shadowRadius: 8,
+            elevation: 2,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+          onPress={handleHighlightClick}
+          disabled={highlightLoading}
+        >
+          <Ionicons name="star" size={20} color="#FFD700" />
+          <Text style={{ color: '#FFD700', fontSize: SIZES.md, fontFamily: FONTS.bold, flex: 1, marginLeft: 8 }}>Destacar este partido</Text>
+          {highlightLoading ? (
+            <ActivityIndicator size="small" color="#FFD700" />
+          ) : (
+            <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+          )}
+        </TouchableOpacity>
+        {/* Botón de crear partido premium */}
+        <TouchableOpacity
+          style={{
+            width: '100%',
+            padding: 18,
+            borderRadius: 16,
+            alignItems: 'center',
+            backgroundColor: COLORS.primary,
+            marginBottom: SPACING.xl,
+            shadowColor: COLORS.shadow,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.14,
+            shadowRadius: 12,
+            elevation: 4,
+            transform: [{ scale: loading ? 0.98 : 1 }],
+            opacity: loading ? 0.7 : 1,
+          }}
           onPress={handleCreateMatch}
           disabled={loading}
+          activeOpacity={0.85}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Crear Partido</Text>
+            <Text style={{ color: COLORS.white, fontSize: SIZES.lg, fontFamily: FONTS.bold }}>Crear Partido</Text>
           )}
         </TouchableOpacity>
       </View>
