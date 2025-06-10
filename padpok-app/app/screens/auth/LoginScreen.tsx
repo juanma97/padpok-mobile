@@ -66,7 +66,6 @@ const LoginScreen = () => {
         })
       );
     } catch (error: any) {
-      console.log(error);
       let errorMessage = 'Error al iniciar sesión';
       if (error.code === 'auth/invalid-email' || error.code === 'auth/invalid-credential') {
         errorMessage = 'Email o contraseña incorrectos';

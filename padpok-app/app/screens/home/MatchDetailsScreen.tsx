@@ -21,6 +21,7 @@ import { joinMatch, leaveMatch, getMatchUsers } from '@app/lib/matches';
 import ScoreForm from '@app/components/ScoreForm';
 import TeamSelectionModal from '@app/components/TeamSelectionModal';
 import UserProfileModal from '@app/components/UserProfileModal';
+import CustomDialog from '@app/components/CustomDialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MatchDetails'>;
 
@@ -37,6 +38,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [dialog, setDialog] = useState({ visible: false, title: '', message: '', onClose: () => {} });
 
   useEffect(() => {
     const fetchMatch = async () => {
@@ -189,10 +191,25 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     if (!match) return;
     try {
       await deleteDoc(doc(db, 'matches', match.id));
-      Alert.alert('Partido eliminado', 'El partido ha sido eliminado correctamente');
-      navigation.navigate('Matches', { refresh: true });
+      setDialog({
+        visible: true,
+        title: 'Partido eliminado',
+        message: 'El partido ha sido eliminado correctamente',
+        onClose: () => {
+          setDialog((prev) => ({ ...prev, visible: false }));
+          navigation.navigate('Home', {
+            screen: 'Matches',
+            params: { refresh: true }
+          });
+        }
+      });
     } catch (error) {
-      Alert.alert('Error', 'No se pudo eliminar el partido');
+      setDialog({
+        visible: true,
+        title: 'Error',
+        message: 'No se pudo eliminar el partido',
+        onClose: () => setDialog((prev) => ({ ...prev, visible: false }))
+      });
     }
   };
 
@@ -500,6 +517,13 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
         visible={showUserProfile}
         onClose={() => setShowUserProfile(false)}
         userId={selectedUserId || ''}
+      />
+
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={dialog.onClose}
       />
     </SafeAreaView>
   );

@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { auth, db } from '@app/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useNavigation, CommonActions } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@app/types';
 import { getAllMedals, getUserMedals } from '@app/lib/medals';
 import { Medal, UserMedal } from '@app/types/medals';
 import CustomDialog from '@app/components/CustomDialog';
@@ -58,7 +56,7 @@ interface ProfileParams {
 
 const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   const { userId } = route.params || {};
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(false);
   const [savingAvailability, setSavingAvailability] = useState(false);
@@ -191,9 +189,15 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
           setLoading(true);
           try {
             await signOut(auth);
-            navigation.navigate('Welcome');
+            setUser(null);
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Welcome', params: undefined }],
+              })
+            );
           } catch (error) {
-            showDialog('Error', 'No se pudo cerrar la sesión');
+            showDialog('Error', 'No se pudo cerrar la sesión', undefined);
           } finally {
             setLoading(false);
           }
@@ -203,7 +207,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   };
 
   const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
-    setDialog({ visible: true, title, message, options });
+    setDialog({ visible: true, title: String(title), message: String(message), options: options as any });
   };
 
   if (!user) {

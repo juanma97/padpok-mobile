@@ -25,7 +25,7 @@ export type HomeStackParamList = {
 
 export type RootStackParamList = {
   Auth: undefined;
-  Home: undefined;
+  Home: { screen?: keyof HomeTabsParamList; params?: object } | undefined;
   CreateGroup: undefined;
   GroupDetails: { groupId: string };
   Profile: { userId: string };

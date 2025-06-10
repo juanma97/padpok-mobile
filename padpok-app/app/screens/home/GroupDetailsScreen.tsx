@@ -281,7 +281,6 @@ export default function GroupDetailsScreen() {
   };
   // 4. Función para añadir resultado a un partido en grupo
   const handleScoreGroupMatch = async (newScore: Score) => {
-    console.log('handleScoreGroupMatch', newScore);
     if (!selectedMatch) return;
     setMatchLoading(true);
     try {

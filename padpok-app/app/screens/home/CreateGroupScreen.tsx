@@ -82,7 +82,6 @@ const CreateGroupScreen = () => {
       setDescription('');
       setIsPrivate(false);
     } catch (error) {
-      console.log(error);
       setDialog({
         visible: true,
         title: 'Error',

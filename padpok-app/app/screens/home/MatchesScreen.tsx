@@ -306,7 +306,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
         {/* Tabs */}
-        <View style={styles.tabsContainer}>
+        {user && <View style={styles.tabsContainer}>
           <TouchableOpacity
             style={[styles.tab, selectedTab === 'disponibles' && styles.tabSelected]}
             onPress={() => setSelectedTab('disponibles')}
@@ -319,7 +319,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           >
             <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
           </TouchableOpacity>
-        </View>
+        </View>}
         {/* Lista según tab */}
         {selectedTab === 'disponibles' ? (
           filteredAndSortedMatches.length === 0 ? (
@@ -365,9 +365,9 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
           )
         )}
         {/* FAB para crear partido */}
-        <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')}>
+        {user && <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')}>
           <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
     </SafeAreaView>
   );
