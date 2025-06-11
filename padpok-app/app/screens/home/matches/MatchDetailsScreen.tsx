@@ -72,14 +72,14 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   }, [matchId, initialMatch]);
 
   useEffect(() => {
-    if (user && match?.playersJoined.includes(user.uid)) {
+    if (user && match?.playersJoined?.includes(user.uid)) {
       setIsJoined(true);
     }
   }, [user, match]);
 
   useEffect(() => {
     const fetchUserInfos = async () => {
-      if (match?.playersJoined.length > 0) {
+      if (match && Array.isArray(match.playersJoined) && match.playersJoined.length > 0) {
         const users = await getMatchUsers(match.playersJoined);
         setUserInfos(users);
       }
@@ -245,17 +245,11 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
             <TouchableOpacity 
               style={{ padding: 8, marginRight: 8 }}
               onPress={() => navigation.goBack()}
+              testID="back-button"
             >
               <Ionicons name="arrow-back" size={SIZES.lg} color={COLORS.primary} />
             </TouchableOpacity>
-            <Text style={{
-              flex: 1,
-              fontSize: SIZES.lg,
-              fontFamily: FONTS.bold,
-              color: COLORS.primary,
-              textAlign: 'center',
-              marginRight: 8,
-            }}>{match.title}</Text>
+            <Text style={styles.title} testID="match-title">{match.title}</Text>
             {isJoined && (
               <TouchableOpacity 
                 style={{ padding: 8, backgroundColor: COLORS.lightGray, borderRadius: 8 }}
@@ -292,24 +286,26 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               }}>{match.title}</Text>
               <View style={{ gap: SPACING.sm }}>
                 <View style={styles.infoRow}>
-                  <Ionicons name="location-outline" size={SIZES.md} color={COLORS.primary} />
-                  <Text style={styles.infoText}>{match.location}</Text>
+                  <Ionicons name="location" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText} testID="match-location">{match.location}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Ionicons name="calendar-outline" size={SIZES.md} color={COLORS.primary} />
+                  <Ionicons name="calendar" size={SIZES.md} color={COLORS.primary} />
                   <Text style={styles.infoText}>{formattedDate}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Ionicons name="trophy-outline" size={SIZES.md} color={COLORS.primary} />
-                  <Text style={styles.infoText}>{match.level}</Text>
+                  <Ionicons name="trophy" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText} testID="match-level">{match.level}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} />
-                  <Text style={styles.infoText}>{match.ageRange}</Text>
+                  <Ionicons name="people" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText} testID="match-age-range">{match.ageRange}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Ionicons name="people-outline" size={SIZES.md} color={COLORS.primary} />
-                  <Text style={styles.infoText}>{match.playersJoined.length}/{match.playersNeeded} jugadores</Text>
+                  <Ionicons name="person" size={SIZES.md} color={COLORS.primary} />
+                  <Text style={styles.infoText} testID="players-count">
+                    {match.playersJoined.length}/{match.playersNeeded} jugadores
+                  </Text>
                 </View>
               </View>
             </View>
@@ -349,10 +345,10 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                           <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.regular }}>
                             {playerId === auth.currentUser?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
                           </Text>
-                          {userInfos[playerId]?.gender === 'Masculino' && (
+                          {userInfos[playerId] && userInfos[playerId].gender === 'Masculino' && (
                             <Ionicons name="male" size={16} color="#3B82F6" style={{ marginLeft: 6 }} />
                           )}
-                          {userInfos[playerId]?.gender === 'Femenino' && (
+                          {userInfos[playerId] && userInfos[playerId].gender === 'Femenino' && (
                             <Ionicons name="female" size={16} color="#EC4899" style={{ marginLeft: 6 }} />
                           )}
                         </View>
@@ -373,10 +369,10 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                           <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.regular }}>
                             {playerId === auth.currentUser?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
                           </Text>
-                          {userInfos[playerId]?.gender === 'Masculino' && (
+                          {userInfos[playerId] && userInfos[playerId].gender === 'Masculino' && (
                             <Ionicons name="male" size={16} color="#3B82F6" style={{ marginLeft: 6 }} />
                           )}
-                          {userInfos[playerId]?.gender === 'Femenino' && (
+                          {userInfos[playerId] && userInfos[playerId].gender === 'Femenino' && (
                             <Ionicons name="female" size={16} color="#EC4899" style={{ marginLeft: 6 }} />
                           )}
                         </View>
@@ -515,95 +511,35 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
           </View>
         </ScrollView>
 
-        <View style={{
-          padding: 0,
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          marginTop: 0,
-        }}>
-          {!match.score && (
-            (() => {
-              const isCreatorAndOnlyPlayer = !!match && match.createdBy === user?.uid && Array.isArray(match.playersJoined) && match.playersJoined.length === 1;
-              if (isCreatorAndOnlyPlayer && showDeleteConfirm) {
-                return (
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: '#e11d48', fontWeight: 'bold', marginBottom: 12, textAlign: 'center' }}>
-                      ¿Seguro que quieres eliminar este partido? Esta acción no se puede deshacer.
-                    </Text>
-                    <View style={{ flexDirection: 'row', gap: 12 }}>
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: '#aaa',
-                          padding: 16,
-                          borderRadius: 12,
-                          shadowColor: COLORS.shadow,
-                          shadowOffset: { width: 0, height: 4 },
-                          shadowOpacity: 0.10,
-                          shadowRadius: 8,
-                          elevation: 1,
-                        }}
-                        onPress={() => setShowDeleteConfirm(false)}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Cancelar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: '#e11d48',
-                          padding: 16,
-                          borderRadius: 12,
-                          shadowColor: COLORS.shadow,
-                          shadowOffset: { width: 0, height: 4 },
-                          shadowOpacity: 0.10,
-                          shadowRadius: 8,
-                          elevation: 2,
-                        }}
-                        onPress={handleDeleteMatch}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Eliminar</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              }
-              return (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: isJoined ? '#dc2626' : COLORS.primary,
-                    padding: 16,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    shadowColor: COLORS.shadow,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.10,
-                    shadowRadius: 8,
-                    elevation: 2,
-                    marginBottom: 4,
-                  }}
-                  onPress={
-                    isCreatorAndOnlyPlayer
-                      ? () => setShowDeleteConfirm(true)
-                      : isJoined
-                        ? handleLeaveMatch
-                        : handleJoinMatch
-                  }
-                  disabled={loading || (match.playersJoined.length >= match.playersNeeded && !isJoined)}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', fontFamily: FONTS.bold }}>
-                      {isCreatorAndOnlyPlayer
-                        ? 'Eliminar partido'
-                        : isJoined
-                          ? 'Abandonar Partido'
-                          : match.playersJoined.length >= match.playersNeeded
-                            ? 'Partido Completo'
-                            : 'Unirse al Partido'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })()
+        <View style={styles.actionButtons}>
+          {!isJoined && match?.playersJoined?.length < match?.playersNeeded && (
+            <TouchableOpacity
+              style={styles.joinButton}
+              onPress={handleJoinMatch}
+              testID="join-button"
+            >
+              <Text style={styles.buttonText}>Unirse al Partido</Text>
+            </TouchableOpacity>
+          )}
+
+          {isJoined && (
+            <TouchableOpacity
+              style={styles.leaveButton}
+              onPress={handleLeaveMatch}
+              testID="leave-button"
+            >
+              <Text style={styles.buttonText}>Abandonar Partido</Text>
+            </TouchableOpacity>
+          )}
+
+          {match?.createdBy === user?.uid && match?.playersJoined?.length === 1 && (
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => setShowDeleteConfirm(true)}
+              testID="delete-button"
+            >
+              <Text style={styles.buttonText}>Eliminar Partido</Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -765,7 +701,7 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     backgroundColor: '#F0F0F0',
   },
-  joinButtonText: {
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
@@ -864,6 +800,35 @@ const styles = StyleSheet.create({
     color: '#314E99',
     fontWeight: '600',
     fontSize: 14,
+  },
+  title: {
+    flex: 1,
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginRight: 8,
+  },
+  infoContainer: {
+    padding: 16,
+  },
+  deleteButton: {
+    backgroundColor: '#e11d48',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 2,
+    marginBottom: 4,
+  },
+  actionButtons: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
 });
 

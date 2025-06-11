@@ -1,37 +1,45 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import AppBar from '../components/AppBar';
-import { View, Text, Animated, TouchableOpacity } from 'react-native';
-import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import { View, Animated, TouchableOpacity } from 'react-native';
+import { COLORS, SPACING } from '@app/constants/theme';
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import type { RouteProp } from '@react-navigation/native';
-import { PlatformPressable } from '@react-navigation/elements';
 
 // Auth Screens
-import WelcomeScreen from '@app/screens/auth/WelcomeScreen';
-import LoginScreen from '@app/screens/auth/LoginScreen';
-import RegisterScreen from '@app/screens/auth/RegisterScreen';
+import WelcomeScreen from '@app/screens/auth/WelcomeScreen/WelcomeScreen';
+import LoginScreen from '@app/screens/auth/LoginScreen/LoginScreen';
+import RegisterScreen from '@app/screens/auth/RegisterScreen/RegisterScreen';
 
-// Main Screens
-import MatchesScreen from '@app/screens/home/MatchesScreen';
-import CreateMatchScreen from '@app/screens/home/CreateMatchScreen';
-import ProfileScreen from '@app/screens/home/ProfileScreen';
-import MatchDetailsScreen from '@app/screens/home/MatchDetailsScreen';
-import RankingScreen from '@app/screens/home/RankingScreen';
-import MedalsScreen from '@app/screens/home/MedalsScreen';
-import NotificationsScreen from '@app/screens/home/NotificationsScreen';
-import MatchChatScreen from '@app/screens/home/MatchChatScreen';
-import MatchHistoryScreen from '@app/screens/MatchHistoryScreen';
-import CreateGroupScreen from '@app/screens/home/CreateGroupScreen';
-import GroupsScreen from '@app/screens/home/GroupsScreen';
+// Matches Screens
+import MatchesScreen from '@/app/screens/home/matches/MatchesScreen';
+import CreateMatchScreen from '@/app/screens/home/matches/CreateMatchScreen';
+import MatchDetailsScreen from '@/app/screens/home/matches/MatchDetailsScreen';
+import MatchChatScreen from '@/app/screens/home/matches/MatchChatScreen';
+import MatchHistoryScreen from '@app/screens/home/matches/MatchHistoryScreen';
+
+// Groups Screens
+import GroupsScreen from '@/app/screens/home/groups/GroupsScreen';
+import CreateGroupScreen from '@/app/screens/home/groups/CreateGroupScreen';
+import GroupDetailsScreen from '../screens/home/groups/GroupDetailsScreen';
+
+// Profile Screens
+import ProfileScreen from '@/app/screens/home/profile/ProfileScreen';
+
+// Ranking Screens
+import RankingScreen from '@/app/screens/home/ranking/RankingScreen';
+
+// Medals Screens
+import MedalsScreen from '@/app/screens/home/medals/MedalsScreen';
+
+// Notifications Screens
+import NotificationsScreen from '@/app/screens/home/notifications/NotificationsScreen';
 
 // Types
 import { AuthStackParamList, HomeTabsParamList, RootStackParamList } from '@app/types/navigation';
-import GroupDetailsScreen from '../screens/home/GroupDetailsScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeTab = createBottomTabNavigator<HomeTabsParamList>();

@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList } from '@app/types';
+import { RootStackParamList } from '@app/types/navigation';
 import MatchChat from '@app/components/MatchChat';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
-type Props = NativeStackScreenProps<HomeStackParamList, 'MatchChat'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'MatchChat'>;
 
 const MatchChatScreen: React.FC<Props> = ({ route, navigation }) => {
   const { matchId } = route.params;
@@ -28,6 +28,7 @@ const MatchChatScreen: React.FC<Props> = ({ route, navigation }) => {
         <TouchableOpacity 
           style={{ padding: 8, marginRight: 8 }}
           onPress={() => navigation.goBack()}
+          testID="back-button"
         >
           <Ionicons name="arrow-back" size={SIZES.lg} color={COLORS.primary} />
         </TouchableOpacity>

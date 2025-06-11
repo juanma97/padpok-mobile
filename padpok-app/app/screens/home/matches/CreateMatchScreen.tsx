@@ -5,14 +5,13 @@ import {
   TextInput, 
   TouchableOpacity, 
   ScrollView, 
-  Alert, 
   StyleSheet,
   ActivityIndicator,
   Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { Match, AgeRange, CreateStackParamList } from '@app/types/index';
-import { collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import type { Match, CreateStackParamList } from '@app/types/index';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
