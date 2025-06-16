@@ -84,7 +84,9 @@ jest.mock('@react-navigation/native', () => {
 // Helper para mockear getDocs dinámicamente
 const mockGetDocs = (docs: any[]) => {
   const firebase = require('@app/lib/firebase');
+  const firestore = require('firebase/firestore');
   firebase.getDocs.mockImplementationOnce(() => Promise.resolve({ docs }));
+  firestore.getDocs.mockImplementationOnce(() => Promise.resolve({ docs }));
 };
 
 describe('GroupsScreen', () => {
@@ -125,10 +127,10 @@ describe('GroupsScreen', () => {
     expect(await findByText('Group 2')).toBeTruthy();
   });
 
-  it.skip('shows "No tienes grupos aún" if user has no groups', async () => {
-    const firebase = require('@app/lib/firebase');
-    firebase.getDocs.mockImplementationOnce(() => Promise.resolve({ docs: [] }));
-    const { findByText } = render(<GroupsScreen />);
+  it('shows "No tienes grupos aún" if user has no groups', async () => {
+    mockGetDocs([]);
+    const { findByText, queryByText } = render(<GroupsScreen />);
+    await waitFor(() => expect(queryByText('Cargando grupos...')).toBeNull());
     expect(await findByText('No tienes grupos aún')).toBeTruthy();
   });
 
