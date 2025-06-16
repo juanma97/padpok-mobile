@@ -188,6 +188,7 @@ const GroupsScreen = () => {
               if (found) setSelectedTab(found.value as 'mis' | 'explorar');
             }}
             style={{ marginBottom: SPACING.md }}
+            testID="segmented-control"
           />
         </View>
         {/* Buscador solo en explorar */}
@@ -240,7 +241,7 @@ const GroupsScreen = () => {
           />
         )}
         {/* FAB premium */}
-        <TouchableOpacity style={styles.fab} onPress={handleCreateGroup} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.fab} onPress={handleCreateGroup} activeOpacity={0.85} testID="fab-create-group">
           <Ionicons name="add" size={SIZES.xl} color={COLORS.white} />
         </TouchableOpacity>
       </View>

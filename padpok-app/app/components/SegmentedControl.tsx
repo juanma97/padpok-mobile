@@ -7,9 +7,10 @@ interface SegmentedControlProps {
   value: string;
   onChange: (value: string) => void;
   style?: ViewStyle;
+  testID?: string;
 }
 
-const SegmentedControl: React.FC<SegmentedControlProps> = ({ options, value, onChange, style }) => {
+const SegmentedControl: React.FC<SegmentedControlProps> = ({ options, value, onChange, style, testID }) => {
   const animatedValue = useRef(new Animated.Value(options.indexOf(value))).current;
 
   React.useEffect(() => {
@@ -24,7 +25,7 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({ options, value, onC
   const segmentWidth = 100 / options.length;
 
   return (
-    <View style={[styles.container, style]}>  
+    <View style={[styles.container, style]} testID={testID}>
       <View style={styles.background}>
         <Animated.View
           style={[
@@ -47,6 +48,7 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({ options, value, onC
               onPress={() => onChange(option)}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
+              testID={`tab-${option}`}
             >
               <Animated.Text
                 style={[
