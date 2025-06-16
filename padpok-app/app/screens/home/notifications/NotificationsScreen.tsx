@@ -176,6 +176,7 @@ const NotificationsScreen = () => {
               }}
               onPress={() => handleNotificationPress(item)}
               activeOpacity={0.85}
+              testID={`notification-${item.id}`}
             >
               <View style={{
                 width: 48,
