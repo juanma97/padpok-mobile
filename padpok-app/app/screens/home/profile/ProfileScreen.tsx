@@ -58,7 +58,7 @@ interface ProfileParams {
 
 const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   const { userId } = route.params || {};
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(false);
   const [savingAvailability, setSavingAvailability] = useState(false);
@@ -68,11 +68,16 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   const [medals, setMedals] = useState<Medal[]>([]);
   const [userMedals, setUserMedals] = useState<UserMedal[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [dialog, setDialog] = useState({
+  const [dialog, setDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    options?: { text: string; onPress?: () => void; style?: object }[];
+  }>({
     visible: false,
     title: '',
     message: '',
-    options: undefined as { text: string; onPress?: () => void; style?: object }[] | undefined,
+    options: undefined,
   });
 
   // Determinar si estamos viendo nuestro propio perfil
@@ -182,16 +187,13 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
     showDialog('Cerrar sesión', '¿Estás seguro de que quieres cerrar sesión?', [
       {
         text: 'Cancelar',
-        style: 'cancel'
       },
       {
         text: 'Cerrar sesión',
-        style: 'destructive',
         onPress: async () => {
           setLoading(true);
           try {
             await signOut(auth);
-            setUser(null);
             navigation.dispatch(
               CommonActions.reset({
                 index: 0,
@@ -199,7 +201,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
               })
             );
           } catch (error) {
-            showDialog('Error', 'No se pudo cerrar la sesión', undefined);
+            showDialog('Error', 'No se pudo cerrar la sesión');
           } finally {
             setLoading(false);
           }
@@ -209,7 +211,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
   };
 
   const showDialog = (title: string, message: string, options?: { text: string; onPress?: () => void; style?: object }[]) => {
-    setDialog({ visible: true, title: String(title), message: String(message), options: options as any });
+    setDialog({ visible: true, title: String(title), message: String(message), options });
   };
 
   if (!user) {
@@ -283,6 +285,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
                 style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', padding: 4 }}
                 onPress={handleSignOut}
                 disabled={loading}
+                testID="signout-button"
               >
                 {loading ? (
                   <ActivityIndicator color={COLORS.error} size="small" />
@@ -307,6 +310,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             <TouchableOpacity 
               style={styles.seeAllButton}
               onPress={() => navigation.navigate('MatchHistory')}
+              testID="see-history-button"
             >
               <Text style={styles.seeAllText}>Ver historial</Text>
               <Ionicons name="chevron-forward" size={SIZES.md} color={COLORS.primary} />
@@ -356,6 +360,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             <TouchableOpacity 
               style={styles.seeAllButton}
               onPress={() => navigation.navigate('Medals')}
+              testID="see-all-medals-button"
             >
               <Text style={styles.seeAllText}>Ver todas</Text>
               <Ionicons name="chevron-forward" size={SIZES.md} color={COLORS.primary} />
@@ -415,7 +420,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             </View>
           </View>
           {/* Días de la semana: grid compacto de chips circulares */}
-          <View style={{ alignItems: 'left', marginBottom: SPACING.md }}>
+          <View style={{ alignItems: 'flex-start', marginBottom: SPACING.md }}>
             <Text style={{ fontSize: SIZES.md, fontFamily: FONTS.medium, color: COLORS.primary, marginBottom: SPACING.sm }}>Días disponibles</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: SPACING.sm }}>
               {DAYS.map((day) => (
@@ -438,6 +443,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
                     }}
                     onPress={() => handleDayToggle(day.id)}
                     activeOpacity={0.85}
+                    testID={`day-chip-${day.id}`}
                   >
                     <Text style={{
                       fontSize: SIZES.md,
@@ -496,6 +502,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
                       }}
                       onPress={() => handleHourToggle(hour)}
                       activeOpacity={0.85}
+                      testID={`hour-chip-${hour}`}
                     >
                       <Text style={{
                         color: selectedHours.includes(hour) ? COLORS.white : COLORS.primary,
@@ -542,6 +549,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Guardar cambios"
+            testID="save-availability-button"
           >
             {savingAvailability ? (
               <ActivityIndicator color={COLORS.white} />
