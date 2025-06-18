@@ -118,9 +118,22 @@ describe('MatchDetailsScreen', () => {
   });
 
   it('shows the leave button when the user is in the match', async () => {
+    // El usuario está unido pero NO es el creador
+    const mockRouteJoinedNotCreator = {
+      ...mockRoute,
+      params: {
+        ...mockRoute.params,
+        match: {
+          ...mockRoute.params.match,
+          playersJoined: ['test-user'],
+          createdBy: 'otro-usuario'
+        }
+      }
+    };
+
     const { getByTestId } = render(
       <MatchDetailsScreen 
-        route={mockRoute} 
+        route={mockRouteJoinedNotCreator} 
         navigation={mockNavigation as any} 
       />
     );

@@ -150,10 +150,11 @@ const RankingScreen: React.FC<Props> = ({ navigation }) => {
         </View>
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+            <ActivityIndicator size="large" color={COLORS.primary} testID="loading-indicator" />
           </View>
         ) : (
           <FlatList
+            testID="FlatList"
             data={users}
             renderItem={renderUserItem}
             keyExtractor={(item) => item.id}

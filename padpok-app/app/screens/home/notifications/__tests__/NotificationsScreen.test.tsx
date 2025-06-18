@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { TouchableOpacity, Text } from 'react-native';
+import NotificationsScreen from '../NotificationsScreen';
 // Mock de navegación antes de importar el componente
 jest.mock('@react-navigation/native', () => {
   const navigationMock = {
@@ -57,7 +58,6 @@ jest.mock('@app/lib/notifications', () => ({
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons'
 }));
-import NotificationsScreen from './NotificationsScreen';
 
 describe('NotificationsScreen', () => {
   beforeEach(() => {

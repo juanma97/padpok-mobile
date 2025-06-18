@@ -1,8 +1,5 @@
-import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import ProfileScreen from './ProfileScreen';
-import { act } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import ProfileScreen from '../ProfileScreen';
 
 // Mocks globales
 jest.mock('@app/lib/AuthContext', () => ({
