@@ -1066,7 +1066,7 @@ export default function GroupDetailsScreen() {
                           <Text style={styles.joinButtonText}>
                             {isCreatorAndOnlyPlayer
                               ? 'Eliminar partido'
-                              : isJoined
+                              : isJoined && !isCreatorAndOnlyPlayer
                                 ? 'Abandonar Partido'
                                 : selectedMatch.playersJoined.length >= selectedMatch.playersNeeded
                                   ? 'Partido Completo'

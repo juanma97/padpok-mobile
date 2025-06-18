@@ -40,14 +40,19 @@ const RankingScreen: React.FC<Props> = ({ navigation }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortBy>('points');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchUsers();
   }, [sortBy]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const usersRef = collection(db, 'users');
       const querySnapshot = await getDocs(usersRef);
       
@@ -79,8 +84,16 @@ const RankingScreen: React.FC<Props> = ({ navigation }) => {
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
-      setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
+  };
+
+  const onRefresh = () => {
+    fetchUsers(true);
   };
 
   const renderUserItem = ({ item, index }: { item: User; index: number }) => {
@@ -145,6 +158,8 @@ const RankingScreen: React.FC<Props> = ({ navigation }) => {
             renderItem={renderUserItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         )}
       </View>
