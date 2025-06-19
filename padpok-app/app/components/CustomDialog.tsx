@@ -37,9 +37,6 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <View style={styles.iconWrapper}>
-            <Ionicons name={icon.name as any} size={SIZES.xl} color={icon.color} />
-          </View>
           {title && <Text style={styles.title}>{title}</Text>}
           <Text style={styles.message}>{message}</Text>
           <View style={styles.optionsRow}>
@@ -91,11 +88,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 16,
   },
-  iconWrapper: {
-    marginBottom: SPACING.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.lg,
@@ -133,7 +125,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: COLORS.white,
     fontFamily: FONTS.bold,
-    fontSize: SIZES.md,
+    fontSize: SIZES.sm,
   },
   buttonError: {
     backgroundColor: COLORS.error,

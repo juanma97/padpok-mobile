@@ -194,12 +194,6 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
           setLoading(true);
           try {
             await signOut(auth);
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'Welcome', params: undefined }],
-              })
-            );
           } catch (error) {
             showDialog('Error', 'No se pudo cerrar la sesión');
           } finally {
