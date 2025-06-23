@@ -524,7 +524,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
 
           {isJoined && match?.createdBy !== user?.uid && (
             <TouchableOpacity
-              style={styles.leaveButton}
+              style={styles.deleteButton}
               onPress={handleLeaveMatch}
               testID="leave-button"
             >
