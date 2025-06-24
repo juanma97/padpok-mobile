@@ -7,7 +7,8 @@ import {
   ScrollView, 
   StyleSheet,
   ActivityIndicator,
-  Platform
+  Platform,
+  Linking
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Match, CreateStackParamList } from '@app/types/index';
@@ -100,9 +101,14 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         'Tu partido se ha creado correctamente',
         [
           {
+            text: 'Dejar feedback',
+            onPress: () => Linking.openURL('https://forms.gle/gAe37ZzMC6udozNM7'),
+            style: { color: '#1e3a8a', fontWeight: 'bold' }
+          },
+          {
             text: 'OK',
             onPress: () => {
-              navigation.navigate('Home', { screen: 'Matches', params: { refresh: true } });
+              navigation.popToTop();
             },
           },
         ]

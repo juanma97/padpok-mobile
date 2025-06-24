@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { auth, db } from '@app/lib/firebase';
@@ -553,6 +553,29 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
           </TouchableOpacity>
         </View>
       )}
+      <TouchableOpacity
+        style={{
+          backgroundColor: COLORS.primary,
+          borderRadius: 16,
+          alignItems: 'center',
+          paddingVertical: SPACING.md,
+          margin: SPACING.lg,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.14,
+          shadowRadius: 12,
+          elevation: 4,
+          padding: 8
+        }}
+        onPress={() => Linking.openURL('https://forms.gle/gAe37ZzMC6udozNM7')}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Enviar feedback"
+      >
+        <Text style={{ color: COLORS.white, fontSize: SIZES.md, fontFamily: FONTS.bold, margin: 4 }}>
+          ¿Sugerencias? ¡Envíanos tu feedback!
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };

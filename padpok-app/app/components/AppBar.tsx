@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import NotificationHeader from './NotificationHeader';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 
 const APP_BAR_HEIGHT = SIZES.xl + SPACING.xl;
+const FEEDBACK_FORM_URL = 'https://forms.gle/gAe37ZzMC6udozNM7';
 
 interface AppBarProps {
   title: string;
@@ -39,6 +40,15 @@ const AppBar: React.FC<AppBarProps> = ({ title, showBackButton, onBackPress }) =
             </Text>
           </View>
           <NotificationHeader />
+          <TouchableOpacity
+            onPress={() => Linking.openURL(FEEDBACK_FORM_URL)}
+            style={{ marginLeft: SPACING.md }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            accessibilityLabel="Enviar feedback"
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={SIZES.xl} color={COLORS.white} />
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </View>
