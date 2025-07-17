@@ -451,7 +451,7 @@ export default function GroupDetailsScreen() {
             <Text style={styles.groupName}>{group?.name}</Text>
             <View style={styles.headerRow}>
               <Ionicons name="people-outline" size={SIZES.sm} color={COLORS.primary} />
-              <Text style={styles.membersText}>{((group?.members?.length || 0) + 1)} miembros</Text>
+              <Text style={styles.membersText}>{((group?.members?.length || 0))} miembros</Text>
               {group && group.admin === user?.uid && (
                 <View style={styles.adminBadge}>
                   <Ionicons name="star" size={SIZES.sm} color={COLORS.white} style={{ marginRight: 2 }} />
@@ -987,9 +987,11 @@ export default function GroupDetailsScreen() {
                         <View style={[styles.addScoreButton, styles.addScoreButtonDisabled, { marginTop: 24, width: '100%', alignSelf: 'center' }]}> 
                           <Ionicons name="time-outline" size={20} color="#fff" style={styles.addScoreIcon} />
                           <Text style={styles.addScoreText}>
-                            {minutesRemaining > 60
-                              ? `El partido comienza en ${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
-                              : `El partido comienza en ${minutesRemaining}m`}
+                            {minutesRemaining > 1380 
+                              ? `El partido comienza en ${Math.floor(minutesRemaining / 1440)}d ${Math.floor((minutesRemaining % 1440) / 60)}h`
+                              : minutesRemaining > 60
+                                ? `El partido comienza en ${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
+                                : `El partido comienza en ${minutesRemaining}m`}
                           </Text>
                         </View>
                       );

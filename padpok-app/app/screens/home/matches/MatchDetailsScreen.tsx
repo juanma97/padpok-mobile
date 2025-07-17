@@ -485,9 +485,11 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                     }}>
                       <Ionicons name="time-outline" size={20} color={COLORS.primary} style={{ marginRight: 8 }} />
                       <Text style={{ color: COLORS.gray, fontWeight: '600', fontSize: 16, fontFamily: FONTS.medium }}>
-                        {minutesRemaining > 60 
-                          ? `El partido comienza en ${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
-                          : `El partido comienza en ${minutesRemaining}m`}
+                        {minutesRemaining > 1380 
+                          ? `El partido comienza en ${Math.floor(minutesRemaining / 1440)}d ${Math.floor((minutesRemaining % 1440) / 60)}h`
+                          : minutesRemaining > 60 
+                            ? `El partido comienza en ${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
+                            : `El partido comienza en ${minutesRemaining}m`}
                       </Text>
                     </View>
                   );
