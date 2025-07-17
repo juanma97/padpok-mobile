@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Match, CreateStackParamList } from '@app/types/index';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '@app/types/navigation';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -23,14 +26,19 @@ import SegmentedControl from '@app/components/SegmentedControl';
 type Props = NativeStackScreenProps<CreateStackParamList, 'CreateMatch'>;
 
 const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
-  const [formData, setFormData] = useState<Partial<Match>>({
+  const rootNavigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  
+  // Valores por defecto del formulario
+  const defaultFormData: Partial<Match> = {
     title: '',
     location: '',
     level: 'Intermedio',
     description: '',
     date: new Date(),
     ageRange: 'todas las edades'
-  });
+  };
+
+  const [formData, setFormData] = useState<Partial<Match>>(defaultFormData);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,6 +54,13 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     message: '',
     options: undefined,
   });
+
+  // Función para resetear el formulario
+  const resetForm = () => {
+    setFormData(defaultFormData);
+    setShowDatePicker(false);
+    setShowTimePicker(false);
+  };
 
   const validateForm = (): string | null => {
     if (!formData.title?.trim()) return 'El título es obligatorio';
@@ -106,9 +121,12 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
             style: { color: '#1e3a8a', fontWeight: 'bold' }
           },
           {
-            text: 'OK',
+            text: 'Aceptar',
             onPress: () => {
-              navigation.popToTop();
+              // Resetear el formulario
+              resetForm();
+              // Navegar a MatchesScreen y refrescar la lista
+              rootNavigation.navigate('Home', { screen: 'Matches', params: { refresh: true } });
             },
           },
         ]
