@@ -2,7 +2,7 @@
   "expo": {
     "name": "padpok",
     "slug": "padpok",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -32,6 +32,9 @@
       "eas": {
         "projectId": "bc37ac55-91df-4fb7-95d4-c0871823a55a"
       }
+    },
+    "cli": {
+      "appVersionSource": "remote"
     }
   }
 }
