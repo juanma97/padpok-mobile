@@ -33,6 +33,7 @@ import TeamSelectionModal from '@app/components/TeamSelectionModal';
 import ScoreForm from '@app/components/ScoreForm';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 import SegmentedControl from '@app/components/SegmentedControl';
+import { createNotification } from '@app/lib/notifications';
 
 const TABS = [
   { label: 'Partidos', value: 'Partidos' },
@@ -103,6 +104,37 @@ export default function GroupDetailsScreen() {
     fetchGroup();
   }, [groupId]);
 
+  // Al cargar los partidos del grupo (fetchGroup y refreshGroup), añade la lógica de cancelación automática:
+  const cancelIncompleteGroupMatches = async (groupData: GroupType) => {
+    if (!Array.isArray(groupData.matches)) return;
+    const now = new Date();
+    const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    let updated = false;
+    for (const match of groupData.matches) {
+      if (
+        match.status !== 'cancelled' &&
+        match.status !== 'completed' &&
+        new Date(match.date) <= minDate &&
+        match.playersJoined.length < match.playersNeeded
+      ) {
+        match.status = 'cancelled';
+        updated = true;
+        // Notificación al creador
+        await createNotification(
+          'match_cancelled',
+          match.id,
+          match.title,
+          match.createdBy,
+          { reason: 'No se completaron los jugadores 24h antes del inicio.' }
+        );
+      }
+    }
+    if (updated) {
+      const groupRef = firestoreDoc(db, 'groups', groupData.id);
+      await updateDoc(groupRef, { matches: groupData.matches });
+    }
+  };
+
   const handleDeleteGroup = () => {
     setDialog({
       visible: true,
@@ -124,6 +156,18 @@ export default function GroupDetailsScreen() {
         visible: true,
         title: 'Error',
         message: 'El título y la ubicación son obligatorios',
+        onConfirm: () => setDialog({ ...dialog, visible: false }),
+        onClose: () => setDialog({ ...dialog, visible: false })
+      });
+      return;
+    }
+    const now = new Date();
+    const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    if (matchForm.date < minDate) {
+      setDialog({
+        visible: true,
+        title: 'Error',
+        message: 'La fecha y hora del partido deben ser al menos 24 horas en el futuro.',
         onConfirm: () => setDialog({ ...dialog, visible: false }),
         onClose: () => setDialog({ ...dialog, visible: false })
       });
@@ -162,6 +206,7 @@ export default function GroupDetailsScreen() {
       if (snap.exists()) {
         const groupData: GroupType = { id: snap.id, ...snap.data() };
         setGroup(groupData);
+        await cancelIncompleteGroupMatches(groupData);
       }
     } catch (error) {
       setDialog({
@@ -233,6 +278,29 @@ export default function GroupDetailsScreen() {
     if (!user || !selectedMatch) return;
     setMatchLoading(true);
     try {
+      const now = new Date();
+      const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      if (selectedMatch.date <= minDate && selectedMatch.playersJoined.length < selectedMatch.playersNeeded) {
+        // Cancelar el partido
+        await updateGroupMatch(selectedMatch.id, (match) => ({ ...match, status: 'cancelled' }));
+        await createNotification(
+          'match_cancelled',
+          selectedMatch.id,
+          selectedMatch.title,
+          selectedMatch.createdBy,
+          { reason: 'No se completaron los jugadores 24h antes del inicio.' }
+        );
+        setDialog({
+          visible: true,
+          title: 'Partido cancelado',
+          message: 'El partido ha sido cancelado automáticamente porque no se completaron los jugadores 24h antes del inicio.',
+          onConfirm: () => setDialog({ ...dialog, visible: false }),
+          onClose: () => setDialog({ ...dialog, visible: false })
+        });
+        setShowTeamSelection(false);
+        await reloadGroupAndSelectedMatch(selectedMatch.id);
+        return;
+      }
       await updateGroupMatch(selectedMatch.id, (match) => {
         // Evitar duplicados
         if (match.playersJoined.includes(user.uid)) return match;
@@ -340,6 +408,7 @@ export default function GroupDetailsScreen() {
         usernamesObj[uid] = userSnap.exists() ? userSnap.data().username || uid : uid;
       }
       setUsernames(usernamesObj);
+      await cancelIncompleteGroupMatches(groupData);
     }
     setRefreshing(false);
   };
@@ -425,7 +494,9 @@ export default function GroupDetailsScreen() {
         else if (m.date && typeof m.date.toDate === 'function') matchDate = (m.date as any).toDate();
         else if (typeof m.date === 'string' || typeof m.date === 'number') matchDate = new Date(m.date);
         else matchDate = new Date();
-        return matchDate >= new Date();
+        return matchDate >= new Date() && 
+               m.status !== 'cancelled' && 
+               m.status !== 'completed';
       })
     : [];
 
@@ -623,6 +694,11 @@ export default function GroupDetailsScreen() {
                   </View>
                   {/* Formulario en secciones */}
                   <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+                    <View style={{ backgroundColor: '#FFF8E1', borderRadius: 10, padding: 14, marginBottom: 18, borderWidth: 1, borderColor: '#FFD700' }}>
+                      <Text style={{ color: '#B8860B', fontFamily: FONTS.medium, fontSize: SIZES.md }}>
+                        Recuerda: solo puedes crear partidos con al menos 24 horas de antelación. Si no se completan los jugadores necesarios 24h antes del inicio, el partido se cancelará automáticamente y se notificará al creador.
+                      </Text>
+                    </View>
                     {/* Sección: Información básica */}
                     <View style={styles.sheetSection}>
                       <Text style={styles.sheetSectionTitle}>Información básica</Text>
@@ -724,7 +800,7 @@ export default function GroupDetailsScreen() {
                                 setTimeout(() => setShowTimePicker(true), 300);
                               }
                             }}
-                            minimumDate={new Date()}
+                            minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
                             display="default"
                           />
                         </View>

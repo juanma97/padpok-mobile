@@ -68,10 +68,11 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     if (!formData.level) return 'El nivel es obligatorio';
     if (!formData.ageRange) return 'El rango de edad es obligatorio';
     
-    // Validación de fecha y hora
+    // Validación de fecha y hora (mínimo 24h en el futuro)
     const now = new Date();
-    if (formData.date && formData.date < now) {
-      return 'La fecha y hora del partido no pueden ser anteriores al momento actual';
+    const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    if (formData.date && formData.date < minDate) {
+      return 'La fecha y hora del partido deben ser al menos 24 horas en el futuro.';
     }
     
     return null;
@@ -231,6 +232,8 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     </View>
   );
 
+  const datePickerMinDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: COLORS.lightGray }}>
       <View style={{ padding: SPACING.lg }}>
@@ -324,7 +327,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
                 value={formData.date || new Date()}
                 mode="date"
                 onChange={handleDateChange}
-                minimumDate={new Date()}
+                minimumDate={datePickerMinDate}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               />
               {Platform.OS === 'ios' && (
@@ -492,6 +495,11 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={{ color: COLORS.white, fontSize: SIZES.lg, fontFamily: FONTS.bold }}>Crear Partido</Text>
           )}
         </TouchableOpacity>
+        <View style={{ backgroundColor: '#FFF8E1', borderRadius: 10, padding: 14, marginBottom: 18, borderWidth: 1, borderColor: '#FFD700' }}>
+          <Text style={{ color: '#B8860B', fontFamily: FONTS.medium, fontSize: SIZES.md }}>
+            Recuerda: solo puedes crear partidos con al menos 24 horas de antelación. Si no se completan los jugadores necesarios 24h antes del inicio, el partido se cancelará automáticamente y se notificará al creador.
+          </Text>
+        </View>
       </View>
       <CustomDialog
         visible={dialog.visible}

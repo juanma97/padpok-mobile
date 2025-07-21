@@ -13,7 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types/navigation';
 import { Match, Score } from '@app/types/models';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
@@ -23,6 +23,7 @@ import TeamSelectionModal from '@app/components/TeamSelectionModal';
 import UserProfileModal from '@app/components/UserProfileModal';
 import CustomDialog from '@app/components/CustomDialog';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import { createNotification } from '@app/lib/notifications';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MatchDetails'>;
 
@@ -103,7 +104,28 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   }
 
-  const handleJoinMatch = () => {
+  const handleJoinMatch = async () => {
+    const now = new Date();
+    const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    if (match.date <= minDate && match.playersJoined.length < match.playersNeeded) {
+      // Cancelar el partido
+      await updateDoc(doc(db, 'matches', match.id), { status: 'cancelled' });
+      await createNotification(
+        'match_cancelled',
+        match.id,
+        match.title,
+        match.createdBy,
+        { reason: 'No se completaron los jugadores 24h antes del inicio.' }
+      );
+      setDialog({
+        visible: true,
+        title: 'Partido cancelado',
+        message: 'El partido ha sido cancelado automáticamente porque no se completaron los jugadores 24h antes del inicio.',
+        onClose: () => setDialog({ ...dialog, visible: false })
+      });
+      return;
+    }
+
     if (!user || !auth.currentUser) {
       Alert.alert('Error', 'Debes iniciar sesión para unirte a un partido');
       return;

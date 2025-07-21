@@ -14,7 +14,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList } from '@app/types/navigation';
 import { Match } from '@app/types/models';
-import { query, orderBy, getDocs, where, Timestamp, collection, DocumentData, doc, getDoc } from 'firebase/firestore';
+import { query, orderBy, getDocs, where, Timestamp, collection, DocumentData, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@app/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
@@ -23,6 +23,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@app/types';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 import MatchCard from '@app/components/MatchCard';
+import { createNotification } from '@app/lib/notifications';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 type RootNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -70,8 +71,28 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
         matchesRef,
         orderBy('date', 'asc') 
       );
-      
       const querySnapshot = await getDocs(q);
+      const now = new Date();
+      const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      // Cancelar partidos próximos a menos de 24h y no completos ni cancelados
+      await Promise.all(querySnapshot.docs.map(async docSnapshot => {
+        const data = docSnapshot.data();
+        if (
+          data.status !== 'cancelled' &&
+          data.status !== 'completed' &&
+          data.date.toDate() <= minDate &&
+          data.playersJoined.length < data.playersNeeded
+        ) {
+          await updateDoc(doc(db, 'matches', docSnapshot.id), { status: 'cancelled' });
+          await createNotification(
+            'match_cancelled',
+            docSnapshot.id,
+            data.title,
+            data.createdBy,
+            { reason: 'No se completaron los jugadores 24h antes del inicio.' }
+          );
+        }
+      }));
       const matchesData = querySnapshot.docs.map(docSnapshot => {
         const data = docSnapshot.data();
         return {
@@ -160,7 +181,11 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     let processedMatches = [...matches];
 
     // Filtrar por fecha futura
-    processedMatches = processedMatches.filter(match => match.date >= new Date());
+    processedMatches = processedMatches.filter(match => 
+      match.date >= new Date() &&
+      match.status !== 'cancelled' &&
+      match.status !== 'completed'
+    );
 
     if (showOnlyPreferences && user && userPreferences) {
       processedMatches = processedMatches.filter(match => {
