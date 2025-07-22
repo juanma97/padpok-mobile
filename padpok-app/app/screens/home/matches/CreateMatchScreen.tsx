@@ -154,8 +154,9 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         showDialog('Error', 'No puedes seleccionar una fecha anterior al momento actual');
         return;
       }
-      
       setFormData((prev: Partial<Match>) => ({ ...prev, date: selectedDate }));
+      setShowDatePicker(false);
+      setTimeout(() => setShowTimePicker(true), 300); // Abre el picker de hora tras seleccionar fecha
     }
   };
 
@@ -282,7 +283,10 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
                 shadowRadius: 4,
                 elevation: 1,
               }}
-              onPress={() => setShowDatePicker(true)}
+              onPress={() => {
+                setShowTimePicker(false);
+                setShowDatePicker(true);
+              }}
             >
               <Text style={{ color: COLORS.gray, fontFamily: FONTS.medium }}>
                 {formData.date?.toLocaleDateString('es-ES', {
@@ -310,7 +314,10 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
                 shadowRadius: 4,
                 elevation: 1,
               }}
-              onPress={() => setShowTimePicker(true)}
+              onPress={() => {
+                setShowDatePicker(false);
+                setShowTimePicker(true);
+              }}
             >
               <Text style={{ color: COLORS.gray, fontFamily: FONTS.medium }}>
                 {formData.date?.toLocaleTimeString('es-ES', {
