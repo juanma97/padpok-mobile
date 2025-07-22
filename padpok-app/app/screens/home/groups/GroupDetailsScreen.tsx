@@ -111,11 +111,21 @@ export default function GroupDetailsScreen() {
     const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     let updated = false;
     for (const match of groupData.matches) {
+      // Convertir la fecha del partido a Date si es necesario
+      let matchDate;
+      if (match.date instanceof Date) matchDate = match.date;
+      else if (match.date && typeof match.date.toDate === 'function') matchDate = (match.date as any).toDate();
+      else if (typeof match.date === 'string' || typeof match.date === 'number') matchDate = new Date(match.date);
+      else continue; // Si no se puede parsear la fecha, saltar este partido
+      
+      // Solo cancelar si: faltan menos de 24h Y no está completo Y no está ya cancelado/completado
       if (
         match.status !== 'cancelled' &&
         match.status !== 'completed' &&
-        new Date(match.date) <= minDate &&
-        match.playersJoined.length < match.playersNeeded
+        matchDate <= minDate && // Faltan menos de 24h
+        match.playersJoined && 
+        Array.isArray(match.playersJoined) &&
+        match.playersJoined.length < match.playersNeeded // No está completo
       ) {
         match.status = 'cancelled';
         updated = true;
@@ -232,95 +242,76 @@ export default function GroupDetailsScreen() {
     const updatedMatch = updater(matches[idx]);
     const updatedMatches = [...matches];
     updatedMatches[idx] = updatedMatch;
+    
+    // Actualizar Firestore
     await updateDoc(groupRef, { matches: updatedMatches, updatedAt: serverTimestamp() });
-    // Refrescar grupo local
-    const snap = await getDoc(groupRef);
-    if (snap.exists()) {
-      const groupData: GroupType = { id: snap.id, ...snap.data() };
-      setGroup(groupData);
-      // Actualizar el partido seleccionado si es el mismo
-      if (selectedMatch && selectedMatch.id === matchId) {
-        setSelectedMatch(updatedMatch);
-        setIsJoined(!!user && updatedMatch.playersJoined.includes(user.uid));
-        // Actualizar userInfos para los jugadores actuales
-        if (updatedMatch.playersJoined.length > 0) {
-          getMatchUsers(updatedMatch.playersJoined).then(setUserInfos);
-        } else {
-          setUserInfos({});
-        }
-      }
-    }
-  };
-
-  // Añadir función para recargar el grupo y el partido seleccionado desde Firestore
-  const reloadGroupAndSelectedMatch = async (matchId: string) => {
-    if (!group) return;
-    const groupRef = firestoreDoc(db, 'groups', group.id);
-    const snap = await getDoc(groupRef);
-    if (snap.exists()) {
-      const groupData: GroupType = { id: snap.id, ...snap.data() };
-      setGroup(groupData);
-      const match = (groupData.matches || []).find((m: Match) => m.id === matchId);
-      if (match) {
-        setSelectedMatch(match);
-        setIsJoined(!!user && match.playersJoined.includes(user.uid));
-        if (match.playersJoined.length > 0) {
-          getMatchUsers(match.playersJoined).then(setUserInfos);
-        } else {
-          setUserInfos({});
-        }
+    
+    // Pequeño delay para asegurar que Firestore se actualice
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Actualizar estado local directamente
+    const newGroupData = { ...group, matches: updatedMatches };
+    setGroup(newGroupData);
+    
+    // Actualizar el partido seleccionado si es el mismo
+    if (selectedMatch && selectedMatch.id === matchId) {
+      setSelectedMatch(updatedMatch);
+      setIsJoined(!!user && updatedMatch.playersJoined.includes(user.uid));
+      // Actualizar userInfos para los jugadores actuales
+      if (updatedMatch.playersJoined.length > 0) {
+        getMatchUsers(updatedMatch.playersJoined).then(setUserInfos);
+      } else {
+        setUserInfos({});
       }
     }
   };
 
   // 2. Función para unirse a un partido en grupo
   const handleJoinGroupMatch = async (team: 'team1' | 'team2', position: 'first' | 'second') => {
-    if (!user || !selectedMatch) return;
+    if (!user || !selectedMatch || !group) return;
+    
     setMatchLoading(true);
+    
     try {
-      const now = new Date();
-      const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      if (selectedMatch.date <= minDate && selectedMatch.playersJoined.length < selectedMatch.playersNeeded) {
-        // Cancelar el partido
-        await updateGroupMatch(selectedMatch.id, (match) => ({ ...match, status: 'cancelled' }));
-        await createNotification(
-          'match_cancelled',
-          selectedMatch.id,
-          selectedMatch.title,
-          selectedMatch.createdBy,
-          { reason: 'No se completaron los jugadores 24h antes del inicio.' }
-        );
-        setDialog({
-          visible: true,
-          title: 'Partido cancelado',
-          message: 'El partido ha sido cancelado automáticamente porque no se completaron los jugadores 24h antes del inicio.',
-          onConfirm: () => setDialog({ ...dialog, visible: false }),
-          onClose: () => setDialog({ ...dialog, visible: false })
-        });
-        setShowTeamSelection(false);
-        await reloadGroupAndSelectedMatch(selectedMatch.id);
-        return;
-      }
-      await updateGroupMatch(selectedMatch.id, (match) => {
-        // Evitar duplicados
-        if (match.playersJoined.includes(user.uid)) return match;
+      // Añadir usuario al partido
+      const groupRef = firestoreDoc(db, 'groups', group.id);
+      const matches = Array.isArray(group.matches) ? group.matches : [];
+      const idx = matches.findIndex((m: Match) => m.id === selectedMatch.id);
+      
+      if (idx !== -1) {
+        const match = matches[idx];
         const newTeams = {
           team1: team === 'team1' ? [...(match.teams?.team1 || []), user.uid] : (match.teams?.team1 || []),
           team2: team === 'team2' ? [...(match.teams?.team2 || []), user.uid] : (match.teams?.team2 || [])
         };
-        return {
+        
+        const updatedMatch = {
           ...match,
-          playersJoined: [...match.playersJoined, user.uid],
+          playersJoined: [...(match.playersJoined || []), user.uid],
           teams: newTeams
         };
-      });
+        
+        const updatedMatches = [...matches];
+        updatedMatches[idx] = updatedMatch;
+        
+        // Actualizar Firestore
+        await updateDoc(groupRef, { matches: updatedMatches, updatedAt: serverTimestamp() });
+        
+        // Actualizar estado local
+        setGroup({ ...group, matches: updatedMatches } as GroupType);
+      }
+      
+      // Cerrar modales
       setShowTeamSelection(false);
-      await reloadGroupAndSelectedMatch(selectedMatch.id);
+      setShowMatchDetails(false);
+      setSelectedMatch(null);
+      
     } catch (error) {
+      console.error('Error al unirse al partido:', error);
       setDialog({
         visible: true,
         title: 'Error',
-        message: 'No se pudo unir al partido',
+        message: 'No se pudo unir al partido. Inténtalo de nuevo.',
         onConfirm: () => setDialog({ ...dialog, visible: false }),
         onClose: () => setDialog({ ...dialog, visible: false })
       });
@@ -344,7 +335,6 @@ export default function GroupDetailsScreen() {
           }
         };
       });
-      await reloadGroupAndSelectedMatch(selectedMatch.id);
     } catch (error) {
       setDialog({
         visible: true,
@@ -486,7 +476,7 @@ export default function GroupDetailsScreen() {
     );
   };
 
-  // Partidos disponibles (futuros)
+  // Partidos disponibles (futuros) - NO incluir partidos donde ya estoy unido
   const disponibles = Array.isArray(group?.matches)
     ? group.matches.filter(m => {
         let matchDate;
@@ -494,15 +484,25 @@ export default function GroupDetailsScreen() {
         else if (m.date && typeof m.date.toDate === 'function') matchDate = (m.date as any).toDate();
         else if (typeof m.date === 'string' || typeof m.date === 'number') matchDate = new Date(m.date);
         else matchDate = new Date();
-        return matchDate >= new Date() && 
-               m.status !== 'cancelled' && 
-               m.status !== 'completed';
+        
+        const now = new Date();
+        const isFuture = matchDate >= now;
+        const isNotCancelled = m.status !== 'cancelled';
+        const isNotCompleted = m.status !== 'completed';
+        const isNotFull = m.playersJoined && Array.isArray(m.playersJoined) && m.playersJoined.length < m.playersNeeded;
+        const isNotJoined = !user || !m.playersJoined || !Array.isArray(m.playersJoined) || !m.playersJoined.includes(user.uid);
+        
+        return isFuture && isNotCancelled && isNotCompleted && isNotFull && isNotJoined;
       })
     : [];
 
   // Mis partidos (todos los que me he unido)
   const misPartidos = Array.isArray(group?.matches) && user
-    ? group.matches.filter(m => m.playersJoined && m.playersJoined.includes(user.uid))
+    ? group.matches.filter(m => 
+        m.playersJoined && 
+        Array.isArray(m.playersJoined) && 
+        m.playersJoined.includes(user.uid)
+      )
     : [];
 
   return (
@@ -866,7 +866,14 @@ export default function GroupDetailsScreen() {
         {/* Modal de detalles de partido como sheet premium */}
         <Modal
           isVisible={showMatchDetails}
-          onBackdropPress={() => setShowMatchDetails(false)}
+          onBackdropPress={() => {
+            setShowMatchDetails(false);
+            setSelectedMatch(null);
+          }}
+          onModalHide={() => {
+            setShowMatchDetails(false);
+            setSelectedMatch(null);
+          }}
           style={{ margin: 0, justifyContent: 'flex-end' }}
           backdropOpacity={0.25}
           animationIn="slideInUp"
@@ -957,7 +964,9 @@ export default function GroupDetailsScreen() {
                             </View>
                             <TouchableOpacity style={styles.playerNameContainer} onPress={() => { setSelectedUserId(playerId); setShowUserProfile(true); }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Text style={styles.playerName}>{playerId === user?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}</Text>
+                                <Text style={styles.playerName}>
+                                  {playerId === user?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
+                                </Text>
                                 {userInfos[playerId]?.gender === 'Masculino' && (
                                   <Ionicons name="male" size={16} color="#3B82F6" style={{ marginLeft: 6 }} />
                                 )}
@@ -981,7 +990,9 @@ export default function GroupDetailsScreen() {
                             </View>
                             <TouchableOpacity style={styles.playerNameContainer} onPress={() => { setSelectedUserId(playerId); setShowUserProfile(true); }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Text style={styles.playerName}>{playerId === user?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}</Text>
+                                <Text style={styles.playerName}>
+                                  {playerId === user?.uid ? 'Tú' : userInfos[playerId]?.username || 'Cargando...'}
+                                </Text>
                                 {userInfos[playerId]?.gender === 'Masculino' && (
                                   <Ionicons name="male" size={16} color="#3B82F6" style={{ marginLeft: 6 }} />
                                 )}
@@ -1088,6 +1099,8 @@ export default function GroupDetailsScreen() {
                   onClose={() => setShowTeamSelection(false)}
                   onSelectTeam={handleJoinGroupMatch}
                   match={selectedMatch}
+                  userInfos={userInfos}
+                  currentUserId={user?.uid}
                 />
               </ScrollView>
               {/* Botón fijo premium para unirse/abandonar/eliminar */}

@@ -7,14 +7,18 @@ interface TeamSelectionModalProps {
   visible: boolean;
   onClose: () => void;
   onSelectTeam: (team: 'team1' | 'team2', position: 'first' | 'second') => void;
-  match: Match;
+  match: any;
+  userInfos?: { [key: string]: { username: string } };
+  currentUserId?: string;
 }
 
 const TeamSelectionModal: React.FC<TeamSelectionModalProps> = ({
   visible,
   onClose,
   onSelectTeam,
-  match
+  match,
+  userInfos,
+  currentUserId
 }) => {
   const isTeam1Full = match.teams?.team1.length === 2;
   const isTeam2Full = match.teams?.team2.length === 2;
@@ -45,7 +49,9 @@ const TeamSelectionModal: React.FC<TeamSelectionModalProps> = ({
                 </Text>
                 {match.teams?.team1.map((playerId: string, index: number) => (
                   <Text key={playerId} style={styles.playerName}>
-                    {playerId === match.createdBy ? 'Creador del partido' : `Jugador ${index + 1}`}
+                    {userInfos && userInfos[playerId]
+                      ? (playerId === currentUserId ? 'Tú' : userInfos[playerId].username)
+                      : (playerId === match.createdBy ? 'Creador del partido' : `Jugador ${index + 1}`)}
                   </Text>
                 ))}
               </View>

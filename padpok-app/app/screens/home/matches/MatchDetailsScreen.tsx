@@ -531,6 +531,8 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
               onClose={() => setShowTeamSelection(false)}
               onSelectTeam={handleTeamSelection}
               match={match}
+              userInfos={userInfos}
+              currentUserId={user?.uid}
             />
           </View>
         </ScrollView>
