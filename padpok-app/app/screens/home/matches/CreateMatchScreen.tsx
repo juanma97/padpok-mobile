@@ -54,6 +54,9 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     message: '',
     options: undefined,
   });
+  const [titleCount, setTitleCount] = useState(0);
+  const [locationCount, setLocationCount] = useState(0);
+  const [descriptionCount, setDescriptionCount] = useState(0);
 
   // Función para resetear el formulario
   const resetForm = () => {
@@ -209,7 +212,10 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
     placeholder: string,
     options?: {
       multiline?: boolean,
-      required?: boolean
+      required?: boolean,
+      maxLength?: number,
+      count?: number,
+      setCount?: (n: number) => void
     }
   ) => (
     <View style={styles.formItem}>
@@ -223,13 +229,25 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         ]}
         placeholder={placeholder}
         value={formData[field]?.toString()}
-        onChangeText={(text) => setFormData((prev: Partial<Match>) => ({ 
-          ...prev, 
-          [field]: text 
-        }))}
+        onChangeText={(text) => {
+          setFormData((prev: Partial<Match>) => ({ 
+            ...prev, 
+            [field]: text 
+          }));
+          options?.setCount && options.setCount(text.length);
+        }}
         multiline={options?.multiline}
         numberOfLines={options?.multiline ? 4 : 1}
+        maxLength={options?.maxLength}
       />
+      {options?.maxLength && (
+        <Text style={{
+          alignSelf: 'flex-end',
+          fontSize: 12,
+          color: (options.count === options.maxLength) ? '#e11d48' : COLORS.gray,
+          marginTop: 2
+        }}>{options.count}/{options.maxLength}</Text>
+      )}
     </View>
   );
 
@@ -250,8 +268,8 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
           shadowRadius: 8,
           elevation: 2,
         }}>
-          {renderFormField('Título del partido', 'title', 'Ej: Partido amistoso nivel medio', { required: true })}
-          {renderFormField('Ubicación', 'location', 'Ej: Club Deportivo Norte - Pista 3', { required: true })}
+          {renderFormField('Título del partido', 'title', 'Ej: Partido amistoso nivel medio', { required: true, maxLength: 40, count: titleCount, setCount: setTitleCount })}
+          {renderFormField('Ubicación', 'location', 'Ej: Club Deportivo Norte - Pista 3', { required: true, maxLength: 60, count: locationCount, setCount: setLocationCount })}
         </View>
         {/* Tarjeta: Fecha y hora */}
         <View style={{
@@ -444,7 +462,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
           shadowRadius: 8,
           elevation: 2,
         }}>
-          {renderFormField('Descripción', 'description', 'Añade detalles adicionales...', { multiline: true })}
+          {renderFormField('Descripción', 'description', 'Añade detalles adicionales...', { multiline: true, maxLength: 200, count: descriptionCount, setCount: setDescriptionCount })}
         </View>
         {/* Botón de destacar partido */}
         <TouchableOpacity

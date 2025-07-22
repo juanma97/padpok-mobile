@@ -81,6 +81,9 @@ export default function GroupDetailsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState<'points' | 'matchesPlayed' | 'wins'>('points');
+  const [titleCount, setTitleCount] = useState(0);
+  const [locationCount, setLocationCount] = useState(0);
+  const [descriptionCount, setDescriptionCount] = useState(0);
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -707,23 +710,31 @@ export default function GroupDetailsScreen() {
                         style={styles.sheetInput}
                         placeholder="Ej: Partido amistoso nivel medio"
                         value={matchForm.title}
-                        onChangeText={text => setMatchForm(f => ({ ...f, title: text }))}
+                        onChangeText={text => {
+                          setMatchForm(f => ({ ...f, title: text }));
+                          setTitleCount(text.length);
+                        }}
                         placeholderTextColor={COLORS.gray}
                         autoCapitalize="sentences"
                         maxLength={40}
                         accessibilityLabel="Título del partido"
                       />
+                      <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: titleCount === 40 ? '#e11d48' : COLORS.gray, marginBottom: 4 }}>{titleCount}/40</Text>
                       <Text style={styles.sheetLabel}>Ubicación *</Text>
                       <TextInput
                         style={styles.sheetInput}
                         placeholder="Ej: Club Deportivo Norte - Pista 3"
                         value={matchForm.location}
-                        onChangeText={text => setMatchForm(f => ({ ...f, location: text }))}
+                        onChangeText={text => {
+                          setMatchForm(f => ({ ...f, location: text }));
+                          setLocationCount(text.length);
+                        }}
                         placeholderTextColor={COLORS.gray}
                         autoCapitalize="sentences"
                         maxLength={60}
                         accessibilityLabel="Ubicación del partido"
                       />
+                      <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: locationCount === 60 ? '#e11d48' : COLORS.gray, marginBottom: 4 }}>{locationCount}/60</Text>
                     </View>
                     {/* Sección: Detalles */}
                     <View style={styles.sheetSection}>
@@ -733,13 +744,17 @@ export default function GroupDetailsScreen() {
                         style={[styles.sheetInput, styles.sheetTextArea]}
                         placeholder="Añade detalles adicionales..."
                         value={matchForm.description}
-                        onChangeText={text => setMatchForm(f => ({ ...f, description: text }))}
+                        onChangeText={text => {
+                          setMatchForm(f => ({ ...f, description: text }));
+                          setDescriptionCount(text.length);
+                        }}
                         multiline
                         numberOfLines={3}
                         placeholderTextColor={COLORS.gray}
                         accessibilityLabel="Descripción del partido"
                         maxLength={200}
                       />
+                      <Text style={{ alignSelf: 'flex-end', fontSize: 12, color: descriptionCount === 200 ? '#e11d48' : COLORS.gray, marginBottom: 4 }}>{descriptionCount}/200</Text>
                       <Text style={styles.sheetLabel}>Nivel *</Text>
                       <SegmentedControl
                         options={['Principiante', 'Intermedio', 'Avanzado']}
