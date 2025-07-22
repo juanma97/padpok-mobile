@@ -293,7 +293,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {showOnlyPreferences ? 'Filtros activos' : 'Filtrar por preferencias'}
+                  Mi disponibilidad
                 </Text>
               </TouchableOpacity>
             )}
@@ -423,17 +423,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.light,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.sm,
     borderRadius: 8,
-    gap: SPACING.sm,
-    maxWidth: '60%',
+    gap: SPACING.xs,
+    flex: 0,
+    maxWidth: '45%',
     borderWidth: 1,
     borderColor: COLORS.lightGray,
   },
@@ -459,10 +461,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.light,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.sm,
     borderRadius: 8,
-    gap: SPACING.sm,
+    gap: SPACING.xs,
+    flex: 1,
+    maxWidth: '40%',
     borderWidth: 1,
     borderColor: COLORS.lightGray,
   },
