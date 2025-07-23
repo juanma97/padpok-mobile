@@ -55,7 +55,7 @@ export type User = {
   };
 };
 
-export type NotificationType = 'match_full' | 'result_added' | 'result_confirmed';
+export type NotificationType = 'match_full' | 'result_added' | 'result_confirmed' | 'add_result' | 'match_cancelled';
 
 export type Notification = {
   id: string;
@@ -69,4 +69,19 @@ export type Notification = {
     score?: Score;
     confirmedBy?: string[];
   };
+};
+
+export type MatchHistory = {
+  id: string;
+  matchId: string;
+  groupId?: string;
+  userId: string;
+  date: Date;
+  result: 'win' | 'loss';
+  score?: Score;
+  team: 'team1' | 'team2';
+  position: 'first' | 'second';
+  partnerId?: string;
+  opponentIds: string[];
+  createdAt: Date;
 }; 

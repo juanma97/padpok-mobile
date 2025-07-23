@@ -1,8 +1,8 @@
 import { collection, doc, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove, query, where, orderBy, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import { Match, Score } from '@app/types/index';
+import { Match, Score, MatchHistory } from '@app/types/models';
 import { checkAndUpdateMedals } from './medals';
-import { notifyMatchFull, notifyResultAdded, notifyResultConfirmed } from './notifications';
+import { notifyMatchFull, notifyResultAdded, notifyResultConfirmed, notifyAddResult } from './notifications';
 
 // Función para actualizar las estadísticas de los jugadores
 const updatePlayerStats = async (match: Match, score: Score): Promise<void> => {
@@ -222,7 +222,7 @@ export const joinMatch = async (matchId: string, userId: string, team: 'team1' |
   // Verificar si el partido está lleno
   const updatedMatchDoc = await getDoc(matchRef);
   const updatedMatchData = updatedMatchDoc.data();
-  if (updatedMatchData.playersJoined.length === updatedMatchData.playersNeeded) {
+  if (updatedMatchData && updatedMatchData.playersJoined.length === updatedMatchData.playersNeeded) {
     await notifyMatchFull({
       id: matchId,
       ...updatedMatchData
@@ -484,5 +484,134 @@ export const updateGroupMatchScore = async (
       const result = (score.winner === team) ? 'win' : 'loss';
       await addGroupMatchToHistory(groupId, matchId, playerId, result, team, position, partnerId, opponentIds);
     }
+  }
+}; 
+
+// Función para detectar partidos pendientes de resultado y crear notificaciones
+export const checkPendingResults = async (): Promise<void> => {
+  const matchesRef = collection(db, 'matches');
+  const now = new Date();
+  
+  // Buscar partidos que han terminado pero no tienen resultado
+  const q = query(
+    matchesRef,
+    where('date', '<', now),
+    where('score', '==', null)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  
+  for (const doc of querySnapshot.docs) {
+    const matchData = doc.data() as Match;
+    
+    // Solo crear notificación si el partido está completo (4 jugadores)
+    if (matchData.playersJoined && matchData.playersJoined.length >= matchData.playersNeeded) {
+      await notifyAddResult({
+        ...matchData,
+        id: doc.id
+      });
+    }
+  }
+};
+
+// Función para obtener el número de partidos pendientes de resultado para un usuario
+export const getPendingResultsCount = async (userId: string): Promise<number> => {
+  const matchesRef = collection(db, 'matches');
+  const now = new Date();
+  
+  // Buscar partidos donde el usuario participó, han terminado pero no tienen resultado
+  const q = query(
+    matchesRef,
+    where('playersJoined', 'array-contains', userId),
+    where('date', '<', now),
+    where('score', '==', null)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  let count = 0;
+  
+  querySnapshot.forEach(doc => {
+    const matchData = doc.data() as Match;
+    // Solo contar si el partido está completo
+    if (matchData.playersJoined && matchData.playersJoined.length >= matchData.playersNeeded) {
+      count++;
+    }
+  });
+  
+  return count;
+};
+
+// Función para crear partidos de prueba
+export const createTestMatches = async (userId: string): Promise<void> => {
+  const matchesRef = collection(db, 'matches');
+  const now = new Date();
+  
+  // Partido 1: Terminado sin resultado (debería mostrar borde naranja y badge)
+  const pastMatch = {
+    title: 'Partido de prueba - Terminado sin resultado',
+    location: 'Club Deportivo Norte - Pista 1',
+    level: 'Intermedio',
+    description: 'Este partido terminó ayer pero no se añadió el resultado',
+    date: new Date(now.getTime() - 24 * 60 * 60 * 1000), // Ayer
+    ageRange: 'todas las edades',
+    playersNeeded: 4,
+    playersJoined: [userId, 'user2', 'user3', 'user4'],
+    createdBy: userId,
+    createdAt: new Date(now.getTime() - 48 * 60 * 60 * 1000), // Hace 2 días
+    teams: {
+      team1: [userId, 'user2'],
+      team2: ['user3', 'user4']
+    }
+  };
+  
+  // Partido 2: Terminado con resultado (debería verse normal)
+  const pastMatchWithScore = {
+    title: 'Partido de prueba - Terminado con resultado',
+    location: 'Club Deportivo Sur - Pista 2',
+    level: 'Avanzado',
+    description: 'Este partido terminó y tiene resultado añadido',
+    date: new Date(now.getTime() - 12 * 60 * 60 * 1000), // Hace 12 horas
+    ageRange: 'todas las edades',
+    playersNeeded: 4,
+    playersJoined: [userId, 'user5', 'user6', 'user7'],
+    createdBy: userId,
+    createdAt: new Date(now.getTime() - 36 * 60 * 60 * 1000), // Hace 36 horas
+    score: {
+      set1: { team1: 6, team2: 4 },
+      set2: { team1: 7, team2: 5 },
+      winner: 'team1'
+    },
+    teams: {
+      team1: [userId, 'user5'],
+      team2: ['user6', 'user7']
+    }
+  };
+  
+  // Partido 3: Futuro (debería verse normal)
+  const futureMatch = {
+    title: 'Partido de prueba - Futuro',
+    location: 'Club Deportivo Este - Pista 3',
+    level: 'Principiante',
+    description: 'Este partido es para mañana',
+    date: new Date(now.getTime() + 24 * 60 * 60 * 1000), // Mañana
+    ageRange: 'todas las edades',
+    playersNeeded: 4,
+    playersJoined: [userId, 'user8', 'user9'],
+    createdBy: userId,
+    createdAt: new Date(),
+    teams: {
+      team1: [userId, 'user8'],
+      team2: ['user9']
+    }
+  };
+  
+  try {
+    await addDoc(matchesRef, pastMatch);
+    await addDoc(matchesRef, pastMatchWithScore);
+    await addDoc(matchesRef, futureMatch);
+    
+    console.log('✅ Partidos de prueba creados exitosamente');
+  } catch (error) {
+    console.error('❌ Error creando partidos de prueba:', error);
   }
 }; 

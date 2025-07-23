@@ -24,6 +24,7 @@ import { RootStackParamList } from '@app/types';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 import MatchCard from '@app/components/MatchCard';
 import { createNotification } from '@app/lib/notifications';
+import { getPendingResultsCount, createTestMatches } from '@app/lib/matches';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Matches'>;
 type RootNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -60,8 +61,20 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     level: null
   });
   const [selectedTab, setSelectedTab] = useState<'disponibles' | 'mis'>('disponibles');
+  const [pendingResultsCount, setPendingResultsCount] = useState(0);
 
   const { user } = useAuth();
+
+  // Función para obtener el conteo de partidos pendientes de resultado
+  const fetchPendingResultsCount = useCallback(async () => {
+    if (!user) return;
+    try {
+      const count = await getPendingResultsCount(user.uid);
+      setPendingResultsCount(count);
+    } catch (error) {
+      console.error('Error fetching pending results count:', error);
+    }
+  }, [user]);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -113,49 +126,18 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   }, []);
 
   useEffect(() => {
-    const fetchUserPreferences = async () => {
-      if (!user) {
-        // Resetear preferencias si el usuario cierra sesión
-        setUserPreferences({ days: [], hours: [], level: null });
-        setShowOnlyPreferences(false); // Opcional: desactivar filtro si no hay usuario
-        return;
-      }
-      
-      try {
-        const userRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userRef);
-        
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserPreferences({
-            days: userData?.availability?.days || [],
-            hours: userData?.availability?.hours || [],
-            level: userData?.level || null
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching user preferences:', error);
-      }
-    };
-
-    fetchUserPreferences();
-  }, [user]);
-
-  useEffect(() => {
-    if (route.params?.refresh) {
-      fetchMatches();
-      navigation.setParams({ refresh: undefined });
-    }
-  }, [route.params?.refresh, navigation, fetchMatches]);
-
-  useEffect(() => {
     fetchMatches();
-  }, [fetchMatches]);
+    fetchPendingResultsCount();
+  }, [fetchMatches, fetchPendingResultsCount]);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    fetchMatches();
-  }, [fetchMatches]);
+    await Promise.all([
+      fetchMatches(),
+      fetchPendingResultsCount()
+    ]);
+    setRefreshing(false);
+  }, [fetchMatches, fetchPendingResultsCount]);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -223,11 +205,32 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   // Mis partidos (todos los que me he unido)
   const myMatches = React.useMemo(() => {
     if (!user) return [];
-    return [...matches].filter(match => match.playersJoined.includes(user.uid)).sort((a, b) => {
-      const dateA = a.date?.getTime() || 0;
-      const dateB = b.date?.getTime() || 0;
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    
+    const userMatches = [...matches].filter(match => match.playersJoined.includes(user.uid));
+    
+    // Separar partidos pendientes de resultado y ordenar
+    const pendingMatches = userMatches.filter(match => {
+      if (match.score) return false; // Ya tiene resultado
+      const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+      const now = new Date();
+      return matchDate < now && match.playersJoined.length >= match.playersNeeded;
     });
+    
+    const otherMatches = userMatches.filter(match => {
+      if (match.score) return true; // Tiene resultado
+      const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+      const now = new Date();
+      return matchDate >= now || match.playersJoined.length < match.playersNeeded;
+    });
+    
+    // Ordenar por fecha
+    const sortByDate = (a: Match, b: Match) => {
+      const dateA = a.date instanceof Date ? a.date : (a.date as any).toDate();
+      const dateB = b.date instanceof Date ? b.date : (b.date as any).toDate();
+      return sortOrder === 'asc' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+    };
+    
+    return [...pendingMatches.sort(sortByDate), ...otherMatches.sort(sortByDate)];
   }, [matches, user, sortOrder]);
 
   const handleMatchPress = (match: Match) => {
@@ -251,9 +254,68 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     navigation.navigate('MatchDetails', { matchId: match.id });
   };
 
-  const renderMatchItem = ({ item }: { item: Match }) => (
-    <MatchCard match={item} onPress={() => handleMatchPress(item)} />
+  // Separar partidos pendientes de los demás
+  const pendingMatches = myMatches.filter(match => {
+    if (match.score) return false;
+    const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+    const now = new Date();
+    return matchDate < now && match.playersJoined.length >= match.playersNeeded;
+  });
+
+  const otherMatches = myMatches.filter(match => {
+    if (match.score) return true;
+    const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+    const now = new Date();
+    return !(matchDate < now && match.playersJoined.length >= match.playersNeeded);
+  });
+
+  // Componente para renderizar partido pendiente en el carrusel
+  const renderPendingMatch = ({ item }: { item: Match }) => (
+    <TouchableOpacity
+      style={styles.pendingMatchCard}
+      onPress={() => handleMatchPress(item)}
+      activeOpacity={0.85}
+    >
+      <View style={styles.pendingMatchHeader}>
+        <Text style={styles.pendingMatchTitle}>{item.title}</Text>
+        <View style={styles.pendingResultBadge}>
+          <Ionicons name="add-circle-outline" size={SIZES.sm} color={COLORS.white} />
+          <Text style={styles.pendingResultText}>Añadir Resultado</Text>
+        </View>
+      </View>
+      <View style={styles.pendingMatchInfo}>
+        <Text style={styles.pendingMatchLocation}>{item.location}</Text>
+        <Text style={styles.pendingMatchDate}>
+          {item.date instanceof Date 
+            ? item.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+            : (item.date as any).toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+          }
+        </Text>
+      </View>
+    </TouchableOpacity>
   );
+
+  // Componente del carrusel de partidos pendientes
+  const PendingMatchesCarousel = () => {
+    if (pendingMatches.length === 0) return null;
+
+    return (
+      <View style={styles.carouselContainer}>
+        <FlatList
+          data={pendingMatches}
+          renderItem={renderPendingMatch}
+          keyExtractor={item => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContent}
+        />
+      </View>
+    );
+  };
+
+  const renderMatchItem = ({ item, index }: { item: Match; index: number }) => {
+    return <MatchCard match={item} onPress={() => handleMatchPress(item)} />;
+  };
 
   // Icono para estado vacío
   const EmptyIcon = () => (
@@ -327,7 +389,16 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
             onPress={() => setSelectedTab('mis')}
             activeOpacity={0.85}
           >
-            <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
+            <View style={styles.tabWithBadge}>
+              <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
+              {pendingResultsCount > 0 && (
+                <View style={styles.tabBadge}>
+                  <Text style={styles.tabBadgeText}>
+                    {pendingResultsCount > 99 ? '99+' : pendingResultsCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         </View>}
         {/* Lista según tab */}
@@ -360,26 +431,62 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={styles.emptyText}>No te has unido a ningún partido</Text>
             </View>
           ) : (
-            <FlatList
-              data={myMatches}
-              renderItem={renderMatchItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={[COLORS.primary]}
-                  tintColor={COLORS.primary}
-                />
-              }
-            />
+            <View style={styles.matchesContainer}>
+              {/* Carrusel de partidos pendientes */}
+              <PendingMatchesCarousel />
+              
+              {/* Lista de otros partidos */}
+              {otherMatches.length > 0 && (
+                <>
+                  {pendingMatches.length > 0 && (
+                    <View style={styles.separator}>
+                      <View style={styles.separatorLine} />
+                      <Text style={styles.separatorText}>Otros partidos</Text>
+                      <View style={styles.separatorLine} />
+                    </View>
+                  )}
+                  <FlatList
+                    data={otherMatches}
+                    renderItem={renderMatchItem}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.listContent}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[COLORS.primary]}
+                        tintColor={COLORS.primary}
+                      />
+                    }
+                  />
+                </>
+              )}
+            </View>
           )
         )}
         {/* FAB para crear partido */}
         {user && <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')} activeOpacity={0.85}>
           <Ionicons name="add" size={SIZES.xl} color={COLORS.white} />
         </TouchableOpacity>}
+        
+        {/* Botón temporal para crear partidos de prueba */}
+        {user && (
+          <TouchableOpacity 
+            style={[styles.fab, { bottom: 100, backgroundColor: '#f59e0b' }]} 
+            onPress={async () => {
+              try {
+                await createTestMatches(user.uid);
+                // Recargar partidos
+                onRefresh();
+              } catch (error) {
+                console.error('Error creando partidos de prueba:', error);
+              }
+            }} 
+            activeOpacity={0.85}
+          >
+            <Ionicons name="flask" size={SIZES.xl} color={COLORS.white} />
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -517,6 +624,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     alignItems: 'center',
     backgroundColor: 'transparent',
+    position: 'relative',
   },
   tabSelected: {
     backgroundColor: COLORS.primary,
@@ -535,6 +643,30 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontFamily: FONTS.bold,
   },
+  tabWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  tabBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -12,
+    backgroundColor: COLORS.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    paddingHorizontal: 4,
+  },
+  tabBadgeText: {
+    color: COLORS.white,
+    fontSize: SIZES.xs,
+    fontFamily: FONTS.bold,
+  },
   fab: {
     position: 'absolute',
     bottom: SPACING.xxl,
@@ -550,6 +682,108 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 16,
     elevation: 8,
+  },
+  pendingMatchCard: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    marginHorizontal: SPACING.xs,
+    width: 300, // Ancho fijo para el carrusel
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  pendingMatchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  pendingMatchTitle: {
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    flex: 1,
+    marginRight: SPACING.sm,
+  },
+  pendingResultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 10,
+  },
+  pendingResultText: {
+    color: COLORS.white,
+    fontSize: SIZES.sm,
+    fontFamily: FONTS.medium,
+    marginLeft: SPACING.xs,
+  },
+  pendingMatchInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pendingMatchLocation: {
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.medium,
+  },
+  pendingMatchDate: {
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.medium,
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  separatorText: {
+    marginHorizontal: SPACING.sm,
+    color: COLORS.gray,
+    fontSize: SIZES.sm,
+    fontFamily: FONTS.medium,
+  },
+  // Estilos para el carrusel
+  matchesContainer: {
+    flex: 1,
+  },
+  carouselContainer: {
+    marginBottom: SPACING.md,
+  },
+  carouselContent: {
+    paddingHorizontal: SPACING.md,
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: COLORS.primary,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
 });
 

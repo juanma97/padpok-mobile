@@ -98,7 +98,7 @@ export type CreateStackParamList = {
   SelectLocation: undefined;
 };
 
-export type NotificationType = 'match_full' | 'result_added' | 'result_confirmed';
+export type NotificationType = 'match_full' | 'result_added' | 'result_confirmed' | 'add_result' | 'match_cancelled';
 
 export type Notification = {
   id: string;

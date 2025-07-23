@@ -9,59 +9,13 @@ import {
   StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { getUserNotifications, markNotificationAsRead } from '@app/lib/notifications';
-import { Notification } from '@app/types';
-import { useNavigation } from '@react-navigation/native';
+import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
+import { Notification } from '@app/types/models';
 import { Timestamp } from 'firebase/firestore';
-import { COLORS, SIZES, FONTS, SPACING } from '@app/constants/theme';
-
-// Datos mock para pruebas
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'match_full',
-    matchId: 'match1',
-    matchTitle: 'Partido en Club de Pádel Central',
-    userId: 'user1',
-    read: false,
-    createdAt: Timestamp.now(),
-  },
-  {
-    id: '2',
-    type: 'result_added',
-    matchId: 'match2',
-    matchTitle: 'Partido en Pádel Indoor',
-    userId: 'user1',
-    read: false,
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000)), // 1 hora atrás
-    data: {
-      score: {
-        set1: { team1: 6, team2: 4 },
-        set2: { team1: 6, team2: 3 },
-        winner: 'team1'
-      }
-    }
-  },
-  {
-    id: '3',
-    type: 'result_confirmed',
-    matchId: 'match3',
-    matchTitle: 'Partido en Club de Pádel Norte',
-    userId: 'user1',
-    read: true,
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000)), // 1 día atrás
-    data: {
-      score: {
-        set1: { team1: 6, team2: 4 },
-        set2: { team1: 6, team2: 3 },
-        winner: 'team1'
-      },
-      confirmedBy: ['user2', 'user3']
-    }
-  }
-];
 
 const NotificationsScreen = () => {
   const { user } = useAuth();
@@ -106,6 +60,10 @@ const NotificationsScreen = () => {
         return 'trophy';
       case 'result_confirmed':
         return 'checkmark-circle';
+      case 'add_result':
+        return 'add-circle';
+      case 'match_cancelled':
+        return 'close-circle';
       default:
         return 'notifications';
     }
@@ -119,6 +77,10 @@ const NotificationsScreen = () => {
         return 'Resultado añadido';
       case 'result_confirmed':
         return 'Resultado confirmado';
+      case 'add_result':
+        return 'Añadir resultado';
+      case 'match_cancelled':
+        return 'Partido cancelado';
       default:
         return 'Notificación';
     }

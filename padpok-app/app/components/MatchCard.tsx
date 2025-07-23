@@ -29,9 +29,19 @@ export default function MatchCard({ match, onPress }: MatchCardProps) {
       })
     : 'Fecha no disponible';
 
+  // Verificar si el partido está pendiente de resultado
+  const isPendingResult = React.useMemo(() => {
+    if (!dateObj || match.score) return false;
+    const now = new Date();
+    return dateObj < now && match.playersJoined.length >= match.playersNeeded;
+  }, [dateObj, match.score, match.playersJoined.length, match.playersNeeded]);
+
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[
+        styles.card,
+        isPendingResult && styles.cardPendingResult
+      ]}
       activeOpacity={0.85}
       onPress={onPress}
     >
@@ -43,6 +53,12 @@ export default function MatchCard({ match, onPress }: MatchCardProps) {
             {match.playersJoined.length}/{match.playersNeeded}
           </Text>
         </View>
+        {isPendingResult && (
+          <View style={styles.pendingResultBadge}>
+            <Ionicons name="add-circle-outline" size={SIZES.sm} color={COLORS.white} />
+            <Text style={styles.pendingResultText}>Añadir Resultado</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.cardContent}>
@@ -83,6 +99,12 @@ const styles = StyleSheet.create({
     elevation: 4,
     minHeight: 120,
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  cardPendingResult: {
+    borderColor: '#f59e0b',
+    backgroundColor: '#fffbeb',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -111,6 +133,21 @@ const styles = StyleSheet.create({
     fontSize: SIZES.md,
     color: COLORS.gray,
     fontFamily: FONTS.medium,
+  },
+  pendingResultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f59e0b',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 12,
+    marginLeft: SPACING.sm,
+  },
+  pendingResultText: {
+    fontSize: SIZES.xs,
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    marginLeft: 4,
   },
   cardContent: {
     gap: SPACING.sm,

@@ -1,6 +1,6 @@
-import { collection, doc, addDoc, updateDoc, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, query, where, orderBy, getDocs, Timestamp, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
-import { Notification, NotificationType } from '@app/types';
+import { Notification, NotificationType } from '@app/types/models';
 
 // Función para crear una notificación
 export const createNotification = async (
@@ -103,5 +103,36 @@ export const notifyResultConfirmed = async (match: any, confirmedBy: string): Pr
       playerId,
       { confirmedBy }
     );
+  }
+};
+
+// Función para notificar cuando un partido termina sin resultado
+export const notifyAddResult = async (match: any): Promise<void> => {
+  const allPlayers = [...match.teams.team1, ...match.teams.team2];
+  
+  for (const playerId of allPlayers) {
+    await createNotification(
+      'add_result',
+      match.id,
+      match.title,
+      playerId,
+      {}
+    );
+  }
+};
+
+// Función para limpiar notificaciones con tipos incorrectos
+export const cleanInvalidNotifications = async (): Promise<void> => {
+  const notificationsRef = collection(db, 'notifications');
+  const querySnapshot = await getDocs(notificationsRef);
+  
+  const validTypes = ['match_full', 'result_added', 'result_confirmed', 'add_result', 'match_cancelled'];
+  
+  for (const docSnapshot of querySnapshot.docs) {
+    const data = docSnapshot.data();
+    if (!validTypes.includes(data.type)) {
+      console.log(`Eliminando notificación con tipo inválido: ${data.type}`);
+      await deleteDoc(doc(db, 'notifications', docSnapshot.id));
+    }
   }
 }; 
