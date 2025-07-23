@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -85,6 +85,20 @@ export default function GroupDetailsScreen() {
   const [titleCount, setTitleCount] = useState(0);
   const [locationCount, setLocationCount] = useState(0);
   const [descriptionCount, setDescriptionCount] = useState(0);
+
+  // Calcular partidos pendientes de resultado en el grupo
+  const pendingResultsCount = React.useMemo(() => {
+    if (!user || !group?.matches) return 0;
+    
+    return group.matches.filter(match => {
+      if (match.score) return false; // Ya tiene resultado
+      if (!match.playersJoined.includes(user.uid)) return false; // No participó
+      
+      const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+      const now = new Date();
+      return matchDate < now && match.playersJoined.length >= match.playersNeeded;
+    }).length;
+  }, [user, group?.matches]);
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -645,15 +659,33 @@ export default function GroupDetailsScreen() {
             <>
               {/* Subtabs premium */}
               <View style={styles.tabsWrapper}>
-                <SegmentedControl
-                  options={PARTIDOS_TABS.map(t => t.label)}
-                  value={PARTIDOS_TABS.find(t => t.value === partidosTab)?.label || PARTIDOS_TABS[0].label}
-                  onChange={label => {
-                    const found = PARTIDOS_TABS.find(t => t.label === label);
-                    if (found) setPartidosTab(found.value as 'disponibles' | 'mis');
-                  }}
-                  style={{ marginBottom: SPACING.md }}
-                />
+                <View style={styles.tabsWrapper}>
+                  <View style={styles.tabsContainer}>
+                    <TouchableOpacity
+                      style={[styles.tab, partidosTab === 'disponibles' && styles.tabSelected]}
+                      onPress={() => setPartidosTab('disponibles')}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.tabText, partidosTab === 'disponibles' && styles.tabTextSelected]}>Disponibles</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tab, partidosTab === 'mis' && styles.tabSelected]}
+                      onPress={() => setPartidosTab('mis')}
+                      activeOpacity={0.85}
+                    >
+                      <View style={styles.tabWithBadge}>
+                        <Text style={[styles.tabText, partidosTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
+                        {pendingResultsCount > 0 && (
+                          <View style={styles.tabBadge}>
+                            <Text style={styles.tabBadgeText}>
+                              {pendingResultsCount > 99 ? '99+' : pendingResultsCount}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
               {/* Lista según subtab */}
               {partidosTab === 'disponibles' ? (
@@ -1296,6 +1328,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.lg,
+    paddingTop: Platform.OS === 'android' ? SPACING.lg + 20 : SPACING.lg,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     borderTopLeftRadius: 0,
@@ -1939,5 +1972,66 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     fontSize: SIZES.sm,
     fontFamily: FONTS.medium,
+  },
+  // Estilos para las tabs con badge
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    position: 'relative',
+  },
+  tabSelected: {
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  tabText: {
+    color: COLORS.primary,
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.md,
+  },
+  tabTextSelected: {
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+  },
+  tabWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    paddingRight: 16, // Añadir padding para dar espacio al badge
+  },
+  tabBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -4,
+    backgroundColor: COLORS.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    paddingHorizontal: 4,
+  },
+  tabBadgeText: {
+    color: COLORS.white,
+    fontSize: SIZES.xs,
+    fontFamily: FONTS.bold,
   },
 }); 

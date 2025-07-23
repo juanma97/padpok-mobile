@@ -8,7 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@app/types/navigation';
@@ -247,7 +248,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.mainContainer}>
+      <View style={[styles.mainContainer, Platform.OS === 'android' && { paddingTop: 24 }]}>
         <ScrollView style={styles.scrollView}>
           {/* Header premium con sombra y alineación */}
           <View style={{
@@ -581,6 +582,18 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
         title={dialog.title}
         message={dialog.message}
         onClose={dialog.onClose}
+      />
+
+      {/* Modal de confirmación para eliminar partido */}
+      <CustomDialog
+        visible={showDeleteConfirm}
+        title="Eliminar partido"
+        message="¿Estás seguro de que quieres eliminar este partido? Esta acción no se puede deshacer."
+        options={[
+          { text: 'Cancelar', onPress: () => setShowDeleteConfirm(false), style: { backgroundColor: '#aaa' } },
+          { text: 'Eliminar', onPress: handleDeleteMatch, style: { backgroundColor: '#e11d48' } }
+        ]}
+        onClose={() => setShowDeleteConfirm(false)}
       />
     </SafeAreaView>
   );

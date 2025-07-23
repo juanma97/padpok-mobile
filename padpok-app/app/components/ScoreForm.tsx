@@ -73,7 +73,7 @@ const ScoreForm: React.FC<ScoreFormProps> = ({ matchId, onScoreSubmitted, visibl
       onScoreSubmitted(scoreToSubmit);
       onClose();
     } catch (error) {
-      console.error('Error al guardar el resultado:', error);
+      // Error al guardar el resultado
       Alert.alert('Error', 'No se pudo guardar el resultado');
     } finally {
       setLoading(false);

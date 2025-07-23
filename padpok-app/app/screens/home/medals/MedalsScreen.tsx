@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { getAllMedals, getUserMedals } from '@app/lib/medals';
@@ -48,7 +48,20 @@ const MedalsScreen = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: SPACING.xl }}>
-        <View style={{ alignItems: 'center', padding: SPACING.xl, backgroundColor: COLORS.background, borderBottomLeftRadius: SPACING.xl, borderBottomRightRadius: SPACING.xl, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 8, elevation: 4, marginBottom: SPACING.lg }}>
+        <View style={{ 
+          alignItems: 'center', 
+          padding: SPACING.xl, 
+          paddingTop: Platform.OS === 'android' ? SPACING.xl + 20 : SPACING.xl,
+          backgroundColor: COLORS.background, 
+          borderBottomLeftRadius: SPACING.xl, 
+          borderBottomRightRadius: SPACING.xl, 
+          shadowColor: COLORS.shadow, 
+          shadowOffset: { width: 0, height: 4 }, 
+          shadowOpacity: 0.10, 
+          shadowRadius: 8, 
+          elevation: 4, 
+          marginBottom: SPACING.lg 
+        }}>
           <Text style={{ fontSize: SIZES.xl, fontFamily: FONTS.bold, color: COLORS.primary, marginBottom: SPACING.xs }}>Tu Colección de Medallas</Text>
           <Text style={{ fontSize: SIZES.md, color: COLORS.gray, fontFamily: FONTS.medium }}>
             {unlockedMedalsCount} de {medals.length} medallas desbloqueadas

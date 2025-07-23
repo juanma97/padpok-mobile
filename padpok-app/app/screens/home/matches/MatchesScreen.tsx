@@ -60,10 +60,36 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
     hours: [],
     level: null
   });
-  const [selectedTab, setSelectedTab] = useState<'disponibles' | 'mis'>('disponibles');
-  const [pendingResultsCount, setPendingResultsCount] = useState(0);
 
   const { user } = useAuth();
+
+  // Función para cargar las preferencias del usuario desde su documento
+  const fetchUserPreferences = useCallback(async () => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserPreferences({
+          days: userData.availability?.days || [],
+          hours: userData.availability?.hours || [],
+          level: userData.level || null
+        });
+      } else {
+        setUserPreferences({
+          days: [],
+          hours: [],
+          level: null
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user preferences:', error);
+    }
+  }, [user]);
+  const [selectedTab, setSelectedTab] = useState<'disponibles' | 'mis'>('disponibles');
+  const [pendingResultsCount, setPendingResultsCount] = useState(0);
 
   // Función para obtener el conteo de partidos pendientes de resultado
   const fetchPendingResultsCount = useCallback(async () => {
@@ -128,16 +154,18 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     fetchMatches();
     fetchPendingResultsCount();
-  }, [fetchMatches, fetchPendingResultsCount]);
+    fetchUserPreferences();
+  }, [fetchMatches, fetchPendingResultsCount, fetchUserPreferences]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
       fetchMatches(),
-      fetchPendingResultsCount()
+      fetchPendingResultsCount(),
+      fetchUserPreferences()
     ]);
     setRefreshing(false);
-  }, [fetchMatches, fetchPendingResultsCount]);
+  }, [fetchMatches, fetchPendingResultsCount, fetchUserPreferences]);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -390,14 +418,14 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
             activeOpacity={0.85}
           >
             <View style={styles.tabWithBadge}>
-              <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
-              {pendingResultsCount > 0 && (
-                <View style={styles.tabBadge}>
-                  <Text style={styles.tabBadgeText}>
-                    {pendingResultsCount > 99 ? '99+' : pendingResultsCount}
-                  </Text>
-                </View>
-              )}
+                                      <Text style={[styles.tabText, selectedTab === 'mis' && styles.tabTextSelected]}>Mis Partidos</Text>
+                        {pendingResultsCount > 0 && (
+                          <View style={[styles.tabBadge, styles.tabBadgeTopRight]}>
+                            <Text style={styles.tabBadgeText}>
+                              {pendingResultsCount > 99 ? '99+' : pendingResultsCount}
+                            </Text>
+                          </View>
+                        )}
             </View>
           </TouchableOpacity>
         </View>}
@@ -629,11 +657,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    paddingRight: 16, // Añadir padding para dar espacio al badge
   },
   tabBadge: {
     position: 'absolute',
     top: -8,
-    right: -12,
+    right: -4,
     backgroundColor: COLORS.error,
     borderRadius: 10,
     minWidth: 20,
@@ -642,6 +671,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
     paddingHorizontal: 4,
+  },
+  tabBadgeTopRight: {
+    top: -8,
+    right: -4,
   },
   tabBadgeText: {
     color: COLORS.white,

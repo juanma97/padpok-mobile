@@ -13,18 +13,18 @@ export default function App() {
     const checkPending = async () => {
       try {
         await checkPendingResults();
-      } catch (error) {
-        console.error('Error checking pending results:', error);
-      }
+          } catch (error) {
+      // Error checking pending results
+    }
     };
     
     // Limpiar notificaciones inválidas
     const cleanNotifications = async () => {
       try {
         await cleanInvalidNotifications();
-      } catch (error) {
-        console.error('Error cleaning invalid notifications:', error);
-      }
+          } catch (error) {
+      // Error cleaning invalid notifications
+    }
     };
     
     Promise.all([checkPending(), cleanNotifications()]);

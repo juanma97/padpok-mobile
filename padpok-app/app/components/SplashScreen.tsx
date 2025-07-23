@@ -75,7 +75,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           onFinish();
         }, 600);
       } catch (error) {
-        console.error('Error loading initial data:', error);
+        // Error loading initial data
         setLoadingProgress(1);
         animateProgressTo(1);
         setTimeout(() => {

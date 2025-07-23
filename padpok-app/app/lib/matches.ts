@@ -519,25 +519,50 @@ export const getPendingResultsCount = async (userId: string): Promise<number> =>
   const matchesRef = collection(db, 'matches');
   const now = new Date();
   
-  // Buscar partidos donde el usuario participó, han terminado pero no tienen resultado
-  const q = query(
+  console.log('🔍 Buscando partidos pendientes para usuario:', userId);
+  console.log('📅 Fecha actual:', now);
+  
+  // Primero, buscar TODOS los partidos donde el usuario participó
+  const q1 = query(
     matchesRef,
-    where('playersJoined', 'array-contains', userId),
-    where('date', '<', now),
-    where('score', '==', null)
+    where('playersJoined', 'array-contains', userId)
   );
   
-  const querySnapshot = await getDocs(q);
+  const querySnapshot1 = await getDocs(q1);
+  console.log('📊 Total de partidos donde participa el usuario:', querySnapshot1.size);
+  
+  querySnapshot1.forEach(doc => {
+    const matchData = doc.data() as Match;
+    console.log('🏓 Partido encontrado:', matchData.title, '| Fecha:', matchData.date, '| Score:', matchData.score, '| Jugadores:', matchData.playersJoined?.length, '/', matchData.playersNeeded);
+  });
+  
+  // Ahora buscar con todas las condiciones usando Timestamp
+  // Nota: No podemos usar múltiples where con OR en Firestore, así que haremos la consulta sin el filtro de score
+  const q2 = query(
+    matchesRef,
+    where('playersJoined', 'array-contains', userId),
+    where('date', '<', Timestamp.fromDate(now))
+  );
+  
+  const querySnapshot2 = await getDocs(q2);
   let count = 0;
   
-  querySnapshot.forEach(doc => {
+  console.log('📊 Total de partidos encontrados en la consulta completa:', querySnapshot2.size);
+  
+  querySnapshot2.forEach(doc => {
     const matchData = doc.data() as Match;
-    // Solo contar si el partido está completo
-    if (matchData.playersJoined && matchData.playersJoined.length >= matchData.playersNeeded) {
+    console.log('🏓 Partido pendiente:', matchData.title, '| Jugadores:', matchData.playersJoined?.length, '/', matchData.playersNeeded, '| Score:', matchData.score);
+    
+    // Solo contar si el partido está completo Y no tiene score (null o undefined)
+    if (matchData.playersJoined && 
+        matchData.playersJoined.length >= matchData.playersNeeded && 
+        (matchData.score === null || matchData.score === undefined)) {
       count++;
+      console.log('✅ Partido pendiente contado:', matchData.title);
     }
   });
   
+  console.log('🎯 Total de partidos pendientes:', count);
   return count;
 };
 

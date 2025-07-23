@@ -32,7 +32,7 @@ const MatchChat: React.FC<MatchChatProps> = ({ matchId }) => {
       const matchMessages = await getMatchMessages(matchId);
       setMessages(matchMessages);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      // Error fetching messages
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ const MatchChat: React.FC<MatchChatProps> = ({ matchId }) => {
       setNewMessage('');
       fetchMessages(); // Recargar mensajes después de enviar
     } catch (error) {
-      console.error('Error sending message:', error);
+      // Error sending message
     }
   };
 

@@ -75,14 +75,14 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ visible, onClose, u
             const userMedalsList = await getUserMedals(userId);
             setUserMedals(userMedalsList);
           } catch (medalError) {
-            console.error('Error fetching medals:', medalError);
+            // Error fetching medals
             // No mostramos error al usuario si falla solo la carga de medallas
             // Continuamos con el perfil básico
             setUserMedals([]);
           }
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        // Error fetching user data
         setError('No se pudo cargar el perfil del usuario');
       } finally {
         setLoading(false);
