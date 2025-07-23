@@ -35,6 +35,7 @@ import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 import SegmentedControl from '@app/components/SegmentedControl';
 import { createNotification } from '@app/lib/notifications';
 
+
 const TABS = [
   { label: 'Partidos', value: 'Partidos' },
   { label: 'Ranking', value: 'Ranking' },
@@ -499,7 +500,7 @@ export default function GroupDetailsScreen() {
       })
     : [];
 
-  // Mis partidos (todos los que me he unido)
+  // Separar partidos pendientes de los demás en mis partidos
   const misPartidos = Array.isArray(group?.matches) && user
     ? group.matches.filter(m => 
         m.playersJoined && 
@@ -507,6 +508,73 @@ export default function GroupDetailsScreen() {
         m.playersJoined.includes(user.uid)
       )
     : [];
+
+  const pendingMatches = misPartidos.filter(match => {
+    if (match.score) return false;
+    const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+    const now = new Date();
+    return matchDate < now && match.playersJoined.length >= match.playersNeeded;
+  });
+
+  const otherMatches = misPartidos.filter(match => {
+    if (match.score) return true;
+    const matchDate = match.date instanceof Date ? match.date : (match.date as any).toDate();
+    const now = new Date();
+    return !(matchDate < now && match.playersJoined.length >= match.playersNeeded);
+  });
+
+  // Componente para renderizar partido pendiente en el carrusel
+  const renderPendingMatch = ({ item }: { item: Match }) => (
+    <TouchableOpacity
+      style={styles.pendingMatchCard}
+      onPress={() => {
+        setSelectedMatch(item);
+        setShowMatchDetails(true);
+        setIsJoined(!!user && item.playersJoined.includes(user.uid));
+        if (item.playersJoined.length > 0) {
+          getMatchUsers(item.playersJoined).then(setUserInfos);
+        } else {
+          setUserInfos({});
+        }
+      }}
+      activeOpacity={0.85}
+    >
+      <View style={styles.pendingMatchHeader}>
+        <Text style={styles.pendingMatchTitle}>{item.title}</Text>
+        <View style={styles.pendingResultBadge}>
+          <Ionicons name="add-circle-outline" size={SIZES.sm} color={COLORS.white} />
+          <Text style={styles.pendingResultText}>Añadir Resultado</Text>
+        </View>
+      </View>
+      <View style={styles.pendingMatchInfo}>
+        <Text style={styles.pendingMatchLocation}>{item.location}</Text>
+        <Text style={styles.pendingMatchDate}>
+          {item.date instanceof Date 
+            ? item.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+            : (item.date as any).toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+          }
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // Componente del carrusel de partidos pendientes
+  const PendingMatchesCarousel = () => {
+    if (pendingMatches.length === 0) return null;
+
+    return (
+      <View style={styles.carouselContainer}>
+        <FlatList
+          data={pendingMatches}
+          renderItem={renderPendingMatch}
+          keyExtractor={item => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContent}
+        />
+      </View>
+    );
+  };
 
   return (
     <KeyboardAvoidingView
@@ -605,21 +673,38 @@ export default function GroupDetailsScreen() {
                   }
                 />
               ) : (
-                <FlatList
-                  data={misPartidos}
-                  renderItem={renderMatch}
-                  keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
-                  contentContainerStyle={styles.listContent}
-                  ListEmptyComponent={<Text style={styles.emptyText}>No te has unido a ningún partido</Text>}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={refreshGroup}
-                      colors={[COLORS.primary]}
-                      tintColor={COLORS.primary}
-                    />
-                  }
-                />
+                <View style={styles.matchesContainer}>
+                  {/* Carrusel de partidos pendientes */}
+                  <PendingMatchesCarousel />
+                  
+                  {/* Lista de otros partidos */}
+                  {otherMatches.length > 0 && (
+                    <>
+                      {pendingMatches.length > 0 && (
+                        <View style={styles.separator}>
+                          <View style={styles.separatorLine} />
+                          <Text style={styles.separatorText}>Otros partidos</Text>
+                          <View style={styles.separatorLine} />
+                        </View>
+                      )}
+                      <FlatList
+                        data={otherMatches}
+                        renderItem={renderMatch}
+                        keyExtractor={(item, index) => item.id ? String(item.id) : `match-${index}`}
+                        contentContainerStyle={styles.listContent}
+                        ListEmptyComponent={<Text style={styles.emptyText}>No te has unido a ningún partido</Text>}
+                        refreshControl={
+                          <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={refreshGroup}
+                            colors={[COLORS.primary]}
+                            tintColor={COLORS.primary}
+                          />
+                        }
+                      />
+                    </>
+                  )}
+                </View>
               )}
             </>
           )}
@@ -1772,5 +1857,87 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: SIZES.lg,
     fontFamily: FONTS.bold,
+  },
+  // Estilos para el carrusel
+  matchesContainer: {
+    flex: 1,
+  },
+  carouselContainer: {
+    marginBottom: SPACING.md,
+  },
+  carouselContent: {
+    paddingHorizontal: SPACING.md,
+  },
+  pendingMatchCard: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    marginHorizontal: SPACING.xs,
+    width: 300, // Ancho fijo para el carrusel
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  pendingMatchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  pendingMatchTitle: {
+    fontSize: SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    flex: 1,
+    marginRight: SPACING.sm,
+  },
+  pendingResultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 10,
+  },
+  pendingResultText: {
+    color: COLORS.white,
+    fontSize: SIZES.sm,
+    fontFamily: FONTS.medium,
+    marginLeft: SPACING.xs,
+  },
+  pendingMatchInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pendingMatchLocation: {
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.medium,
+  },
+  pendingMatchDate: {
+    fontSize: SIZES.md,
+    color: COLORS.gray,
+    fontFamily: FONTS.medium,
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  separatorText: {
+    marginHorizontal: SPACING.sm,
+    color: COLORS.gray,
+    fontSize: SIZES.sm,
+    fontFamily: FONTS.medium,
   },
 }); 

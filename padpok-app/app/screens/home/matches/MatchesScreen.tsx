@@ -468,25 +468,6 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
         {user && <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateMatch')} activeOpacity={0.85}>
           <Ionicons name="add" size={SIZES.xl} color={COLORS.white} />
         </TouchableOpacity>}
-        
-        {/* Botón temporal para crear partidos de prueba */}
-        {user && (
-          <TouchableOpacity 
-            style={[styles.fab, { bottom: 100, backgroundColor: '#f59e0b' }]} 
-            onPress={async () => {
-              try {
-                await createTestMatches(user.uid);
-                // Recargar partidos
-                onRefresh();
-              } catch (error) {
-                console.error('Error creando partidos de prueba:', error);
-              }
-            }} 
-            activeOpacity={0.85}
-          >
-            <Ionicons name="flask" size={SIZES.xl} color={COLORS.white} />
-          </TouchableOpacity>
-        )}
       </View>
     </SafeAreaView>
   );

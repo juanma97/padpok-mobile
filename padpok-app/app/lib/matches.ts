@@ -614,4 +614,97 @@ export const createTestMatches = async (userId: string): Promise<void> => {
   } catch (error) {
     console.error('❌ Error creando partidos de prueba:', error);
   }
+};
+
+// Función para crear partidos de prueba en grupos
+export const createTestGroupMatches = async (userId: string, groupId: string): Promise<void> => {
+  const groupRef = doc(db, 'groups', groupId);
+  const now = new Date();
+  
+  // Partido 1: Terminado sin resultado (debería mostrar borde naranja y badge)
+  const pastMatch = {
+    id: `test-${Date.now()}-1`,
+    title: 'Partido de grupo - Terminado sin resultado',
+    location: 'Club Deportivo Norte - Pista 1',
+    level: 'Intermedio',
+    description: 'Este partido de grupo terminó ayer pero no se añadió el resultado',
+    date: new Date(now.getTime() - 24 * 60 * 60 * 1000), // Ayer
+    ageRange: 'todas las edades',
+    playersNeeded: 4,
+    playersJoined: [userId, 'user2', 'user3', 'user4'],
+    createdBy: userId,
+    createdAt: new Date(now.getTime() - 48 * 60 * 60 * 1000), // Hace 2 días
+    teams: {
+      team1: [userId, 'user2'],
+      team2: ['user3', 'user4']
+    }
+  };
+  
+  // Partido 2: Terminado con resultado (debería verse normal)
+  const pastMatchWithScore = {
+    id: `test-${Date.now()}-2`,
+    title: 'Partido de grupo - Terminado con resultado',
+    location: 'Club Deportivo Sur - Pista 2',
+    level: 'Avanzado',
+    description: 'Este partido de grupo terminó y tiene resultado añadido',
+    date: new Date(now.getTime() - 12 * 60 * 60 * 1000), // Hace 12 horas
+    ageRange: 'todas las edades',
+    playersNeeded: 4,
+    playersJoined: [userId, 'user5', 'user6', 'user7'],
+    createdBy: userId,
+    createdAt: new Date(now.getTime() - 36 * 60 * 60 * 1000), // Hace 36 horas
+    score: {
+      set1: { team1: 6, team2: 4 },
+      set2: { team1: 7, team2: 5 },
+      winner: 'team1'
+    },
+    teams: {
+      team1: [userId, 'user5'],
+      team2: ['user6', 'user7']
+    }
+  };
+  
+  // Partido 3: Futuro (debería verse normal)
+  const futureMatch = {
+    id: `test-${Date.now()}-3`,
+    title: 'Partido de grupo - Futuro',
+    location: 'Club Deportivo Este - Pista 3',
+    level: 'Principiante',
+    description: 'Este partido de grupo es para mañana',
+    date: new Date(now.getTime() + 24 * 60 * 60 * 1000), // Mañana
+    ageRange: 'todas las edades',
+    playersNeeded: 4,
+    playersJoined: [userId, 'user8', 'user9'],
+    createdBy: userId,
+    createdAt: new Date(),
+    teams: {
+      team1: [userId, 'user8'],
+      team2: ['user9']
+    }
+  };
+  
+  try {
+    // Obtener el grupo actual
+    const groupSnap = await getDoc(groupRef);
+    if (!groupSnap.exists()) {
+      throw new Error('Grupo no encontrado');
+    }
+    
+    const groupData = groupSnap.data();
+    const currentMatches = groupData.matches || [];
+    
+    // Añadir los nuevos partidos de prueba
+    const updatedMatches = [...currentMatches, pastMatch, pastMatchWithScore, futureMatch];
+    
+    // Actualizar el grupo con los nuevos partidos
+    await updateDoc(groupRef, { 
+      matches: updatedMatches,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('✅ Partidos de prueba de grupo creados exitosamente');
+  } catch (error) {
+    console.error('❌ Error creando partidos de prueba de grupo:', error);
+    throw error;
+  }
 }; 

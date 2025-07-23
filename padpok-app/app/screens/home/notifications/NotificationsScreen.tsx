@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@app/lib/AuthContext';
 import { getUserNotifications, markNotificationAsRead } from '@app/lib/notifications';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { db } from '@app/lib/firebase';
 import { COLORS, FONTS, SIZES, SPACING } from '@app/constants/theme';
 import { Notification } from '@app/types/models';
 import { Timestamp } from 'firebase/firestore';
@@ -48,8 +50,43 @@ const NotificationsScreen = () => {
       );
     }
 
-    // Navegar al detalle del partido
-    navigation.navigate('MatchDetails', { matchId: notification.matchId });
+    // Buscar el partido primero en la colección normal de partidos
+    try {
+      const matchRef = doc(db, 'matches', notification.matchId);
+      const matchSnap = await getDoc(matchRef);
+      
+      if (matchSnap.exists()) {
+        // Partido encontrado en la colección normal
+        navigation.navigate('MatchDetails', { matchId: notification.matchId });
+        return;
+      }
+    } catch (error) {
+      console.log('Partido no encontrado en colección normal, buscando en grupos...');
+    }
+
+    // Si no se encuentra en la colección normal, buscar en grupos
+    try {
+      const groupsRef = collection(db, 'groups');
+      const groupsSnap = await getDocs(groupsRef);
+      
+      for (const groupDoc of groupsSnap.docs) {
+        const groupData = groupDoc.data();
+        if (groupData.matches && Array.isArray(groupData.matches)) {
+          const match = groupData.matches.find((m: any) => m.id === notification.matchId);
+          if (match) {
+            // Partido encontrado en un grupo
+            navigation.navigate('GroupDetails', { groupId: groupDoc.id });
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error buscando partido en grupos:', error);
+    }
+
+    // Si no se encuentra en ningún lado, mostrar error o navegar a una pantalla por defecto
+    console.warn('Partido no encontrado ni en colección normal ni en grupos:', notification.matchId);
+    // Opcional: mostrar un alert o navegar a una pantalla por defecto
   };
 
   const getNotificationIcon = (type: Notification['type']) => {
