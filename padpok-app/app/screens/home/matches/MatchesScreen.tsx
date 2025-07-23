@@ -85,7 +85,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
         });
       }
     } catch (error) {
-      console.error('Error fetching user preferences:', error);
+      // Error fetching user preferences
     }
   }, [user]);
   const [selectedTab, setSelectedTab] = useState<'disponibles' | 'mis'>('disponibles');
@@ -98,7 +98,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
       const count = await getPendingResultsCount(user.uid);
       setPendingResultsCount(count);
     } catch (error) {
-      console.error('Error fetching pending results count:', error);
+      // Error fetching pending results count
     }
   }, [user]);
 
@@ -144,7 +144,7 @@ const MatchesScreen: React.FC<Props> = ({ navigation, route }) => {
       });
       setMatches(matchesData);
     } catch (error) {
-      console.error('Error fetching matches:', error);
+      // Error fetching matches
     } finally {
       setLoading(false);
       setRefreshing(false);

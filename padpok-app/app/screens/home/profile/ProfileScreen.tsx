@@ -116,7 +116,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
           setSelectedHours(userData.availability?.hours || []);
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        // Error fetching user data
       }
     };
 
@@ -136,7 +136,7 @@ const ProfileScreen = ({ route }: { route: { params?: ProfileParams } }) => {
         setMedals(allMedals);
         setUserMedals(userMedalsList);
       } catch (error) {
-        console.error('Error fetching medals:', error);
+        // Error fetching medals
       }
     };
 

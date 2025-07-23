@@ -24,9 +24,9 @@ const MedalsScreen = () => {
         
         setMedals(allMedals);
         setUserMedals(userMedalsList);
-      } catch (error) {
-        console.error('Error fetching medals:', error);
-      } finally {
+          } catch (error) {
+      // Error fetching medals
+    } finally {
         setLoading(false);
       }
     };

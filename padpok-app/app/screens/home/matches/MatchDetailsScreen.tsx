@@ -59,7 +59,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
             });
           }
         } catch (error) {
-          console.error('Error fetching match:', error);
+          // Error fetching match
           Alert.alert('Error', 'No se pudo cargar el partido');
         }
       }
@@ -161,7 +161,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
       setShowTeamSelection(false);
       Alert.alert('Éxito', 'Te has unido al partido correctamente');
     } catch (error) {
-      console.error('Error al unirse al partido:', error);
+      // Error al unirse al partido
       Alert.alert('Error', 'No se pudo unir al partido');
     } finally {
       setLoading(false);
@@ -188,7 +188,7 @@ const MatchDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsJoined(false);
       Alert.alert('Éxito', 'Has abandonado el partido correctamente');
     } catch (error) {
-      console.error('Error al abandonar el partido:', error);
+      // Error al abandonar el partido
       Alert.alert('Error', 'No se pudo abandonar el partido');
     } finally {
       setLoading(false);

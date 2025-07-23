@@ -82,7 +82,7 @@ const RankingScreen: React.FC<Props> = ({ navigation }) => {
       });
       setUsers(sortedUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      // Error fetching users
     } finally {
       if (isRefresh) {
         setRefreshing(false);

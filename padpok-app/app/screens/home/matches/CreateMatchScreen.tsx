@@ -200,7 +200,7 @@ const CreateMatchScreen: React.FC<Props> = ({ navigation }) => {
         [{ text: 'OK' }]
       );
     } catch (error) {
-      console.error('Error al registrar el clic:', error);
+      // Error al registrar el clic
     } finally {
       setHighlightLoading(false);
     }

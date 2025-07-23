@@ -66,7 +66,7 @@ export default function MatchHistoryScreen() {
 
       setMatches(historyMatches);
     } catch (error) {
-      console.error('Error fetching match history:', error);
+      // Error fetching match history
     } finally {
       setLoading(false);
     }

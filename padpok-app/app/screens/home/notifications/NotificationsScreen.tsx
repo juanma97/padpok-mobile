@@ -32,9 +32,9 @@ const NotificationsScreen = () => {
       try {
         const userNotifications = await getUserNotifications(user.uid);
         setNotifications(userNotifications);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
+          } catch (error) {
+      // Error fetching notifications
+    } finally {
         setLoading(false);
       }
     };
@@ -61,7 +61,7 @@ const NotificationsScreen = () => {
         return;
       }
     } catch (error) {
-      console.log('Partido no encontrado en colección normal, buscando en grupos...');
+              // Partido no encontrado en colección normal, buscando en grupos...
     }
 
     // Si no se encuentra en la colección normal, buscar en grupos
@@ -80,12 +80,12 @@ const NotificationsScreen = () => {
           }
         }
       }
-    } catch (error) {
-      console.error('Error buscando partido en grupos:', error);
-    }
+          } catch (error) {
+        // Error buscando partido en grupos
+      }
 
     // Si no se encuentra en ningún lado, mostrar error o navegar a una pantalla por defecto
-    console.warn('Partido no encontrado ni en colección normal ni en grupos:', notification.matchId);
+            // Partido no encontrado ni en colección normal ni en grupos
     // Opcional: mostrar un alert o navegar a una pantalla por defecto
   };
 
